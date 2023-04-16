@@ -2,6 +2,8 @@ struct Ray
 {
     vec3 Origin;
     vec3 Direction;
+    vec3 Color;
+    vec3 IncomingLight;
 };
 
 struct Material
@@ -254,56 +256,59 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     return !isinf(manifold.Depth);
 }
 
-vec4 CalculateColor(in Ray ray, uint seed)
+void CollisionReact(inout Ray ray, in CollisionManifold manifold, inout uint seed)
+{
+    vec3 diffuseDir = normalize(RandomVector3(seed) + manifold.Normal);
+    vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
+            
+    Material material = Materials[manifold.MaterialId];
+
+    float fresnelValue = 1.0 - pow(clamp(0.0, 1.0, dot(manifold.Normal, -ray.Direction)), material.FresnelStrength);
+    bool isFresnelBounce = fresnelValue >= RandomValue(seed);
+    bool isSpecularBounce = material.Metalness >= RandomValue(seed);
+    bool isBounce = isFresnelBounce || isSpecularBounce;
+
+    ray.Direction = mix(diffuseDir, reflectedDir, isBounce ? 1.0 - material.Roughness : 0.0);
+    ray.Origin = manifold.Point;
+    ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
+    ray.Color *= mix(
+        material.AlbedoColor,
+        clamp(vec3(0), vec3(1), material.MetalnessColor * vec3(isSpecularBounce) + material.FresnelColor * vec3(isFresnelBounce)),
+        isBounce ? 1.0 : 0.0);
+}
+
+void SendRay(inout Ray ray, inout uint seed)
+{
+    for (int i = 0; i <= MaxBouceCount; i++)
+    {
+        CollisionManifold manifold;
+        if (!FindIntersection(ray, manifold))
+        {
+            if (EnableEnvironment)
+            {
+                ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
+            }
+
+            break;
+        }
+
+        CollisionReact(ray, manifold, seed);
+    }
+}
+
+vec4 CollectColor(in Ray ray, inout uint seed)
 {
     vec3 cameraRight = cross(CameraForward, CameraUp);
     vec3 resultLight = vec3(0);
-    for (int j = 0; j < RayPerFrameCount; j++)
+    for (int i = 0; i < RayPerFrameCount; i++)
     {
         vec2 jitter = RandomVector2(seed) * FocusStrength;
         vec3 jitterOrigin = ray.Origin + jitter.x * cameraRight + jitter.y * CameraUp;
 
         vec3 focalPoint = ray.Origin + ray.Direction * FocalLength;
-        Ray jitterRay = Ray(
-            jitterOrigin,
-            normalize(focalPoint - jitterOrigin));
-
-
-        vec3 rayColor = vec3(1);
-        vec3 incomingLight = vec3(0);
-        for (int i = 0; i <= MaxBouceCount; i++)
-        {
-            CollisionManifold manifold;
-            if (!FindIntersection(jitterRay, manifold))
-            {
-                if (EnableEnvironment)
-                {
-                    incomingLight += GetEnvironmentLight(jitterRay) * rayColor;
-                }
-
-                break;
-            }
-
-            vec3 diffuseDir = normalize(RandomVector3(seed) + manifold.Normal);
-            vec3 reflectedDir = reflect(jitterRay.Direction, manifold.Normal);
-            
-            Material material = Materials[manifold.MaterialId];
-
-            float fresnelValue = 1.0 - pow(clamp(0.0, 1.0, dot(manifold.Normal, -jitterRay.Direction)), material.FresnelStrength);
-            bool isFresnelBounce = fresnelValue >= RandomValue(seed);
-            bool isSpecularBounce = material.Metalness >= RandomValue(seed);
-            bool isBounce = isFresnelBounce || isSpecularBounce;
-
-            jitterRay.Direction = mix(diffuseDir, reflectedDir, isBounce ? 1.0 - material.Roughness : 0.0);
-            jitterRay.Origin = manifold.Point;
-            incomingLight += material.EmissionColor * material.EmissionStrength * rayColor;
-            rayColor *= mix(
-                material.AlbedoColor,
-                clamp(vec3(0), vec3(1), material.MetalnessColor * vec3(isSpecularBounce) + material.FresnelColor * vec3(isFresnelBounce)),
-                isBounce);
-        }
-        
-        resultLight += incomingLight;
+        Ray jitterRay = Ray(jitterOrigin, normalize(focalPoint - jitterOrigin), ray.Color, ray.IncomingLight);
+        SendRay(jitterRay, seed);
+        resultLight += jitterRay.IncomingLight;
     }
     
     return vec4(resultLight / float(RayPerFrameCount), 1);
@@ -314,11 +319,11 @@ void main()
     float aspectRatio = WindowSize.x / WindowSize.y;
     vec2 coord = vec2((gl_TexCoord[0].x - .5) * aspectRatio, gl_TexCoord[0].y - .5);
     vec3 right = cross(CameraForward, CameraUp);
-    Ray ray = Ray(CameraPosition, normalize(CameraForward + right * coord.x + CameraUp * coord.y));
+    Ray ray = Ray(CameraPosition, normalize(CameraForward + right * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
 
     uint seed = uint((WindowSize.x * gl_TexCoord[0].x + WindowSize.y * gl_TexCoord[0].y * gl_TexCoord[0].x) * 549856.0) + uint(FrameCount) * 5458u;
 
-    vec4 newColor = CalculateColor(ray, seed);
+    vec4 newColor = CollectColor(ray, seed);
     vec4 oldColor = texture2D(Texture, gl_TexCoord[0].xy);
     float weight = 1.0 / (float(FrameCount) + 1.0);
     gl_FragColor = mix(oldColor, newColor, weight);
