@@ -6,7 +6,7 @@ int main()
     Material green(Vector3f(0, 1, 0), 1);
     Material blue(Vector3f(0, 0, 1), 1);
     Material white(Vector3f(1, 1, 1), 1);
-    Material lightSource(Vector3f(0, 0, 0), 0, Vector3f(0, 0, 0), 0, Vector3f(1, 1, 1), 5);
+    Material lightSource(Vector3f(0, 0, 0), 0, Vector3f(0, 0, 0), 0, Vector3f(1, 1, 1), 1);
     Material mirror(Vector3f(0, 0, 0), 0, Vector3f(1, 1, 1), 1);
 
     Renderer renderer(Vector2i(600, 600), Camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f));

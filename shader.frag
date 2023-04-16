@@ -84,13 +84,13 @@ uniform Triangle Triangles[TriangleCount];
 uniform AABB AABBs[AABBCount];
 #endif
 
-const vec3 SkyColorHorizon = vec3(1, 1, 1);
-const vec3 SkyColorZenith = vec3(.5, .5, 1);
-const vec3 GroundColor = vec3(.5, .5, .5);
+const vec3 SkyColorHorizon = vec3(.01, .01, .01);
+const vec3 SkyColorZenith = vec3(.005, .005, .01);
+const vec3 GroundColor = vec3(.005, .005, .005);
 const vec3 SunColor = vec3(1, 1, 1);
 const vec3 SunLightDirection = normalize(vec3(0, -1, -1));
-const float SunFocus = 50;
-const float SunIntensity = 2.0;
+const float SunFocus = 800;
+const float SunIntensity = 5;
 
 vec3 GetEnvironmentLight(Ray ray)
 {    
@@ -296,7 +296,7 @@ void SendRay(inout Ray ray, inout uint seed)
     }
 }
 
-vec4 CollectColor(in Ray ray, inout uint seed)
+vec3 CollectColor(in Ray ray, inout uint seed)
 {
     vec3 cameraRight = cross(CameraForward, CameraUp);
     vec3 resultLight = vec3(0);
@@ -311,7 +311,7 @@ vec4 CollectColor(in Ray ray, inout uint seed)
         resultLight += jitterRay.IncomingLight;
     }
     
-    return vec4(resultLight / float(RayPerFrameCount), 1);
+    return resultLight / float(RayPerFrameCount);
 }
 
 void main()
@@ -323,8 +323,16 @@ void main()
 
     uint seed = uint((WindowSize.x * gl_TexCoord[0].x + WindowSize.y * gl_TexCoord[0].y * gl_TexCoord[0].x) * 549856.0) + uint(FrameCount) * 5458u;
 
-    vec4 newColor = CollectColor(ray, seed);
-    vec4 oldColor = texture2D(Texture, gl_TexCoord[0].xy);
+    vec3 newColor = CollectColor(ray, seed);
+
+    // Tone mapping
+    const float white = 4.0;
+    const float exposure = 16.0;
+    newColor *= white * exposure;
+    newColor = (newColor * (1.0 + newColor / white / white)) / (1.0 + newColor);
+
+    // Progressive rendering mixing
+    vec3 oldColor = texture2D(Texture, gl_TexCoord[0].xy).rgb;
     float weight = 1.0 / (float(FrameCount) + 1.0);
-    gl_FragColor = mix(oldColor, newColor, weight);
+    gl_FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
 }
