@@ -2,6 +2,13 @@
 
 Ray tracing app
 
+# Renders
+
+
+![](img/image0.png)
+![](img/image1.png)
+![](img/image2.png)
+
 # Features
 - Geometries:
     - Sphere
@@ -59,3 +66,7 @@ int main()
     return 0;
 }
 ```
+
+# External libraries used by TracerX
+- [SFML/SFML](https://github.com/SFML/SFML)
+- [Bly7/OBJ-Loader](https://github.com/Bly7/OBJ-Loader)
