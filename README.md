@@ -2,9 +2,9 @@
 
 Ray tracing app
 
+This renderer was inspired by the book [_Ray Tracing in One Weekend_](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+
 # Renders
-
-
 ![](img/image0.png)
 ![](img/image1.png)
 ![](img/image2.png)
@@ -67,6 +67,6 @@ int main()
 }
 ```
 
-# External libraries used by TracerX
+# External libraries
 - [SFML/SFML](https://github.com/SFML/SFML)
 - [Bly7/OBJ-Loader](https://github.com/Bly7/OBJ-Loader)
