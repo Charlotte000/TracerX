@@ -16,6 +16,8 @@ struct Material
     float EmissionStrength;
     vec3 FresnelColor;
     float FresnelStrength;
+    bool IsTransparent;
+    float RefractionFactor;
 };
 
 struct Sphere
@@ -70,7 +72,7 @@ uniform vec3 CameraForward;
 #if defined(MaterialCount)
 uniform Material Materials[MaterialCount];
 #else
-Material Materials[1] = { Material(vec3(.5), 1.0, vec3(0), 0.0, vec3(0), 0.0, vec3(0), 0.0) };
+Material Materials[1] = { Material(vec3(.5), 1.0, vec3(0), 0.0, vec3(0), 0.0, vec3(0), 0.0, false, vec3(0)) };
 #endif
 
 #if defined(SphereCount)
@@ -277,23 +279,25 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
-    vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
-    vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
-            
     Material material = Materials[manifold.MaterialId];
 
-    float fresnelValue = 1.0 - pow(clamp(0.0, 1.0, dot(manifold.Normal, -ray.Direction)), material.FresnelStrength);
-    bool isFresnelBounce = fresnelValue >= RandomValue();
-    bool isSpecularBounce = material.Metalness >= RandomValue();
-    bool isBounce = isFresnelBounce || isSpecularBounce;
+    vec3 reactedDir = material.IsTransparent ?
+        refract(ray.Direction, manifold.Normal, manifold.isFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
+        normalize(RandomVector3() + manifold.Normal);
+    vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
 
-    ray.Direction = normalize(mix(diffuseDir, reflectedDir, isBounce ? 1.0 - material.Roughness : 0.0));
+    float fresnelValue = material.FresnelStrength > 0.0 ? 1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) : 0.0;
+    float fresnelMask = fresnelValue >= RandomValue() ? 0.0 : 1.0;
+
     ray.Origin = manifold.Point;
+    ray.Direction = normalize(mix(reflectedDir, reactedDir, material.Roughness * fresnelMask));
+
     ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
-    ray.Color *= mix(
-        material.AlbedoColor,
-        clamp(vec3(0), vec3(1), material.MetalnessColor * vec3(isSpecularBounce) + material.FresnelColor * vec3(isFresnelBounce)),
-        isBounce ? 1.0 : 0.0);
+    ray.Color *= material.FresnelStrength > 0.0 && fresnelMask < 1.0 ? 
+        material.FresnelColor : 
+        material.Metalness >= RandomValue() ? 
+        material.MetalnessColor : 
+        material.AlbedoColor;
 }
 
 vec3 SendRay(in Ray ray)
