@@ -202,19 +202,19 @@ public:
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource)
     {
         this->addCornellBox(up, down, left, right, forward, backward);
-        this->add(AABB(Vector3f(0, 1.24f, 0), Vector3f(.5f, .5f, .5f)), lightSource);
+        this->add(AABB(Vector3f(0, .998f, 0), Vector3f(.5f, .001f, .5f)), lightSource);
     }
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward)
     {
-        this->add(AABB(Vector3f(0, 3, 0), Vector3f(2, 4, 2)), up);
-        this->add(AABB(Vector3f(0, -3, 0), Vector3f(2, 4, 2)), down);
+        this->add(AABB(Vector3f(0, 1.5f, -1), Vector3f(2, 1, 4)), up);
+        this->add(AABB(Vector3f(0, -1.5f, -1), Vector3f(2, 1, 4)), down);
 
-        this->add(AABB(Vector3f(3, 0, 0), Vector3f(4, 2, 2)), left);
-        this->add(AABB(Vector3f(-3, 0, 0), Vector3f(4, 2, 2)), right);
+        this->add(AABB(Vector3f(1.5f, 0, -1), Vector3f(1, 2, 4)), left);
+        this->add(AABB(Vector3f(-1.5f, 0, -1), Vector3f(1, 2, 4)), right);
 
-        this->add(AABB(Vector3f(0, 0, 3), Vector3f(2, 2, 4)), forward);
-        this->add(AABB(Vector3f(0, 0, -3), Vector3f(2, 2, 4)), backward);
+        this->add(AABB(Vector3f(0, 0, 1.5f), Vector3f(2, 2, 1)), forward);
+        this->add(AABB(Vector3f(0, 0, -3.5f), Vector3f(2, 2, 1)), backward);
     }
 
 private:

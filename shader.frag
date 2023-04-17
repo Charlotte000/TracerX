@@ -243,7 +243,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     for (int i = 0; i < SphereCount; i++)
     {
         CollisionManifold current;
-        if (SphereIntersection(ray, Spheres[i], current) && (current.Depth < manifold.Depth))
+        if (SphereIntersection(ray, Spheres[i], current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }
@@ -254,7 +254,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     for (int i = 0; i < TriangleCount; i++)
     {
         CollisionManifold current;
-        if (TriangleIntersection(ray, Triangles[i], current) && (current.Depth < manifold.Depth))
+        if (TriangleIntersection(ray, Triangles[i], current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }
@@ -265,7 +265,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     for (int i = 0; i < AABBCount; i++)
     {
         CollisionManifold current;
-        if (AABBIntersection(ray, AABBs[i], current) && (current.Depth < manifold.Depth))
+        if (AABBIntersection(ray, AABBs[i], current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }
