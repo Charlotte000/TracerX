@@ -63,7 +63,6 @@ uniform int MaxBouceCount;
 uniform int FrameCount;
 uniform float FocusStrength;
 uniform float FocalLength;
-uniform bool EnableEnvironment;
 
 uniform vec3 CameraUp;
 uniform vec3 CameraPosition;
@@ -91,23 +90,27 @@ const float SmallNumber = 0.001;
 const vec3 CameraRight = cross(CameraForward, CameraUp);
 uint Seed = uint((WindowSize.x * gl_TexCoord[0].x + WindowSize.y * gl_TexCoord[0].y * gl_TexCoord[0].x) * 549856.0) + uint(FrameCount) * 5458u;
 
-const vec3 SkyColorHorizon = vec3(.01, .01, .01);
-const vec3 SkyColorZenith = vec3(.005, .005, .01);
-const vec3 GroundColor = vec3(.005, .005, .005);
-const vec3 SunColor = vec3(1, 1, 1);
-const vec3 SunLightDirection = normalize(vec3(0, -1, -1));
-const float SunFocus = 800;
-const float SunIntensity = 10;
+uniform struct
+{
+    vec3 SkyColorHorizon;
+    vec3 SkyColorZenith;
+    vec3 GroundColor;
+    vec3 SunColor;
+    vec3 SunDirection;
+    float SunFocus;
+    float SunIntensity;
+    bool Enabled;
+} Environment;
 
 vec3 GetEnvironmentLight(Ray ray)
 {    
     float skyGradientT = pow(smoothstep(0.0, 0.4, ray.Direction.y), 0.35);
-    vec3 skyGradient = mix(SkyColorHorizon, SkyColorZenith, skyGradientT);
-    float sun = pow(max(0.0, dot(ray.Direction, -SunLightDirection)), SunFocus) * SunIntensity;
+    vec3 skyGradient = mix(Environment.SkyColorHorizon, Environment.SkyColorZenith, skyGradientT);
+    float sun = pow(max(0.0, dot(ray.Direction, -Environment.SunDirection)), Environment.SunFocus) * Environment.SunIntensity;
     
     float groundToSkyT = smoothstep(-0.01, 0.0, ray.Direction.y);
     float sunMask = groundToSkyT >= 1.0 ? 1.0 : 0.0;
-    return mix(GroundColor, skyGradient, groundToSkyT) + SunColor * sun * sunMask;
+    return mix(Environment.GroundColor, skyGradient, groundToSkyT) + Environment.SunColor * sun * sunMask;
 }
 
 float RandomValue()
@@ -307,7 +310,7 @@ vec3 SendRay(in Ray ray)
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))
         {
-            if (EnableEnvironment)
+            if (Environment.Enabled)
             {
                 ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
             }

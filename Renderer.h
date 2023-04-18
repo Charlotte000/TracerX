@@ -10,6 +10,7 @@
 #include "Triangle.h"
 #include "Sphere.h"
 #include "Camera.h"
+#include "Environment.h"
 
 using namespace std;
 
@@ -22,6 +23,7 @@ public:
     vector<AABB> aabbs;
     Camera camera;
     Vector2i size;
+    Environment environment;
 
     Renderer(Vector2i size, Camera camera)
         : camera(camera), size(size)
@@ -30,7 +32,7 @@ public:
         this->buffer2.create(this->size.x, this->size.y);
     }
 
-    void loadScene(int rayPerFrameCount, int maxBounceCount, bool enableEnvironment)
+    void loadScene(int rayPerFrameCount, int maxBounceCount)
     {
         this->loadShader();
         this->shader.setUniform("WindowSize", (Vector2f)this->size);
@@ -38,7 +40,6 @@ public:
         this->shader.setUniform("MaxBouceCount", maxBounceCount);
         this->shader.setUniform("FocusStrength", this->camera.focusStrength);
         this->shader.setUniform("FocalLength", this->camera.focalLength);
-        this->shader.setUniform("EnableEnvironment", enableEnvironment);
 
         for (int i = 0; i < this->materials.size(); i++)
         {
@@ -59,6 +60,8 @@ public:
         {
             this->aabbs[i].set(this->shader, "AABBs[" + to_string(i) + ']');
         }
+
+        this->environment.set(this->shader, "Environment");
     }
 
     void runVisual()
