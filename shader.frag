@@ -240,15 +240,33 @@ bool AABBIntersection(in Ray ray, in AABB aabb, out CollisionManifold manifold)
     return true;
 }
 
+bool AABBIntersection(in Ray ray, in vec3 invRayDir, in vec3 boxMin, in vec3 boxMax)
+{
+    vec3 tMin = (boxMin - ray.Origin) * invRayDir;
+    vec3 tMax = (boxMax - ray.Origin) * invRayDir;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tN = max(max(t1.x, t1.y), t1.z);
+    float tF = min(min(t2.x, t2.y), t2.z);
+    return tN <= tF && tF >= SmallNumber;
+}
+
 bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 {
     manifold.Depth = 1.0 / 0.0;
+
+    vec3 invRayDir = 1.0 / ray.Direction;
 
 #if defined(SphereCount)
     for (int i = 0; i < SphereCount; i++)
     {
         CollisionManifold current;
-        if (SphereIntersection(ray, Spheres[i], current) && current.Depth < manifold.Depth)
+        vec3 radius = vec3(Spheres[i].Radius);
+        vec3 boxMin = Spheres[i].Origin - radius;
+        vec3 boxMax = Spheres[i].Origin + radius;
+        if (AABBIntersection(ray, invRayDir, boxMin, boxMax) &&
+            SphereIntersection(ray, Spheres[i], current) &&
+            current.Depth < manifold.Depth)
         {
             manifold = current;
         }
@@ -259,7 +277,11 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     for (int i = 0; i < TriangleCount; i++)
     {
         CollisionManifold current;
-        if (TriangleIntersection(ray, Triangles[i], current) && current.Depth < manifold.Depth)
+        vec3 boxMin = min(min(Triangles[i].Pos1, Triangles[i].Pos2), Triangles[i].Pos3);
+        vec3 boxMax = max(max(Triangles[i].Pos1, Triangles[i].Pos2), Triangles[i].Pos3);
+        if (AABBIntersection(ray, invRayDir, boxMin, boxMax) &&
+            TriangleIntersection(ray, Triangles[i], current) &&
+            current.Depth < manifold.Depth)
         {
             manifold = current;
         }
@@ -356,6 +378,6 @@ void main()
 
     // Progressive rendering mixing
     vec3 oldColor = texture2D(Texture, gl_TexCoord[0].xy).rgb;
-    float weight = 1.0 / (float(FrameCount) + 1.0);
+    float weight = 1.0 / FrameCount;
     gl_FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
 }

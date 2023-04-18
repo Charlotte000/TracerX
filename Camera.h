@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/System.hpp>
+#include "VectorMath.h"
 
 struct Camera
 {
