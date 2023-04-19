@@ -300,7 +300,6 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
                 manifold = current;
             }
         }
-
     }
 #endif
 

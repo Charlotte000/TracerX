@@ -2,7 +2,7 @@
 
 #include "Renderer.h"
 
-void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::RenderWindow& window, sf::RenderTexture& target, char* fileName, size_t fileNameSize);
+void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::RenderWindow& window, sf::RenderTexture& target);
 
 void MaterailUI(Renderer& renderer, bool& isProgressive);
 

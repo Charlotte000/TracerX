@@ -37,6 +37,8 @@ public:
 
     void run(int iterationCount, const string imagePath);
 
+    int getPixelDifference();
+
     void add(Sphere sphere, const Material material);
 
     void add(Sphere sphere);

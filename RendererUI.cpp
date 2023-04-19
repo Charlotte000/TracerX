@@ -3,7 +3,7 @@
 
 #include "RendererUI.h"
 
-void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::RenderWindow& window, sf::RenderTexture& target, char* fileName, size_t fileNameSize)
+void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::RenderWindow& window, sf::RenderTexture& target)
 {
     ImGui::Begin("Info");
     ImGui::Text("Frame count: %d", renderer.frameCount);
@@ -77,9 +77,25 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
     ImGui::Separator();
     ImGui::Spacing();
 
+    static int totalPixels = renderer.size.x * renderer.size.y;
+    static int pixelDifference = totalPixels;
+    static float differencePercentage = 100;
+    if (ImGui::Button("Update pixel difference"))
+    {
+        pixelDifference = renderer.getPixelDifference();
+        differencePercentage = 100.0f * pixelDifference / totalPixels;
+    }
+    
+    ImGui::Text("Difference: %7dpx / %7dpx | %.2f %%", pixelDifference, totalPixels, differencePercentage);
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
     if (ImGui::Checkbox("Camera control", &isCameraControl))
     {
         sf::Mouse::setPosition(renderer.size / 2, window);
+        window.setMouseCursorVisible(false);
         isProgressive = false;
     }
 
@@ -93,6 +109,8 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
     ImGui::Separator();
     ImGui::Spacing();
 
+    static char fileName[50] = "image.png";
+    static size_t fileNameSize = 50 * sizeof(char);
     ImGui::InputText("Filename", fileName, fileNameSize);
     if (ImGui::Button("Save"))
     {

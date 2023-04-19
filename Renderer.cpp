@@ -78,9 +78,6 @@ void Renderer::runVisual()
 
     bool isProgressive = false;
     bool isCameraControl = false;
-    window.setMouseCursorVisible(false);
-    char fileName[50] = "image.png";
-    size_t fileNameSize = 50 * sizeof(char);
 
     Clock clock;
     while (window.isOpen())
@@ -98,12 +95,13 @@ void Renderer::runVisual()
             if (event.type == Event::KeyPressed && event.key.code == Keyboard::Enter && isCameraControl)
             {
                 isCameraControl = false;
+                window.setMouseCursorVisible(true);
             }
         }
 
         ImGui::SFML::Update(window, clock.restart());
 
-        InfoUI(*this, isProgressive, isCameraControl, window, this->buffer1, fileName, fileNameSize);
+        InfoUI(*this, isProgressive, isCameraControl, window, this->buffer1);
         MaterailUI(*this, isProgressive);
         GeometryUI(*this, isProgressive);
         EnvironmentUI(*this, isProgressive);
@@ -160,6 +158,26 @@ void Renderer::run(int iterationCount, const string imagePath)
     }
 
     this->buffer1.getTexture().copyToImage().saveToFile(imagePath);
+}
+
+int Renderer::getPixelDifference()
+{
+    Image image1 = this->buffer1.getTexture().copyToImage();
+    Image image2 = this->buffer2.getTexture().copyToImage();
+
+    int result = 0;
+    for (int x = 0; x < this->size.x; x++)
+    {
+        for (int y = 0; y < this->size.y; y++)
+        {
+            if (image1.getPixel(x, y) != image2.getPixel(x, y))
+            {
+                result++;
+            }
+        }
+    }
+
+    return result;
 }
 
 void Renderer::add(Sphere sphere, const Material material)
