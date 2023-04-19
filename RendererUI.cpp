@@ -61,13 +61,13 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
         ImGui::TreePop();
     }
 
-    if (ImGui::DragInt("Ray per frame", &renderer.rayPerFrameCount, 0.01f, 0))
+    if (ImGui::DragInt("Ray per frame", &renderer.rayPerFrameCount, 0.01f, 0, 10000))
     {
         renderer.shader.setUniform("RayPerFrameCount", renderer.rayPerFrameCount);
         isProgressive = false;
     }
 
-    if (ImGui::DragInt("Max bounce", &renderer.maxBounceCount, 0.01f, 0))
+    if (ImGui::DragInt("Max bounce", &renderer.maxBounceCount, 0.01f, 0, 10000))
     {
         renderer.shader.setUniform("MaxBouceCount", renderer.maxBounceCount);
         isProgressive = false;
@@ -119,7 +119,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                 isProgressive = false;
             }
 
-            if (ImGui::DragFloat("Roughness", &material.roughness, .001f, 0, 1))
+            if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
             {
                 renderer.materials[i].roughness = material.roughness;
                 renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
@@ -136,7 +136,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                if (ImGui::DragFloat("Metalness", &material.metalness, .001f, 0, 1))
+                if (ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
                 {
                     renderer.materials[i].metalness = material.metalness;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
@@ -278,82 +278,22 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Triangles", "Triangles (%d)", renderer.triangles.size()))
+    if (ImGui::TreeNode("Meshes", "Meshes (%d)", renderer.meshes.size()))
     {
-        for (int i = 0; i < renderer.triangles.size(); i++)
+        for (int i = 0; i < renderer.meshes.size(); i++)
         {
-            Triangle triangle = renderer.triangles[i];
+            Mesh mesh = renderer.meshes[i];
 
-            if (ImGui::TreeNode((void*)(intptr_t)i, "Triangle %i", i))
+            if (ImGui::TreeNode((void*)(intptr_t)i, "Mesh %i", i))
             {
-                if (ImGui::TreeNode("Vertex 1"))
-                {
-                    float position[3]{ triangle.pos1.x, triangle.pos1.y, triangle.pos1.z };
-                    if (ImGui::DragFloat3("Position", position, .001f))
-                    {
-                        renderer.triangles[i].pos1 = sf::Vector3f(position[0], position[1], position[2]);
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    float normal[3]{ triangle.normal1.x, triangle.normal1.y, triangle.normal1.z };
-                    if (ImGui::DragFloat3("Normal", normal, .001f))
-                    {
-                        renderer.triangles[i].normal1 = normalized(sf::Vector3f(normal[0], normal[1], normal[2]));
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    ImGui::TreePop();
-                }
-
-                if (ImGui::TreeNode("Vertex 2"))
-                {
-                    float position[3]{ triangle.pos2.x, triangle.pos2.y, triangle.pos2.z };
-                    if (ImGui::DragFloat3("Position", position, .001f))
-                    {
-                        renderer.triangles[i].pos2 = sf::Vector3f(position[0], position[1], position[2]);
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    float normal[3]{ triangle.normal2.x, triangle.normal2.y, triangle.normal2.z };
-                    if (ImGui::DragFloat3("Normal", normal, .001f))
-                    {
-                        renderer.triangles[i].normal2 = normalized(sf::Vector3f(normal[0], normal[1], normal[2]));
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    ImGui::TreePop();
-                }
-
-                if (ImGui::TreeNode("Vertex 3"))
-                {
-                    float position[3]{ triangle.pos3.x, triangle.pos3.y, triangle.pos3.z };
-                    if (ImGui::DragFloat3("Position", position, .001f))
-                    {
-                        renderer.triangles[i].pos3 = sf::Vector3f(position[0], position[1], position[2]);
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    float normal[3]{ triangle.normal3.x, triangle.normal3.y, triangle.normal3.z };
-                    if (ImGui::DragFloat3("Normal", normal, .001f))
-                    {
-                        renderer.triangles[i].normal3 = normalized(sf::Vector3f(normal[0], normal[1], normal[2]));
-                        renderer.triangles[i].set(renderer.shader, "Triangles[" + to_string(i) + ']');
-                        isProgressive = false;
-                    }
-
-                    ImGui::TreePop();
-                }
-
-                ImGui::Text("Material id: %i", triangle.materialId);
+                ImGui::Text("Indices start: %i", mesh.indicesStart);
+                ImGui::Text("Indices length: %i", mesh.indicesLength);
+                ImGui::Text("Material id: %i", mesh.materialId);
 
                 ImGui::TreePop();
             }
         }
+
         ImGui::TreePop();
     }
 

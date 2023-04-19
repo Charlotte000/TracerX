@@ -19,3 +19,5 @@ Vector3f rotateX(Vector3f v, float angle);
 Vector3f rotateY(Vector3f v, float angle);
 
 Vector3f rotateZ(Vector3f v, float angle);
+
+float length(Vector3f v);

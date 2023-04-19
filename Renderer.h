@@ -4,10 +4,11 @@
 #include <SFML/Graphics.hpp>
 
 #include "AABB.h"
-#include "Triangle.h"
 #include "Sphere.h"
 #include "Camera.h"
 #include "Environment.h"
+#include "Vertex3.h"
+#include "Mesh.h"
 
 using namespace std;
 
@@ -16,8 +17,10 @@ class Renderer
 public:
     vector<Material> materials;
     vector<Sphere> spheres;
-    vector<Triangle> triangles;
     vector<AABB> aabbs;
+    vector<int> indices;
+    vector<Vertex3> vertices;
+    vector<Mesh> meshes;
     Camera camera;
     Vector2i size;
     Environment environment;
@@ -42,11 +45,9 @@ public:
 
     void add(AABB aabb);
 
-    void add(Triangle triangle, const Material material);
-
-    void add(Triangle triangle);
-
     int add(const Material& material);
+
+    void addFile(const string filePath, Vector3f offset = Vector3f(0, 0, 0), Vector3f scale = Vector3f(1, 1, 1), Vector3f rotation = Vector3f(0, 0, 0));
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource);
 

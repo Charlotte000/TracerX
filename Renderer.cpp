@@ -4,7 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
 #include <imgui-SFML.h>
-
+#include <OBJLoader.h>
 #include "RendererUI.h"
 
 using namespace std;
@@ -18,6 +18,16 @@ Renderer::Renderer(Vector2i size, Camera camera, int rayPerFrameCount, int maxBo
 
 void Renderer::loadScene()
 {
+    if (this->materials.size() == 0)
+    {
+        this->materials.push_back(Material(Vector3f(.8f, .8f, .8f), .7f));
+    }
+
+    if (this->aabbs.size() == 0 && this->spheres.size() == 0 && this->meshes.size() == 0)
+    {
+        this->aabbs.push_back(AABB(Vector3f(0, 0, 0), Vector3f(1, 1, 1), 0));
+    }
+
     this->loadShader();
     this->shader.setUniform("WindowSize", (Vector2f)this->size);
     this->shader.setUniform("RayPerFrameCount", this->rayPerFrameCount);
@@ -35,15 +45,26 @@ void Renderer::loadScene()
         this->spheres[i].set(this->shader, "Spheres[" + to_string(i) + ']');
     }
 
-    for (int i = 0; i < this->triangles.size(); i++)
-    {
-        this->triangles[i].set(this->shader, "Triangles[" + to_string(i) + ']');
-    }
-
     for (int i = 0; i < this->aabbs.size(); i++)
     {
         this->aabbs[i].set(this->shader, "AABBs[" + to_string(i) + ']');
     }
+
+    for (int i = 0; i < this->vertices.size(); i++)
+    {
+        this->vertices[i].set(this->shader, "Vertices[" + to_string(i) + ']');
+    }
+
+    for (int i = 0; i < this->meshes.size(); i++)
+    {
+        this->meshes[i].set(this->shader, "Meshes[" + to_string(i) + ']');
+    }
+
+    for (int i = 0; i < this->indices.size(); i++)
+    {
+        this->shader.setUniform("Indices[" + to_string(i) + ']', this->indices[i]);
+    }
+
 
     this->environment.set(this->shader, "Environment");
 }
@@ -165,18 +186,6 @@ void Renderer::add(AABB aabb)
     this->aabbs.push_back(aabb);
 }
 
-void Renderer::add(Triangle triangle, const Material material)
-{
-    int materialId = this->add(material);
-    triangle.materialId = materialId;
-    this->triangles.push_back(triangle);
-}
-
-void Renderer::add(Triangle triangle)
-{
-    this->triangles.push_back(triangle);
-}
-
 int Renderer::add(const Material& material)
 {
     vector<Material>::iterator it = find(this->materials.begin(), this->materials.end(), material);
@@ -187,6 +196,39 @@ int Renderer::add(const Material& material)
 
     this->materials.push_back(material);
     return (int)(this->materials.size() - 1);
+}
+
+void Renderer::addFile(const string filePath, Vector3f offset, Vector3f scale, Vector3f rotation)
+{
+    objl::Loader loader;
+    loader.LoadFile(filePath);
+
+    for (const objl::Mesh& mesh : loader.LoadedMeshes)
+    {
+        Vector3f boxMin = Vector3f(INFINITY, INFINITY, INFINITY);
+        Vector3f boxMax = Vector3f(-INFINITY, -INFINITY, -INFINITY);
+        for (const objl::Vertex& vertex : mesh.Vertices)
+        {
+            Vector3f position = Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z);
+            Vector3f normal = Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z);
+            position = rotateZ(rotateY(rotateX(mult(position, scale), rotation.x), rotation.y), rotation.z) + offset;
+            normal = normalized(rotateZ(rotateY(rotateX(mult(normal, scale), rotation.x), rotation.y), rotation.z));
+            this->vertices.push_back(Vertex3(position, normal));
+
+            boxMin = Vector3f(min(boxMin.x, position.x), min(boxMin.y, position.y), min(boxMin.z, position.z));
+            boxMax = Vector3f(max(boxMax.x, position.x), max(boxMax.y, position.y), max(boxMax.z, position.z));
+        }
+
+        Material m;
+        m.albedoColor = Vector3f(mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z);
+        m.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
+        m.metalnessColor = Vector3f(mesh.MeshMaterial.Ka.X, mesh.MeshMaterial.Ka.Y, mesh.MeshMaterial.Ka.Z);
+        m.metalness = mesh.MeshMaterial.Ka.X;
+        int materialId = this->add(m);
+
+        this->meshes.push_back(Mesh(this->indices.size(), mesh.Indices.size(), materialId, boxMin, boxMax));
+        this->indices.insert(this->indices.end(), mesh.Indices.begin(), mesh.Indices.end());
+    }
 }
 
 void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource)
@@ -213,12 +255,20 @@ void Renderer::loadShader()
     string content;
     content.assign(istreambuf_iterator<char>(myFile), istreambuf_iterator<char>());
     myFile.close();
-
+    string s = (!this->spheres.empty() ? "#define SphereCount " + to_string(this->spheres.size()) + "\n" : "") +
+        (!this->aabbs.empty() ? "#define AABBCount " + to_string(this->aabbs.size()) + "\n" : "") +
+        (!this->materials.empty() ? "#define MaterialCount " + to_string(this->materials.size()) + "\n" : "") +
+        (!this->vertices.empty() ? "#define VertexCount " + to_string(this->vertices.size()) + "\n" : "") +
+        (!this->meshes.empty() ? "#define MeshCount " + to_string(this->meshes.size()) + "\n" : "") +
+        (!this->indices.empty() ? "#define IndexCount " + to_string(this->indices.size()) + "\n" : "") +
+        content;
     if (!this->shader.loadFromMemory(
-        (!this->triangles.empty() ? "#define TriangleCount " + to_string(this->triangles.size()) + "\n" : "") +
         (!this->spheres.empty() ? "#define SphereCount " + to_string(this->spheres.size()) + "\n" : "") +
         (!this->aabbs.empty() ? "#define AABBCount " + to_string(this->aabbs.size()) + "\n" : "") +
         (!this->materials.empty() ? "#define MaterialCount " + to_string(this->materials.size()) + "\n" : "") +
+        (!this->vertices.empty() ? "#define VertexCount " + to_string(this->vertices.size()) + "\n" : "") +
+        (!this->meshes.empty() ? "#define MeshCount " + to_string(this->meshes.size()) + "\n" : "") +
+        (!this->indices.empty() ? "#define IndexCount " + to_string(this->indices.size()) + "\n" : "") +
         content,
         Shader::Fragment))
     {

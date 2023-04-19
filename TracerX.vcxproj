@@ -165,11 +165,12 @@
     <ClInclude Include="ImGui\imstb_textedit.h" />
     <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RendererUI.h" />
     <ClInclude Include="Sphere.h" />
-    <ClInclude Include="Triangle.h" />
     <ClInclude Include="VectorMath.h" />
+    <ClInclude Include="Vertex3.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

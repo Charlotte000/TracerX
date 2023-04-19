@@ -1,5 +1,4 @@
 #include "Renderer.h"
-#include "OBJLoader.h"
 
 int main()
 {

@@ -27,16 +27,19 @@ struct Sphere
     int MaterialId;
 };
 
-struct Triangle
+struct Vertex
 {
-    vec3 Pos1;
-    vec3 Pos2;
-    vec3 Pos3;
-    
-    vec3 Normal1;
-    vec3 Normal2;
-    vec3 Normal3;
+    vec3 Position;
+    vec3 Normal;
+};
+
+struct Mesh
+{
+    int IndicesStart;
+    int IndicesLength;
     int MaterialId;
+    vec3 BoxMin;
+    vec3 BoxMax;
 };
 
 struct AABB
@@ -68,21 +71,27 @@ uniform vec3 CameraUp;
 uniform vec3 CameraPosition;
 uniform vec3 CameraForward;
 
-#if defined(MaterialCount)
+#ifdef MaterialCount
 uniform Material Materials[MaterialCount];
-#else
-Material Materials[1] = { Material(vec3(.5), 1.0, vec3(0), 0.0, vec3(0), 0.0, vec3(0), 0.0, false, vec3(0)) };
 #endif
 
-#if defined(SphereCount)
+#ifdef SphereCount
 uniform Sphere Spheres[SphereCount];
 #endif
 
-#if defined(TriangleCount)
-uniform Triangle Triangles[TriangleCount];
+#ifdef VertexCount
+uniform Vertex Vertices[VertexCount];
 #endif
 
-#if defined(AABBCount)
+#ifdef IndexCount
+uniform int Indices[IndexCount];
+#endif
+
+#ifdef MeshCount
+uniform Mesh Meshes[MeshCount];
+#endif
+
+#ifdef AABBCount
 uniform AABB AABBs[AABBCount];
 #endif
 
@@ -176,10 +185,10 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     return true;
 }
 
-bool TriangleIntersection(in Ray ray, in Triangle tri, out CollisionManifold manifold)
+bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, out CollisionManifold manifold)
 {
-    vec3 edge12 = tri.Pos2 - tri.Pos1;
-    vec3 edge13 = tri.Pos3 - tri.Pos1;
+    vec3 edge12 = v2.Position - v1.Position;
+    vec3 edge13 = v3.Position - v1.Position;
     vec3 normal = cross(edge12, edge13);
     float det = -dot(ray.Direction, normal);
 
@@ -189,7 +198,7 @@ bool TriangleIntersection(in Ray ray, in Triangle tri, out CollisionManifold man
         return false;
     }
 
-    vec3 ao = ray.Origin - tri.Pos1;
+    vec3 ao = ray.Origin - v1.Position;
     vec3 dao = cross(ao, ray.Direction);
 
     float invDet = 1.0 / det;
@@ -207,8 +216,8 @@ bool TriangleIntersection(in Ray ray, in Triangle tri, out CollisionManifold man
     manifold = CollisionManifold(
         dst,
         ray.Origin + ray.Direction * dst,
-        normalize(tri.Normal1 * w + tri.Normal2 * u + tri.Normal3 * v) * (isFrontFace ? 1.0 : -1.0),
-        tri.MaterialId,
+        normalize(v1.Normal * w + v2.Normal * u + v3.Normal * v) * (isFrontFace ? 1.0 : -1.0),
+        materialId,
         isFrontFace);
     return true;
 }
@@ -257,7 +266,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 
     vec3 invRayDir = 1.0 / ray.Direction;
 
-#if defined(SphereCount)
+#ifdef SphereCount
     for (int i = 0; i < SphereCount; i++)
     {
         CollisionManifold current;
@@ -273,22 +282,29 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     }
 #endif
 
-#if defined(TriangleCount)
-    for (int i = 0; i < TriangleCount; i++)
+#ifdef MeshCount
+    for (int i = 0; i < MeshCount; i++)
     {
-        CollisionManifold current;
-        vec3 boxMin = min(min(Triangles[i].Pos1, Triangles[i].Pos2), Triangles[i].Pos3);
-        vec3 boxMax = max(max(Triangles[i].Pos1, Triangles[i].Pos2), Triangles[i].Pos3);
-        if (AABBIntersection(ray, invRayDir, boxMin, boxMax) &&
-            TriangleIntersection(ray, Triangles[i], current) &&
-            current.Depth < manifold.Depth)
+        Mesh mesh = Meshes[i];
+
+        for (int index = mesh.IndicesStart; index < mesh.IndicesStart + mesh.IndicesLength; index += 3)
         {
-            manifold = current;
+            CollisionManifold current;
+            Vertex v1 = Vertices[Indices[index]];
+            Vertex v2 = Vertices[Indices[index + 1]];
+            Vertex v3 = Vertices[Indices[index + 2]];
+            if (AABBIntersection(ray, invRayDir, mesh.BoxMin, mesh.BoxMax) &&
+                TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) &&
+                current.Depth < manifold.Depth)
+            {
+                manifold = current;
+            }
         }
+
     }
 #endif
 
-#if defined(AABBCount)
+#ifdef AABBCount
     for (int i = 0; i < AABBCount; i++)
     {
         CollisionManifold current;
@@ -378,6 +394,6 @@ void main()
 
     // Progressive rendering mixing
     vec3 oldColor = texture2D(Texture, gl_TexCoord[0].xy).rgb;
-    float weight = 1.0 / FrameCount;
+    float weight = 1.0 / float(FrameCount);
     gl_FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
 }

@@ -47,3 +47,8 @@ Vector3f rotateZ(Vector3f v, float angle)
 {
     return Vector3f(v.x * cos(angle) - v.y * sin(angle), v.x * sin(angle) + v.y * cos(angle), v.z);
 }
+
+float length(Vector3f v)
+{
+    return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+}
