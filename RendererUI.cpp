@@ -328,6 +328,42 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                 ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
                 ImGui::Text("Indices length: %i", renderer.meshes[i].indicesLength);
 
+                float offset[3] = { renderer.meshes[i].position.x, renderer.meshes[i].position.y, renderer.meshes[i].position.z };
+                if (ImGui::DragFloat3("Offset", offset, .01f))
+                {
+                    Vector3f offsetV(offset[0] - renderer.meshes[i].position.x, offset[1] - renderer.meshes[i].position.y, offset[2] - renderer.meshes[i].position.z);
+                    renderer.meshes[i].offset(offsetV, renderer.indices, renderer.vertices);
+                    renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
+                    for (int v = 0; v < renderer.vertices.size(); v++)
+                    {
+                        renderer.vertices[v].set(renderer.shader, "Vertices[" + to_string(v) + ']');
+                    }
+                }
+
+                float scale[3] = { renderer.meshes[i].size.x, renderer.meshes[i].size.y, renderer.meshes[i].size.z };
+                if (ImGui::DragFloat3("Scale", scale, .01f))
+                {
+                    Vector3f sizeV(scale[0] / renderer.meshes[i].size.x, scale[1] / renderer.meshes[i].size.y, scale[2] / renderer.meshes[i].size.z);
+                    renderer.meshes[i].scale(sizeV, renderer.indices, renderer.vertices);
+                    renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
+                    for (int v = 0; v < renderer.vertices.size(); v++)
+                    {
+                        renderer.vertices[v].set(renderer.shader, "Vertices[" + to_string(v) + ']');
+                    }
+                }
+
+                float rotation[3] = { renderer.meshes[i].rotation.x, renderer.meshes[i].rotation.y, renderer.meshes[i].rotation.z };
+                if (ImGui::DragFloat3("Rotate", rotation, .01f))
+                {
+                    Vector3f rotationV(rotation[0] - renderer.meshes[i].rotation.x, rotation[1] - renderer.meshes[i].rotation.y, rotation[2] - renderer.meshes[i].rotation.z);
+                    renderer.meshes[i].rotate(rotationV, renderer.indices, renderer.vertices);
+                    renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
+                    for (int v = 0; v < renderer.vertices.size(); v++)
+                    {
+                        renderer.vertices[v].set(renderer.shader, "Vertices[" + to_string(v) + ']');
+                    }
+                }
+
                 if (ImGui::BeginListBox("Material id"))
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)

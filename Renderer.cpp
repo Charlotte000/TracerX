@@ -223,28 +223,27 @@ void Renderer::addFile(const string filePath, Vector3f offset, Vector3f scale, V
 
     for (const objl::Mesh& mesh : loader.LoadedMeshes)
     {
-        Vector3f boxMin = Vector3f(INFINITY, INFINITY, INFINITY);
-        Vector3f boxMax = Vector3f(-INFINITY, -INFINITY, -INFINITY);
         for (const objl::Vertex& vertex : mesh.Vertices)
         {
-            Vector3f position = Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z);
-            Vector3f normal = Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z);
-            position = rotateZ(rotateY(rotateX(mult(position, scale), rotation.x), rotation.y), rotation.z) + offset;
-            normal = normalized(rotateZ(rotateY(rotateX(mult(normal, scale), rotation.x), rotation.y), rotation.z));
-            this->vertices.push_back(Vertex3(position, normal));
-            boxMin = min(boxMin, position);
-            boxMax = max(boxMax, position);
+            this->vertices.push_back(Vertex3(
+                Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z),
+                Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z)));
         }
 
-        Material m;
-        m.albedoColor = Vector3f(mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z);
-        m.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
-        m.metalnessColor = Vector3f(mesh.MeshMaterial.Ka.X, mesh.MeshMaterial.Ka.Y, mesh.MeshMaterial.Ka.Z);
-        m.metalness = mesh.MeshMaterial.Ka.X;
-        int materialId = this->add(m);
+        Material material;
+        material.albedoColor = Vector3f(mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z);
+        material.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
+        material.metalnessColor = Vector3f(mesh.MeshMaterial.Ka.X, mesh.MeshMaterial.Ka.Y, mesh.MeshMaterial.Ka.Z);
+        material.metalness = mesh.MeshMaterial.Ka.X;
+        int materialId = this->add(material);
 
-        this->meshes.push_back(Mesh(this->indices.size(), mesh.Indices.size(), materialId, boxMin, boxMax));
+        Mesh myMesh((int)this->indices.size(), (int)mesh.Indices.size(), materialId);
         this->indices.insert(this->indices.end(), mesh.Indices.begin(), mesh.Indices.end());
+
+        myMesh.scale(scale, this->indices, this->vertices);
+        myMesh.rotate(rotation, this->indices, this->vertices);
+        myMesh.offset(offset, this->indices, this->vertices);
+        this->meshes.push_back(myMesh);
     }
 }
 
