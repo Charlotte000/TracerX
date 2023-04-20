@@ -52,3 +52,13 @@ float length(Vector3f v)
 {
     return sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 }
+
+Vector3f min(Vector3f a, Vector3f b)
+{
+    return Vector3f(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z));
+}
+
+Vector3f max(Vector3f a, Vector3f b)
+{
+    return Vector3f(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z));
+}

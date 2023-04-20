@@ -232,9 +232,8 @@ void Renderer::addFile(const string filePath, Vector3f offset, Vector3f scale, V
             position = rotateZ(rotateY(rotateX(mult(position, scale), rotation.x), rotation.y), rotation.z) + offset;
             normal = normalized(rotateZ(rotateY(rotateX(mult(normal, scale), rotation.x), rotation.y), rotation.z));
             this->vertices.push_back(Vertex3(position, normal));
-
-            boxMin = Vector3f(min(boxMin.x, position.x), min(boxMin.y, position.y), min(boxMin.z, position.z));
-            boxMax = Vector3f(max(boxMax.x, position.x), max(boxMax.y, position.y), max(boxMax.z, position.z));
+            boxMin = min(boxMin, position);
+            boxMax = max(boxMax, position);
         }
 
         Material m;

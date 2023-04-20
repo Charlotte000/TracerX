@@ -174,7 +174,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                if (ImGui::DragFloat("Emission", &material.emissionStrength, .01f, 0, 100))
+                if (ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
                 {
                     renderer.materials[i].emissionStrength = material.emissionStrength;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
@@ -194,7 +194,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .001f, 0, 100))
+                if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
                 {
                     renderer.materials[i].fresnelStrength = material.fresnelStrength;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
@@ -213,7 +213,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                if (ImGui::DragFloat("Refraction", &material.refractionFactor, .01f, 0, 100))
+                if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
                 {
                     renderer.materials[i].refractionFactor = material.refractionFactor;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
@@ -237,11 +237,9 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
     {
         for (int i = 0; i < renderer.spheres.size(); i++)
         {
-            Sphere sphere = renderer.spheres[i];
-
             if (ImGui::TreeNode((void*)(intptr_t)i, "Sphere %i", i))
             {
-                float origin[3]{ sphere.origin.x, sphere.origin.y, sphere.origin.z };
+                float origin[3]{ renderer.spheres[i].origin.x, renderer.spheres[i].origin.y, renderer.spheres[i].origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
                     renderer.spheres[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
@@ -249,14 +247,27 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                if (ImGui::DragFloat("Radius", &sphere.radius, .001f))
+                if (ImGui::DragFloat("Radius", &renderer.spheres[i].radius, .001f))
                 {
-                    renderer.spheres[i].radius = sphere.radius;
                     renderer.spheres[i].set(renderer.shader, "Spheres[" + to_string(i) + ']');
                     isProgressive = false;
                 }
 
-                ImGui::Text("Material id: %i", sphere.materialId);
+                if (ImGui::BeginListBox("Material id"))
+                {
+                    for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
+                    {
+                        if (ImGui::Selectable(("Material " + to_string(materialId)).c_str(), materialId == renderer.spheres[i].materialId) &&
+                            materialId != renderer.spheres[i].materialId)
+                        {
+                            renderer.spheres[i].materialId = materialId;
+                            renderer.spheres[i].set(renderer.shader, "Spheres[" + to_string(i) + ']');
+                            isProgressive = false;
+                        }
+                    }
+
+                    ImGui::EndListBox();
+                }
 
                 ImGui::TreePop();
             }
@@ -268,11 +279,9 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
     {
         for (int i = 0; i < renderer.aabbs.size(); i++)
         {
-            AABB aabb = renderer.aabbs[i];
-
             if (ImGui::TreeNode((void*)(intptr_t)i, "Box %i", i))
             {
-                float origin[3]{ aabb.origin.x, aabb.origin.y, aabb.origin.z };
+                float origin[3]{ renderer.aabbs[i].origin.x, renderer.aabbs[i].origin.y, renderer.aabbs[i].origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
                     renderer.aabbs[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
@@ -280,7 +289,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                float size[3]{ aabb.size.x, aabb.size.y, aabb.size.z };
+                float size[3]{ renderer.aabbs[i].size.x, renderer.aabbs[i].size.y, renderer.aabbs[i].size.z };
                 if (ImGui::DragFloat3("Size", size, .001f))
                 {
                     renderer.aabbs[i].size = sf::Vector3f(size[0], size[1], size[2]);
@@ -288,7 +297,21 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     isProgressive = false;
                 }
 
-                ImGui::Text("Material id: %i", aabb.materialId);
+                if (ImGui::BeginListBox("Material id"))
+                {
+                    for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
+                    {
+                        if (ImGui::Selectable(("Material " + to_string(materialId)).c_str(), materialId == renderer.aabbs[i].materialId) &&
+                            materialId != renderer.aabbs[i].materialId)
+                        {
+                            renderer.aabbs[i].materialId = materialId;
+                            renderer.aabbs[i].set(renderer.shader, "AABBs[" + to_string(i) + ']');
+                            isProgressive = false;
+                        }
+                    }
+                
+                    ImGui::EndListBox();
+                }
 
                 ImGui::TreePop();
             }
@@ -300,13 +323,26 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
     {
         for (int i = 0; i < renderer.meshes.size(); i++)
         {
-            Mesh mesh = renderer.meshes[i];
-
             if (ImGui::TreeNode((void*)(intptr_t)i, "Mesh %i", i))
             {
-                ImGui::Text("Indices start: %i", mesh.indicesStart);
-                ImGui::Text("Indices length: %i", mesh.indicesLength);
-                ImGui::Text("Material id: %i", mesh.materialId);
+                ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
+                ImGui::Text("Indices length: %i", renderer.meshes[i].indicesLength);
+
+                if (ImGui::BeginListBox("Material id"))
+                {
+                    for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
+                    {
+                        if (ImGui::Selectable(("Material " + to_string(materialId)).c_str(), materialId == renderer.meshes[i].materialId) &&
+                            materialId != renderer.meshes[i].materialId)
+                        {
+                            renderer.meshes[i].materialId = materialId;
+                            renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
+                            isProgressive = false;
+                        }
+                    }
+
+                    ImGui::EndListBox();
+                }
 
                 ImGui::TreePop();
             }
