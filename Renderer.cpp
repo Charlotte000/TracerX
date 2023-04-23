@@ -74,6 +74,8 @@ void Renderer::runVisual()
     RenderWindow window(VideoMode(this->size.x, this->size.y), "Ray Tracing");
     Mouse::setPosition(this->size / 2, window);
 
+    RenderTexture windowBuffer;
+    windowBuffer.create(this->size.x, this->size.y);
     ImGui::SFML::Init(window);
 
     bool isProgressive = false;
@@ -99,13 +101,6 @@ void Renderer::runVisual()
             }
         }
 
-        ImGui::SFML::Update(window, clock.restart());
-
-        InfoUI(*this, isProgressive, isCameraControl, window, this->buffer1);
-        MaterailUI(*this, isProgressive);
-        GeometryUI(*this, isProgressive);
-        EnvironmentUI(*this, isProgressive);
-
         if (isCameraControl)
         {
             this->camera.move(window);
@@ -116,23 +111,59 @@ void Renderer::runVisual()
             this->clear();
         }
 
-        this->frameCount++;
         this->shader.setUniform("FrameCount", this->frameCount);
         this->shader.setUniform("CameraPosition", this->camera.position);
         this->shader.setUniform("CameraForward", this->camera.forward);
         this->shader.setUniform("CameraUp", this->camera.up);
 
+        ImGui::SFML::Update(window, clock.restart());
+
+        InfoUI(*this, isProgressive, isCameraControl, window, this->buffer1);
+        MaterailUI(*this, isProgressive);
+        GeometryUI(*this, isProgressive);
+        EnvironmentUI(*this, isProgressive);
+
+        int subWidth = this->size.x / this->subDivisor.x;
+        int subHeight = this->size.y / this->subDivisor.y;
+        int y = this->subStage / this->subDivisor.x;
+        int x = this->subStage - y * this->subDivisor.x;
+        x *= subWidth;
+        y *= subHeight;
+
         RenderTexture* newBuffer = (this->frameCount & 1) == 0 ? &this->buffer1 : &this->buffer2;
         RenderTexture* oldBuffer = (this->frameCount & 1) == 0 ? &this->buffer2 : &this->buffer1;
-
-        newBuffer->clear();
-        newBuffer->draw(Sprite(oldBuffer->getTexture()), &this->shader);
+        Sprite oldSprite(oldBuffer->getTexture());
+        Sprite newSprite(newBuffer->getTexture());
+        oldSprite.setTextureRect(IntRect(x, y, subWidth, subHeight));
+        oldSprite.setPosition((float)x, (float)y);
+        newBuffer->draw(oldSprite, &this->shader);
         newBuffer->display();
+                
+        newSprite.setTextureRect(IntRect(x, y, subWidth, subHeight));
+        newSprite.setPosition((float)x, (float)y);
+        windowBuffer.draw(newSprite);
+        windowBuffer.display();
 
         window.clear();
-        window.draw(Sprite(newBuffer->getTexture()));
+        window.draw(Sprite(windowBuffer.getTexture()));
+
+        RectangleShape r(Vector2f(subWidth, subHeight));
+        r.setPosition(Vector2f(x, y));
+        r.setFillColor(Color::Transparent);
+        r.setOutlineColor(Color::Red);
+        r.setOutlineThickness(1);
+        window.draw(r);
+
         ImGui::SFML::Render(window);
+
         window.display();
+
+        this->subStage++;
+        if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
+        {
+            this->subStage = 0;
+            this->frameCount++;
+        }
     }
 
     ImGui::SFML::Shutdown();
@@ -298,5 +329,5 @@ void Renderer::clear()
     this->buffer1.display();
     this->buffer2.clear();
     this->buffer2.display();
-    this->frameCount = 0;
+    this->frameCount = 1;
 }

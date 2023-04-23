@@ -19,6 +19,7 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
             {
                 renderer.camera.position = sf::Vector3f(position[0], position[1], position[2]);
                 isProgressive = false;
+                renderer.subStage = 0;
             }
 
             ImGui::TreePop();
@@ -31,6 +32,7 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
             {
                 renderer.camera.position = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
                 isProgressive = false;
+                renderer.subStage = 0;
             }
             ImGui::TreePop();
         }
@@ -42,6 +44,7 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
             {
                 renderer.camera.position = normalized(sf::Vector3f(up[0], up[1], up[2]));
                 isProgressive = false;
+                renderer.subStage = 0;
             }
             ImGui::TreePop();
         }
@@ -50,12 +53,14 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
         {
             renderer.shader.setUniform("FocalLength", renderer.camera.focalLength);
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         if (ImGui::DragFloat("Focal strength", &renderer.camera.focusStrength, 0.0001f, 0, 1000))
         {
             renderer.shader.setUniform("FocusStrength", renderer.camera.focusStrength);
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         ImGui::TreePop();
@@ -65,12 +70,26 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
     {
         renderer.shader.setUniform("RayPerFrameCount", renderer.rayPerFrameCount);
         isProgressive = false;
+        renderer.subStage = 0;
     }
 
     if (ImGui::DragInt("Max bounce", &renderer.maxBounceCount, 0.01f, 0, 10000))
     {
         renderer.shader.setUniform("MaxBouceCount", renderer.maxBounceCount);
         isProgressive = false;
+        renderer.subStage = 0;
+    }
+
+    if (ImGui::SliderInt("Width subdivise", &renderer.subDivisor.x, 1, renderer.size.x))
+    {
+        isProgressive = false;
+        renderer.subStage = 0;
+    }
+
+    if (ImGui::SliderInt("Height subdivise", &renderer.subDivisor.y, 1, renderer.size.y))
+    {
+        isProgressive = false;
+        renderer.subStage = 0;
     }
 
     ImGui::Spacing();
@@ -97,13 +116,17 @@ void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::
         sf::Mouse::setPosition(renderer.size / 2, window);
         window.setMouseCursorVisible(false);
         isProgressive = false;
+        renderer.subStage = 0;
     }
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    ImGui::Checkbox("Render", &isProgressive);
+    if (ImGui::Checkbox("Render", &isProgressive))
+    {
+        renderer.subStage = 0;
+    }
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -135,6 +158,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                 renderer.materials[i].albedoColor = sf::Vector3f(albedo[0], albedo[1], albedo[2]);
                 renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                 isProgressive = false;
+                renderer.subStage = 0;
             }
 
             if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
@@ -142,6 +166,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                 renderer.materials[i].roughness = material.roughness;
                 renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                 isProgressive = false;
+                renderer.subStage = 0;
             }
 
             if (ImGui::TreeNode("Metalness"))
@@ -152,6 +177,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].metalnessColor = sf::Vector3f(metalnessColor[0], metalnessColor[1], metalnessColor[2]);
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
@@ -159,6 +185,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].metalness = material.metalness;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 ImGui::TreePop();
@@ -172,6 +199,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].emissionColor = sf::Vector3f(emissionColor[0], emissionColor[1], emissionColor[2]);
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
@@ -179,6 +207,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].emissionStrength = material.emissionStrength;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 ImGui::TreePop();
@@ -192,6 +221,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].fresnelColor = sf::Vector3f(fresnelColor[0], fresnelColor[1], fresnelColor[2]);
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
@@ -199,6 +229,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].fresnelStrength = material.fresnelStrength;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 ImGui::TreePop();
@@ -211,6 +242,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].isTransparent = material.isTransparent;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
@@ -218,6 +250,7 @@ void MaterailUI(Renderer& renderer, bool& isProgressive)
                     renderer.materials[i].refractionFactor = material.refractionFactor;
                     renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 ImGui::TreePop();
@@ -245,12 +278,14 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     renderer.spheres[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     renderer.spheres[i].set(renderer.shader, "Spheres[" + to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::DragFloat("Radius", &renderer.spheres[i].radius, .001f))
                 {
                     renderer.spheres[i].set(renderer.shader, "Spheres[" + to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::BeginListBox("Material id"))
@@ -263,6 +298,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                             renderer.spheres[i].materialId = materialId;
                             renderer.spheres[i].set(renderer.shader, "Spheres[" + to_string(i) + ']');
                             isProgressive = false;
+                            renderer.subStage = 0;
                         }
                     }
 
@@ -287,6 +323,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     renderer.aabbs[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     renderer.aabbs[i].set(renderer.shader, "AABBs[" + to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 float size[3]{ renderer.aabbs[i].size.x, renderer.aabbs[i].size.y, renderer.aabbs[i].size.z };
@@ -295,6 +332,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                     renderer.aabbs[i].size = sf::Vector3f(size[0], size[1], size[2]);
                     renderer.aabbs[i].set(renderer.shader, "AABBs[" + to_string(i) + ']');
                     isProgressive = false;
+                    renderer.subStage = 0;
                 }
 
                 if (ImGui::BeginListBox("Material id"))
@@ -307,6 +345,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                             renderer.aabbs[i].materialId = materialId;
                             renderer.aabbs[i].set(renderer.shader, "AABBs[" + to_string(i) + ']');
                             isProgressive = false;
+                            renderer.subStage = 0;
                         }
                     }
                 
@@ -332,6 +371,8 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                 if (ImGui::DragFloat3("Offset", offset, .01f))
                 {
                     Vector3f offsetV(offset[0] - renderer.meshes[i].position.x, offset[1] - renderer.meshes[i].position.y, offset[2] - renderer.meshes[i].position.z);
+                    isProgressive = false;
+                    renderer.subStage = 0;
                     renderer.meshes[i].offset(offsetV, renderer.indices, renderer.vertices);
                     renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
                     for (int v = 0; v < renderer.vertices.size(); v++)
@@ -344,6 +385,8 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                 if (ImGui::DragFloat3("Scale", scale, .01f))
                 {
                     Vector3f sizeV(scale[0] / renderer.meshes[i].size.x, scale[1] / renderer.meshes[i].size.y, scale[2] / renderer.meshes[i].size.z);
+                    isProgressive = false;
+                    renderer.subStage = 0;
                     renderer.meshes[i].scale(sizeV, renderer.indices, renderer.vertices);
                     renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
                     for (int v = 0; v < renderer.vertices.size(); v++)
@@ -356,6 +399,8 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                 if (ImGui::DragFloat3("Rotate", rotation, .01f))
                 {
                     Vector3f rotationV(rotation[0] - renderer.meshes[i].rotation.x, rotation[1] - renderer.meshes[i].rotation.y, rotation[2] - renderer.meshes[i].rotation.z);
+                    isProgressive = false;
+                    renderer.subStage = 0;
                     renderer.meshes[i].rotate(rotationV, renderer.indices, renderer.vertices);
                     renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
                     for (int v = 0; v < renderer.vertices.size(); v++)
@@ -374,6 +419,7 @@ void GeometryUI(Renderer& renderer, bool& isProgressive)
                             renderer.meshes[i].materialId = materialId;
                             renderer.meshes[i].set(renderer.shader, "Meshes[" + to_string(i) + ']');
                             isProgressive = false;
+                            renderer.subStage = 0;
                         }
                     }
 
@@ -401,6 +447,7 @@ void EnvironmentUI(Renderer& renderer, bool& isProgressive)
             renderer.environment.sunColor = sf::Vector3f(sunColor[0], sunColor[1], sunColor[2]);
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         float sunDirection[3]{ renderer.environment.sunDirection.x, renderer.environment.sunDirection.y, renderer.environment.sunDirection.z };
@@ -409,18 +456,21 @@ void EnvironmentUI(Renderer& renderer, bool& isProgressive)
             renderer.environment.sunDirection = normalized(sf::Vector3f(sunDirection[0], sunDirection[1], sunDirection[2]));
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         if (ImGui::DragFloat("Focus", &renderer.environment.sunFocus, 1, 0, 10000))
         {
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         if (ImGui::DragFloat("Intensity", &renderer.environment.sunIntensity, 0.001f, 0, 100000))
         {
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         ImGui::TreePop();
@@ -434,6 +484,7 @@ void EnvironmentUI(Renderer& renderer, bool& isProgressive)
             renderer.environment.skyColorHorizon = sf::Vector3f(horizon[0], horizon[1], horizon[2]);
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         float zenith[3]{ renderer.environment.skyColorZenith.x, renderer.environment.skyColorZenith.y, renderer.environment.skyColorZenith.z };
@@ -442,6 +493,7 @@ void EnvironmentUI(Renderer& renderer, bool& isProgressive)
             renderer.environment.skyColorZenith = sf::Vector3f(zenith[0], zenith[1], zenith[2]);
             renderer.environment.set(renderer.shader, "Environment");
             isProgressive = false;
+            renderer.subStage = 0;
         }
 
         ImGui::TreePop();
@@ -453,12 +505,14 @@ void EnvironmentUI(Renderer& renderer, bool& isProgressive)
         renderer.environment.groundColor = sf::Vector3f(ground[0], ground[1], ground[2]);
         renderer.environment.set(renderer.shader, "Environment");
         isProgressive = false;
+        renderer.subStage = 0;
     }
 
     if (ImGui::Checkbox("Enable", &renderer.environment.enabled))
     {
         renderer.environment.set(renderer.shader, "Environment");
         isProgressive = false;
+        renderer.subStage = 0;
     }
 
     ImGui::End();
