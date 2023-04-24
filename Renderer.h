@@ -27,15 +27,13 @@ public:
     Shader shader;
     int frameCount = 1;
     int subStage = 0;
-    int rayPerFrameCount = 0;
+    int sampleCount = 0;
     int maxBounceCount = 0;
     Vector2i subDivisor = Vector2i(1, 1);
 
-    Renderer(Vector2i size, Camera camera, int rayPerFrameCount, int maxBounceCount);
+    Renderer(Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
 
     void loadScene();
-
-    void runVisual();
 
     void run(int iterationCount, const string imagePath);
 
@@ -56,7 +54,7 @@ public:
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource);
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward);
-private:
+protected:
     const string path = "shader.frag";
     RenderTexture buffer1;
     RenderTexture buffer2;

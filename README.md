@@ -39,7 +39,7 @@ This renderer was inspired by the book [_Ray Tracing in One Weekend_](https://ra
 
 # Getting Started
 ```c++
-#include "Renderer.h"
+#include "RendererVisual.h"
 
 int main()
 {
@@ -49,19 +49,19 @@ int main()
     Material lightSource = Material::LightSource(Vector3f(1, 1, 1), 2);
     Material glass = Material::Transparent(Vector3f(1, 1, 1), .5f, Vector3f(1, 1, 1), .4f);
 
-    Renderer renderer(Vector2i(900, 900), Camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f), 5, 5);
+    RendererVisual renderer(Vector2i(900, 900), Camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f), 5, 5);
     
     renderer.addCornellBox(white, white, red, green, white, white, lightSource);
     renderer.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
 
     renderer.loadScene();
 
-    renderer.runVisual();
+    renderer.run();
     return 0;
 }
 ```
 
 # External libraries
 - [SFML/SFML](https://github.com/SFML/SFML): Used for rendering images and creating windows
-- [ocornut/imgui](https://github.com/ocornut/imgui) / [SFML/imgui-sfml](https://github.com/SFML/imgui-sfml): Used for user interface
+- [ocornut/imgui](https://github.com/ocornut/imgui) / [SFML/imgui-sfml](https://github.com/SFML/imgui-sfml): Used for rendering user interface
 - [Bly7/OBJ-Loader](https://github.com/Bly7/OBJ-Loader): Used for loading obj files

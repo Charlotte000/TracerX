@@ -61,7 +61,7 @@ struct CollisionManifold
 uniform sampler2D Texture;
 
 uniform vec2 WindowSize;
-uniform int RayPerFrameCount;
+uniform int SampleCount;
 uniform int MaxBouceCount;
 uniform int FrameCount;
 uniform float FocusStrength;
@@ -366,7 +366,7 @@ vec3 SendRayFlow(in Ray ray)
     vec3 focalPoint = ray.Origin + ray.Direction * FocalLength;
     
     vec3 resultLight = vec3(0);
-    for (int i = 0; i < RayPerFrameCount; i++)
+    for (int i = 0; i < SampleCount; i++)
     {
         vec2 jitter = RandomVector2() * FocusStrength;
         vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * CameraUp;
@@ -374,7 +374,7 @@ vec3 SendRayFlow(in Ray ray)
         resultLight += SendRay(Ray(jitterOrigin, jitterDirection, ray.Color, ray.IncomingLight));
     }
     
-    return resultLight / float(RayPerFrameCount);
+    return resultLight / float(SampleCount);
 }
 
 void main()

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Renderer.h"
+#include "RendererVisual.h"
 
-void InfoUI(Renderer& renderer, bool& isProgressive, bool& isCameraControl, sf::RenderWindow& window, sf::RenderTexture& target);
+void InfoUI(RendererVisual& renderer, RenderTexture& target);
 
-void MaterailUI(Renderer& renderer, bool& isProgressive);
+void MaterailUI(RendererVisual& renderer);
 
-void GeometryUI(Renderer& renderer, bool& isProgressive);
+void GeometryUI(RendererVisual& renderer);
 
-void EnvironmentUI(Renderer& renderer, bool& isProgressive);
+void EnvironmentUI(RendererVisual& renderer);

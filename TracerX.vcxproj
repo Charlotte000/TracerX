@@ -143,6 +143,7 @@
     <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="RendererUI.cpp" />
+    <ClCompile Include="RenderVisual.cpp" />
     <ClCompile Include="TracerX.cpp" />
     <ClCompile Include="VectorMath.cpp" />
   </ItemGroup>
@@ -168,6 +169,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="RendererUI.h" />
+    <ClInclude Include="RendererVisual.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="VectorMath.h" />
     <ClInclude Include="Vertex3.h" />

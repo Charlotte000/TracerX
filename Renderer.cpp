@@ -2,15 +2,12 @@
 
 #include <fstream>
 #include <SFML/Graphics.hpp>
-#include <imgui.h>
-#include <imgui-SFML.h>
 #include <OBJLoader.h>
-#include "RendererUI.h"
 
 using namespace std;
 
-Renderer::Renderer(Vector2i size, Camera camera, int rayPerFrameCount, int maxBounceCount)
-    : camera(camera), size(size), rayPerFrameCount(rayPerFrameCount), maxBounceCount(maxBounceCount)
+Renderer::Renderer(Vector2i size, Camera camera, int sampleCount, int maxBounceCount)
+    : camera(camera), size(size), sampleCount(sampleCount), maxBounceCount(maxBounceCount)
 {
     this->buffer1.create(this->size.x, this->size.y);
     this->buffer2.create(this->size.x, this->size.y);
@@ -30,7 +27,7 @@ void Renderer::loadScene()
 
     this->loadShader();
     this->shader.setUniform("WindowSize", (Vector2f)this->size);
-    this->shader.setUniform("RayPerFrameCount", this->rayPerFrameCount);
+    this->shader.setUniform("SampleCount", this->sampleCount);
     this->shader.setUniform("MaxBouceCount", this->maxBounceCount);
     this->shader.setUniform("FocusStrength", this->camera.focusStrength);
     this->shader.setUniform("FocalLength", this->camera.focalLength);
@@ -69,94 +66,32 @@ void Renderer::loadScene()
     this->environment.set(this->shader, "Environment");
 }
 
-void Renderer::runVisual()
+void Renderer::run(int iterationCount, const string imagePath)
 {
-    RenderWindow window(VideoMode(this->size.x, this->size.y), "Ray Tracing");
-    Mouse::setPosition(this->size / 2, window);
+    this->shader.setUniform("CameraPosition", this->camera.position);
+    this->shader.setUniform("CameraForward", this->camera.forward);
+    this->shader.setUniform("CameraUp", this->camera.up);
 
-    RenderTexture windowBuffer;
-    windowBuffer.create(this->size.x, this->size.y);
-    ImGui::SFML::Init(window);
+    int subWidth = this->size.x / this->subDivisor.x;
+    int subHeight = this->size.y / this->subDivisor.y;
 
-    bool isProgressive = false;
-    bool isCameraControl = false;
-
-    Clock clock;
-    while (window.isOpen())
+    while (this->frameCount <= iterationCount)
     {
-        Event event;
-        while (window.pollEvent(event))
-        {
-            ImGui::SFML::ProcessEvent(event);
-
-            if (event.type == Event::Closed || event.type == Event::KeyPressed && event.key.code == Keyboard::Escape)
-            {
-                window.close();
-            }
-
-            if (event.type == Event::KeyPressed && event.key.code == Keyboard::Enter && isCameraControl)
-            {
-                isCameraControl = false;
-                window.setMouseCursorVisible(true);
-            }
-        }
-
-        if (isCameraControl)
-        {
-            this->camera.move(window);
-        }
-
-        if (!isProgressive)
-        {
-            this->clear();
-        }
-
         this->shader.setUniform("FrameCount", this->frameCount);
-        this->shader.setUniform("CameraPosition", this->camera.position);
-        this->shader.setUniform("CameraForward", this->camera.forward);
-        this->shader.setUniform("CameraUp", this->camera.up);
 
-        ImGui::SFML::Update(window, clock.restart());
-
-        InfoUI(*this, isProgressive, isCameraControl, window, this->buffer1);
-        MaterailUI(*this, isProgressive);
-        GeometryUI(*this, isProgressive);
-        EnvironmentUI(*this, isProgressive);
-
-        int subWidth = this->size.x / this->subDivisor.x;
-        int subHeight = this->size.y / this->subDivisor.y;
         int y = this->subStage / this->subDivisor.x;
         int x = this->subStage - y * this->subDivisor.x;
         x *= subWidth;
         y *= subHeight;
 
-        RenderTexture* newBuffer = (this->frameCount & 1) == 0 ? &this->buffer1 : &this->buffer2;
-        RenderTexture* oldBuffer = (this->frameCount & 1) == 0 ? &this->buffer2 : &this->buffer1;
+        RenderTexture* newBuffer = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
+        RenderTexture* oldBuffer = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
         Sprite oldSprite(oldBuffer->getTexture());
         Sprite newSprite(newBuffer->getTexture());
         oldSprite.setTextureRect(IntRect(x, y, subWidth, subHeight));
         oldSprite.setPosition((float)x, (float)y);
         newBuffer->draw(oldSprite, &this->shader);
         newBuffer->display();
-                
-        newSprite.setTextureRect(IntRect(x, y, subWidth, subHeight));
-        newSprite.setPosition((float)x, (float)y);
-        windowBuffer.draw(newSprite);
-        windowBuffer.display();
-
-        window.clear();
-        window.draw(Sprite(windowBuffer.getTexture()));
-
-        RectangleShape r(Vector2f(subWidth, subHeight));
-        r.setPosition(Vector2f(x, y));
-        r.setFillColor(Color::Transparent);
-        r.setOutlineColor(Color::Red);
-        r.setOutlineThickness(1);
-        window.draw(r);
-
-        ImGui::SFML::Render(window);
-
-        window.display();
 
         this->subStage++;
         if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
@@ -164,28 +99,6 @@ void Renderer::runVisual()
             this->subStage = 0;
             this->frameCount++;
         }
-    }
-
-    ImGui::SFML::Shutdown();
-}
-
-void Renderer::run(int iterationCount, const string imagePath)
-{
-    this->shader.setUniform("CameraPosition", this->camera.position);
-    this->shader.setUniform("CameraForward", this->camera.forward);
-    this->shader.setUniform("CameraUp", this->camera.up);
-
-    while (this->frameCount < iterationCount)
-    {
-        this->frameCount++;
-        this->shader.setUniform("FrameCount", this->frameCount);
-
-        RenderTexture* newBuffer = (this->frameCount & 1) == 0 ? &this->buffer1 : &this->buffer2;
-        RenderTexture* oldBuffer = (this->frameCount & 1) == 0 ? &this->buffer2 : &this->buffer1;
-
-        newBuffer->clear();
-        newBuffer->draw(Sprite(oldBuffer->getTexture()), &this->shader);
-        newBuffer->display();
     }
 
     this->buffer1.getTexture().copyToImage().saveToFile(imagePath);
@@ -302,13 +215,6 @@ void Renderer::loadShader()
     string content;
     content.assign(istreambuf_iterator<char>(myFile), istreambuf_iterator<char>());
     myFile.close();
-    string s = (!this->spheres.empty() ? "#define SphereCount " + to_string(this->spheres.size()) + "\n" : "") +
-        (!this->aabbs.empty() ? "#define AABBCount " + to_string(this->aabbs.size()) + "\n" : "") +
-        (!this->materials.empty() ? "#define MaterialCount " + to_string(this->materials.size()) + "\n" : "") +
-        (!this->vertices.empty() ? "#define VertexCount " + to_string(this->vertices.size()) + "\n" : "") +
-        (!this->meshes.empty() ? "#define MeshCount " + to_string(this->meshes.size()) + "\n" : "") +
-        (!this->indices.empty() ? "#define IndexCount " + to_string(this->indices.size()) + "\n" : "") +
-        content;
     if (!this->shader.loadFromMemory(
         (!this->spheres.empty() ? "#define SphereCount " + to_string(this->spheres.size()) + "\n" : "") +
         (!this->aabbs.empty() ? "#define AABBCount " + to_string(this->aabbs.size()) + "\n" : "") +
