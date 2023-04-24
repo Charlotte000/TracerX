@@ -21,6 +21,7 @@ public:
     vector<int> indices;
     vector<Vertex3> vertices;
     vector<Mesh> meshes;
+    vector<Texture> albedoMaps;
     Camera camera;
     Vector2i size;
     Environment environment;

@@ -1,3 +1,5 @@
+#define PI 3.14159265358979323846
+
 struct Ray
 {
     vec3 Origin;
@@ -9,6 +11,7 @@ struct Ray
 struct Material
 {
     vec3 AlbedoColor;
+    int AlbedoMapId;
     float Roughness;
     vec3 MetalnessColor;
     float Metalness;
@@ -31,6 +34,7 @@ struct Vertex
 {
     vec3 Position;
     vec3 Normal;
+    vec2 TextureCoordinate;
 };
 
 struct Mesh
@@ -53,9 +57,10 @@ struct CollisionManifold
 {
     float Depth;
     vec3 Point;
+    vec2 TextureCoordinate;
     vec3 Normal;
     int MaterialId;
-    bool isFrontFace;
+    bool IsFrontFace;
 };
 
 uniform sampler2D Texture;
@@ -95,6 +100,10 @@ uniform Mesh Meshes[MeshCount];
 uniform AABB AABBs[AABBCount];
 #endif
 
+#ifdef AlbedoMapCount
+uniform sampler2D AlbedoMaps[AlbedoMapCount];
+#endif
+
 const float SmallNumber = 0.001;
 const vec3 CameraRight = cross(CameraForward, CameraUp);
 uint Seed = uint((WindowSize.x * gl_TexCoord[0].x + WindowSize.y * gl_TexCoord[0].y * gl_TexCoord[0].x) * 549856.0) + uint(FrameCount) * 5458u;
@@ -132,14 +141,14 @@ float RandomValue()
 
 float RandomValueNormalDistribution()
 {
-    float theta = 2.0 * 3.1415926 * RandomValue();
+    float theta = 2.0 * PI * RandomValue();
     float rho = sqrt(-2.0 * log(RandomValue()));
     return rho * cos(theta);
 }
 
 vec2 RandomVector2()
 {
-    float angle = RandomValue() * 2.0 * 3.1415926;
+    float angle = RandomValue() * 2.0 * PI;
     return vec2(cos(angle), sin(angle)) * sqrt(RandomValue());
 }
 
@@ -176,9 +185,14 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     bool isFrontFace = tN > SmallNumber;
     float depth = isFrontFace ? tN : tF;
     vec3 point = ray.Origin + ray.Direction * depth;
+
+    vec3 uvPoint = normalize(vec3(0, -.5, 0) - manifold.Point);
+    float theta = acos(-uvPoint.y);
+    float phi = atan(-uvPoint.z, uvPoint.x) + PI;
     manifold = CollisionManifold(
         depth,
         point,
+        vec2(phi / (2 * PI), theta / PI),
         normalize(point - sphere.Origin) * (isFrontFace ? 1.0 : -1.0),
         sphere.MaterialId,
         isFrontFace);
@@ -216,6 +230,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     manifold = CollisionManifold(
         dst,
         ray.Origin + ray.Direction * dst,
+        v1.TextureCoordinate * w + v2.TextureCoordinate * u + v3.TextureCoordinate * v,
         normalize(v1.Normal * w + v2.Normal * u + v3.Normal * v) * (isFrontFace ? 1.0 : -1.0),
         materialId,
         isFrontFace);
@@ -243,6 +258,7 @@ bool AABBIntersection(in Ray ray, in AABB aabb, out CollisionManifold manifold)
     manifold = CollisionManifold(
         depth,
         ray.Origin + ray.Direction * depth,
+        vec2(0, 0),
         normal,
         aabb.MaterialId,
         isFrontFace);
@@ -322,7 +338,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
     Material material = Materials[manifold.MaterialId];
 
     vec3 reactedDir = material.IsTransparent ?
-        refract(ray.Direction, manifold.Normal, manifold.isFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
+        refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
         normalize(RandomVector3() + manifold.Normal);
     vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
 
@@ -336,7 +352,10 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
     ray.Color *= material.FresnelStrength > 0.0 && fresnelMask < 1.0 ? 
         material.FresnelColor : 
         material.Metalness >= RandomValue() ? 
-        material.MetalnessColor : 
+        material.MetalnessColor :
+#ifdef AlbedoMapCount
+        (material.AlbedoMapId >= 0 ? texture2D(AlbedoMaps[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
+#endif
         material.AlbedoColor;
 }
 

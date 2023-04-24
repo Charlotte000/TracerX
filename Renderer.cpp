@@ -62,6 +62,11 @@ void Renderer::loadScene()
         this->shader.setUniform("Indices[" + to_string(i) + ']', this->indices[i]);
     }
 
+    for (int i = 0; i < this->albedoMaps.size(); i++)
+    {
+        this->shader.setUniform("AlbedoMaps[" + to_string(i) + ']', this->albedoMaps[i]);
+    }
+
 
     this->environment.set(this->shader, "Environment");
 }
@@ -171,7 +176,8 @@ void Renderer::addFile(const string filePath, Vector3f offset, Vector3f scale, V
         {
             this->vertices.push_back(Vertex3(
                 Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z),
-                Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z)));
+                Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z),
+                Vector2f(vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y)));
         }
 
         Material material;
@@ -222,6 +228,7 @@ void Renderer::loadShader()
         (!this->vertices.empty() ? "#define VertexCount " + to_string(this->vertices.size()) + "\n" : "") +
         (!this->meshes.empty() ? "#define MeshCount " + to_string(this->meshes.size()) + "\n" : "") +
         (!this->indices.empty() ? "#define IndexCount " + to_string(this->indices.size()) + "\n" : "") +
+        (!this->albedoMaps.empty() ? "#define AlbedoMapCount " + to_string(this->albedoMaps.size()) + "\n" : "") +
         content,
         Shader::Fragment))
     {

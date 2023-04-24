@@ -7,7 +7,10 @@ using namespace sf;
 struct Material
 {
     Vector3f albedoColor;
+    int albedoMapId = -1;
+
     float roughness;
+    
     Vector3f metalnessColor;
     float metalness;
 
@@ -46,6 +49,7 @@ struct Material
     bool operator==(const Material& a) const
     {
         return a.albedoColor == this->albedoColor &&
+            a.albedoMapId == this->albedoMapId &&
             a.roughness == this->roughness &&
             a.emissionColor == this->emissionColor &&
             a.emissionStrength == this->emissionStrength &&
@@ -60,6 +64,7 @@ struct Material
     void set(Shader &shader, const std::string name)
     {
         shader.setUniform(name + ".AlbedoColor", this->albedoColor);
+        shader.setUniform(name + ".AlbedoMapId", this->albedoMapId);
         shader.setUniform(name + ".Roughness", this->roughness);
         shader.setUniform(name + ".EmissionColor", this->emissionColor);
         shader.setUniform(name + ".EmissionStrength", this->emissionStrength);

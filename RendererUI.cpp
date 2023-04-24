@@ -154,6 +154,22 @@ void MaterailUI(RendererVisual& renderer)
                 renderer.reset();
             }
 
+            if (ImGui::TreeNode("Albedo map"))
+            {
+                if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.albedoMaps.size() - 1))
+                {
+                    renderer.materials[i].set(renderer.shader, "Materials[" + std::to_string(i) + ']');
+                    renderer.reset();
+                }
+
+                if (renderer.materials[i].albedoMapId >= 0)
+                {
+                    ImGui::Image(renderer.albedoMaps[renderer.materials[i].albedoMapId]);
+                }
+
+                ImGui::TreePop();
+            }
+
             if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
             {
                 renderer.materials[i].roughness = material.roughness;
