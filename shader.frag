@@ -1,5 +1,7 @@
 #define PI 3.14159265358979323846
 
+out vec4 FragColor;
+
 struct Ray
 {
     vec3 Origin;
@@ -11,15 +13,14 @@ struct Ray
 struct Material
 {
     vec3 AlbedoColor;
+    vec3 MetalnessColor;
+    vec3 EmissionColor;
+    vec3 FresnelColor;
     int AlbedoMapId;
     float Roughness;
-    vec3 MetalnessColor;
     float Metalness;
-    vec3 EmissionColor;
     float EmissionStrength;
-    vec3 FresnelColor;
     float FresnelStrength;
-    bool IsTransparent;
     float RefractionFactor;
 };
 
@@ -39,11 +40,14 @@ struct Vertex
 
 struct Mesh
 {
+    vec3 BoxMin;
+    vec3 BoxMax;
+    vec3 Position;
+    vec3 Size;
+    vec3 Rotation;
     int IndicesStart;
     int IndicesLength;
     int MaterialId;
-    vec3 BoxMin;
-    vec3 BoxMax;
 };
 
 struct AABB
@@ -76,37 +80,46 @@ uniform vec3 CameraUp;
 uniform vec3 CameraPosition;
 uniform vec3 CameraForward;
 
-#ifdef MaterialCount
-uniform Material Materials[MaterialCount];
-#endif
+layout (std430, binding = 1) buffer MaterialBuffer
+{
+    Material Materials[];
+};
 
-#ifdef SphereCount
-uniform Sphere Spheres[SphereCount];
-#endif
+layout (std430, binding = 2) buffer VertexBuffer
+{
+    Vertex Vertices[];
+};
 
-#ifdef VertexCount
-uniform Vertex Vertices[VertexCount];
-#endif
+uniform int SphereCount;
+layout (std430, binding = 3) buffer SphereBuffer
+{
+    Sphere Spheres[];
+};
 
-#ifdef IndexCount
-uniform int Indices[IndexCount];
-#endif
+layout (std430, binding = 4) buffer IndexBuffer
+{
+    int Indices[];
+};
 
-#ifdef MeshCount
-uniform Mesh Meshes[MeshCount];
-#endif
+uniform int MeshCount;
+layout (std430, binding = 5) buffer MeshBuffer
+{
+    Mesh Meshes[];
+};
 
-#ifdef AABBCount
-uniform AABB AABBs[AABBCount];
-#endif
+uniform int AABBCount;
+layout (std430, binding = 6) buffer AABBBuffer
+{
+    AABB AABBs[];
+};
 
 #ifdef AlbedoMapCount
 uniform sampler2D AlbedoMaps[AlbedoMapCount];
 #endif
 
 const float SmallNumber = 0.001;
-const vec3 CameraRight = cross(CameraForward, CameraUp);
-uint Seed = uint((WindowSize.x * gl_TexCoord[0].x + WindowSize.y * gl_TexCoord[0].y * gl_TexCoord[0].x) * 549856.0) + uint(FrameCount) * 5458u;
+vec3 CameraRight = cross(CameraForward, CameraUp);
+uint Seed = uint((gl_FragCoord.x + gl_FragCoord.y * gl_FragCoord.x / WindowSize.x) * 549856.0) + uint(FrameCount) * 5458u;
 
 uniform struct
 {
@@ -186,7 +199,7 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     float depth = isFrontFace ? tN : tF;
     vec3 point = ray.Origin + ray.Direction * depth;
 
-    vec3 uvPoint = normalize(vec3(0, -.5, 0) - manifold.Point);
+    vec3 uvPoint = -normalize(point);
     float theta = acos(-uvPoint.y);
     float phi = atan(-uvPoint.z, uvPoint.x) + PI;
     manifold = CollisionManifold(
@@ -282,7 +295,6 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 
     vec3 invRayDir = 1.0 / ray.Direction;
 
-#ifdef SphereCount
     for (int i = 0; i < SphereCount; i++)
     {
         CollisionManifold current;
@@ -296,9 +308,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
             manifold = current;
         }
     }
-#endif
 
-#ifdef MeshCount
     for (int i = 0; i < MeshCount; i++)
     {
         Mesh mesh = Meshes[i];
@@ -317,9 +327,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
             }
         }
     }
-#endif
 
-#ifdef AABBCount
     for (int i = 0; i < AABBCount; i++)
     {
         CollisionManifold current;
@@ -328,7 +336,6 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
             manifold = current;
         }
     }
-#endif
 
     return !isinf(manifold.Depth);
 }
@@ -337,7 +344,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = Materials[manifold.MaterialId];
 
-    vec3 reactedDir = material.IsTransparent ?
+    vec3 reactedDir = material.RefractionFactor > 0 ?
         refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
         normalize(RandomVector3() + manifold.Normal);
     vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
@@ -354,7 +361,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
         material.Metalness >= RandomValue() ? 
         material.MetalnessColor :
 #ifdef AlbedoMapCount
-        (material.AlbedoMapId >= 0 ? texture2D(AlbedoMaps[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
+        (material.AlbedoMapId >= 0 ? texture(AlbedoMaps[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
 #endif
         material.AlbedoColor;
 }
@@ -399,7 +406,7 @@ vec3 SendRayFlow(in Ray ray)
 void main()
 {
     float aspectRatio = WindowSize.x / WindowSize.y;
-    vec2 coord = vec2((gl_TexCoord[0].x - .5) * aspectRatio, gl_TexCoord[0].y - .5);
+    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(aspectRatio, 1);
     Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
 
     vec3 newColor = SendRayFlow(ray);
@@ -411,7 +418,7 @@ void main()
     newColor = (newColor * (1.0 + newColor / white / white)) / (1.0 + newColor);
 
     // Progressive rendering mixing
-    vec3 oldColor = texture2D(Texture, gl_TexCoord[0].xy).rgb;
+    vec3 oldColor = texture(Texture, gl_FragCoord.xy / WindowSize).rgb;
     float weight = 1.0 / float(FrameCount);
-    gl_FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
+    FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
 }
