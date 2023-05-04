@@ -5,9 +5,9 @@ This ray tracing app is a computer graphics program that simulates the behavior 
 This renderer was inspired by the book series [_Ray Tracing in One Weekend_](https://raytracing.github.io/)
 
 # Renders
-![](img/image0.png)
-![](img/image1.png)
-![](img/image2.png)
+![](img/image0.jpg)
+![](img/image1.jpg)
+![](img/image2.jpg)
 
 # Features
 - Supports several geometries, including:
