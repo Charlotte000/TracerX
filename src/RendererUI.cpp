@@ -120,7 +120,10 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
     ImGui::Separator();
     ImGui::Spacing();
 
-    ImGui::Checkbox("Render", &renderer.isProgressive);
+    if (ImGui::Checkbox("Render", &renderer.isProgressive))
+    {
+        renderer.subStage = 0;
+    }
 
     ImGui::Spacing();
     ImGui::Separator();

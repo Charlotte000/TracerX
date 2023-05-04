@@ -14,13 +14,15 @@ public:
     bool isProgressive = false;
     bool isCameraControl = false;
     bool showCursor = true;
-    sf::RectangleShape cursor;
 
     RendererVisual(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
 
     void run();
 
     void reset();
+
+private:
+    sf::RectangleShape cursor;
 };
 
 }
