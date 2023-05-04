@@ -29,7 +29,6 @@ public:
     Environment environment;
     sf::Shader shader;
     int frameCount = 1;
-    int subStage = 0;
     int sampleCount = 0;
     int maxBounceCount = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
@@ -72,6 +71,7 @@ protected:
     const std::string path = "../shader.frag";
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;
+    int subStage = 0;
     GLuint materialBuffer;
     GLuint vertexBuffer;
     GLuint sphereBuffer;

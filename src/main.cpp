@@ -7,16 +7,20 @@ using namespace sf;
 int main()
 {
     Camera camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
-    RendererVisual renderer(Vector2i(900, 900), camera, 5, 5);
+    RendererVisual renderer(Vector2i(500, 500), camera, 1, 1);
+    renderer.subDivisor = Vector2i(10, 10);
 
-    Material red(Vector3f(1, 0, 0), 1);
-    Material green(Vector3f(0, 1, 0), 1);
-    Material white(Vector3f(1, 1, 1), 1);
-    Material lightSource = Material::LightSource(Vector3f(1, 1, 1), 2);
-    Material glass = Material::Transparent(Vector3f(1, 1, 1), .5f, Vector3f(1, 1, 1), .4f);
+    renderer.addFile("/mnt/c/Users/ramil/Downloads/knight.obj", Vector3f(.5, -.5, 0));
+    renderer.addFile("/mnt/c/Users/ramil/Downloads/knight.obj", Vector3f(-.5, -.5, 0));
+
+    //Material red(Vector3f(1, 0, 0), 1);
+    //Material green(Vector3f(0, 1, 0), 1);
+    //Material white(Vector3f(1, 1, 1), 1);
+    //Material lightSource = Material::LightSource(Vector3f(1, 1, 1), 2);
+    //Material glass = Material::Transparent(Vector3f(1, 1, 1), .5f, Vector3f(1, 1, 1), .4f);
     
-    renderer.addCornellBox(white, white, red, green, white, white, lightSource);
-    renderer.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
+    //renderer.addCornellBox(white, white, red, green, white, white, lightSource);
+    //renderer.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
 
     renderer.run();
     return 0;

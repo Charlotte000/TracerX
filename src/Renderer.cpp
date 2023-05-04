@@ -169,14 +169,6 @@ void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vect
 
     for (const objl::Mesh& mesh : loader.LoadedMeshes)
     {
-        for (const objl::Vertex& vertex : mesh.Vertices)
-        {
-            this->vertices.push_back(Vertex3(
-                sf::Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z),
-                sf::Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z),
-                sf::Vector2f(vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y)));
-        }
-
         Material material;
         material.albedoColor = sf::Vector3f(mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z);
         material.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
@@ -184,9 +176,22 @@ void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vect
         material.metalness = mesh.MeshMaterial.Ka.X;
         int materialId = this->add(material);
 
-        Mesh myMesh((int)this->indices.size(), (int)mesh.Indices.size(), materialId);
-        this->indices.insert(this->indices.end(), mesh.Indices.begin(), mesh.Indices.end());
+        Mesh myMesh((int)this->indices.size(), (int)this->indices.size() + (int)mesh.Indices.size(), materialId);
 
+        int verticesOffset = this->vertices.size();
+        for (auto index : mesh.Indices)
+        {
+            this->indices.push_back(index + verticesOffset);
+        }
+
+        for (const objl::Vertex& vertex : mesh.Vertices)
+        {
+            this->vertices.push_back(Vertex3(
+                sf::Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z),
+                sf::Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z),
+                sf::Vector2f(vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y)));
+        }
+        
         myMesh.scale(scale, this->indices, this->vertices);
         myMesh.rotate(rotation, this->indices, this->vertices);
         myMesh.offset(offset, this->indices, this->vertices);

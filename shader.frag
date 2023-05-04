@@ -46,7 +46,7 @@ struct Mesh
     vec3 Size;
     vec3 Rotation;
     int IndicesStart;
-    int IndicesLength;
+    int IndicesEnd;
     int MaterialId;
 };
 
@@ -313,7 +313,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     {
         Mesh mesh = Meshes[i];
 
-        for (int index = mesh.IndicesStart; index < mesh.IndicesStart + mesh.IndicesLength; index += 3)
+        for (int index = mesh.IndicesStart; index < mesh.IndicesEnd; index += 3)
         {
             CollisionManifold current;
             Vertex v1 = Vertices[Indices[index]];

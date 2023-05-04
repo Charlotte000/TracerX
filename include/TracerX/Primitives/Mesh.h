@@ -18,10 +18,10 @@ struct Mesh
     alignas(16) sf::Vector3f size = sf::Vector3f(1, 1, 1);
     alignas(16) sf::Vector3f rotation = sf::Vector3f(0, 0, 0);
     int indicesStart;
-    int indicesLength;
+    int indicesEnd;
     int materialId;
 
-    Mesh(int indicesStart, int indicesLength, int materialId);
+    Mesh(int indicesStart, int indicesEnd, int materialId);
 
     void offset(sf::Vector3f offset, const std::vector<int>& indices, std::vector<Vertex3>& verticies);
 

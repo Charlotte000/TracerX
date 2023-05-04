@@ -120,10 +120,7 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (ImGui::Checkbox("Render", &renderer.isProgressive))
-    {
-        renderer.subStage = 0;
-    }
+    ImGui::Checkbox("Render", &renderer.isProgressive);
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -378,7 +375,7 @@ void GeometryUI(RendererVisual& renderer)
             if (ImGui::TreeNode((void*)(intptr_t)i, "Mesh %i", i))
             {
                 ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
-                ImGui::Text("Indices length: %i", renderer.meshes[i].indicesLength);
+                ImGui::Text("Indices end: %i", renderer.meshes[i].indicesEnd);
 
                 float offset[3] = { renderer.meshes[i].position.x, renderer.meshes[i].position.y, renderer.meshes[i].position.z };
                 if (ImGui::DragFloat3("Offset", offset, .01f))

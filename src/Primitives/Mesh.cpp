@@ -5,8 +5,8 @@
 namespace TracerX
 {
 
-Mesh::Mesh(int indicesStart, int indicesLength, int materialId)
-    : indicesStart(indicesStart), indicesLength(indicesLength), materialId(materialId)
+Mesh::Mesh(int indicesStart, int indicesEnd, int materialId)
+    : indicesStart(indicesStart), indicesEnd(indicesEnd), materialId(materialId)
 {
 }
 
@@ -18,7 +18,7 @@ void Mesh::offset(sf::Vector3f offset, const std::vector<int>& indices, std::vec
     sf::Vector3f boxMax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
     std::set<int> meshIndices;
-    for (int i = this->indicesStart; i < this->indicesStart + this->indicesLength; i++)
+    for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
         int index = indices[i];
         if (!meshIndices.insert(index).second)
@@ -43,7 +43,7 @@ void Mesh::scale(sf::Vector3f scale, const std::vector<int>& indices, std::vecto
     sf::Vector3f boxMax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
     std::set<int> meshIndices;
-    for (int i = this->indicesStart; i < this->indicesStart + this->indicesLength; i++)
+    for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
         int index = indices[i];
         if (!meshIndices.insert(index).second)
@@ -69,7 +69,7 @@ void Mesh::rotate(sf::Vector3f rotation, const std::vector<int>& indices, std::v
     sf::Vector3f boxMax(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
     std::set<int> meshIndices;
-    for (int i = this->indicesStart; i < this->indicesStart + this->indicesLength; i++)
+    for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
         int index = indices[i];
         if (!meshIndices.insert(index).second)
