@@ -15,39 +15,39 @@ Renderer::Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBou
     this->buffer2.create(this->size.x, this->size.y);
 }
 
-void Renderer::loadScene()
+void Renderer::loadShader()
 {
-    if (this->materials.size() == 0)
-    {
-        this->materials.push_back(Material(sf::Vector3f(.8f, .8f, .8f), .7f));
-    }
-
-    if (this->aabbs.size() == 0 && this->spheres.size() == 0 && this->meshes.size() == 0)
-    {
-        this->aabbs.push_back(AABB(sf::Vector3f(0, 0, 0), sf::Vector3f(1, 1, 1), 0));
-    }
-
-    this->loadShader();
-
-    
     if (glewInit() != GLEW_OK)
     {
         throw std::runtime_error("GLEW initialization failed");
     }
-    
+
+    std::ifstream shaderFile(this->path);
+    std::string content;
+    content.assign(std::istreambuf_iterator<char>(shaderFile), std::istreambuf_iterator<char>());
+    shaderFile.close();
+    if (!this->shader.loadFromMemory(
+        "#version 430 core\n" +
+        (!this->albedoMaps.empty() ? "#define AlbedoMapCount " + std::to_string(this->albedoMaps.size()) + "\n" : "") +
+        content,
+        sf::Shader::Fragment))
+    {
+        throw std::runtime_error("Failed to load shader");
+    }
+
     glGenBuffers(1, &this->materialBuffer);
     glGenBuffers(1, &this->vertexBuffer);
     glGenBuffers(1, &this->sphereBuffer);
     glGenBuffers(1, &this->indexBuffer);
     glGenBuffers(1, &this->meshBuffer);
-    glGenBuffers(1, &this->aabbBuffer);
+    glGenBuffers(1, &this->boxBuffer);
     
-    this->setMaterials();
-    this->setVertices();
-    this->setSpheres();
-    this->setIndices();
-    this->setMeshes();
-    this->setAABBs();
+    this->updateMaterials();
+    this->updateVertices();
+    this->updateSpheres();
+    this->updateIndices();
+    this->updateMeshes();
+    this->updateBoxes();
     
     this->shader.setUniform("WindowSize", (sf::Vector2f)this->size);
     this->shader.setUniform("SampleCount", this->sampleCount);
@@ -61,17 +61,18 @@ void Renderer::loadScene()
     }
 
     this->environment.set(this->shader, "Environment");
+
+    this->shader.setUniform("CameraPosition", this->camera.position);
+    this->shader.setUniform("CameraForward", this->camera.forward);
+    this->shader.setUniform("CameraUp", this->camera.up);
 }
 
 void Renderer::run(int iterationCount, const std::string imagePath)
 {
-    this->shader.setUniform("CameraPosition", this->camera.position);
-    this->shader.setUniform("CameraForward", this->camera.forward);
-    this->shader.setUniform("CameraUp", this->camera.up);
+    this->loadShader();
 
     int subWidth = this->size.x / this->subDivisor.x;
     int subHeight = this->size.y / this->subDivisor.y;
-
     while (this->frameCount <= iterationCount)
     {
         this->shader.setUniform("FrameCount", this->frameCount);
@@ -121,7 +122,8 @@ int Renderer::getPixelDifference()
     return result;
 }
 
-void Renderer::add(Sphere sphere, const Material material)
+#pragma region Add
+void Renderer::add(Sphere sphere, const Material& material)
 {
     int materialId = this->add(material);
     sphere.materialId = materialId;
@@ -133,16 +135,16 @@ void Renderer::add(Sphere sphere)
     this->spheres.push_back(sphere);
 }
 
-void Renderer::add(AABB aabb, const Material material)
+void Renderer::add(Box box, const Material& material)
 {
     int materialId = this->add(material);
-    aabb.materialId = materialId;
-    this->aabbs.push_back(aabb);
+    box.materialId = materialId;
+    this->boxes.push_back(box);
 }
 
-void Renderer::add(AABB aabb)
+void Renderer::add(Box box)
 {
-    this->aabbs.push_back(aabb);
+    this->boxes.push_back(box);
 }
 
 int Renderer::add(const Material& material)
@@ -195,36 +197,21 @@ void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vect
 void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource)
 {
     this->addCornellBox(up, down, left, right, forward, backward);
-    this->add(AABB(sf::Vector3f(0, .998f, 0), sf::Vector3f(.5f, .001f, .5f)), lightSource);
+    this->add(Box(sf::Vector3f(0, .998f, 0), sf::Vector3f(.5f, .001f, .5f)), lightSource);
 }
 
 void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward)
 {
-    this->add(AABB(sf::Vector3f(0, 1.5f, -1), sf::Vector3f(2, 1, 4)), up);
-    this->add(AABB(sf::Vector3f(0, -1.5f, -1), sf::Vector3f(2, 1, 4)), down);
+    this->add(Box(sf::Vector3f(0, 1.5f, -1), sf::Vector3f(2, 1, 4)), up);
+    this->add(Box(sf::Vector3f(0, -1.5f, -1), sf::Vector3f(2, 1, 4)), down);
 
-    this->add(AABB(sf::Vector3f(1.5f, 0, -1), sf::Vector3f(1, 2, 4)), left);
-    this->add(AABB(sf::Vector3f(-1.5f, 0, -1), sf::Vector3f(1, 2, 4)), right);
+    this->add(Box(sf::Vector3f(1.5f, 0, -1), sf::Vector3f(1, 2, 4)), left);
+    this->add(Box(sf::Vector3f(-1.5f, 0, -1), sf::Vector3f(1, 2, 4)), right);
 
-    this->add(AABB(sf::Vector3f(0, 0, 1.5f), sf::Vector3f(2, 2, 1)), forward);
-    this->add(AABB(sf::Vector3f(0, 0, -3.5f), sf::Vector3f(2, 2, 1)), backward);
+    this->add(Box(sf::Vector3f(0, 0, 1.5f), sf::Vector3f(2, 2, 1)), forward);
+    this->add(Box(sf::Vector3f(0, 0, -3.5f), sf::Vector3f(2, 2, 1)), backward);
 }
-
-void Renderer::loadShader()
-{
-    std::ifstream shaderFile(this->path);
-    std::string content;
-    content.assign(std::istreambuf_iterator<char>(shaderFile), std::istreambuf_iterator<char>());
-    shaderFile.close();
-    if (!this->shader.loadFromMemory(
-        "#version 430 core\n" +
-        (!this->albedoMaps.empty() ? "#define AlbedoMapCount " + std::to_string(this->albedoMaps.size()) + "\n" : "") +
-        content,
-        sf::Shader::Fragment))
-    {
-        throw std::runtime_error("Failed to load shader");
-    }
-}
+#pragma endregion
 
 void Renderer::clear()
 {
@@ -235,7 +222,8 @@ void Renderer::clear()
     this->frameCount = 1;
 }
 
-void Renderer::setMaterials()
+#pragma region Updates
+void Renderer::updateMaterials()
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->materialBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->materials.size() * sizeof(Material), this->materials.data(), GL_DYNAMIC_COPY);
@@ -243,7 +231,7 @@ void Renderer::setMaterials()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::setVertices()
+void Renderer::updateVertices()
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->vertexBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->vertices.size() * sizeof(Vertex3), this->vertices.data(), GL_DYNAMIC_COPY);
@@ -251,7 +239,7 @@ void Renderer::setVertices()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::setSpheres()
+void Renderer::updateSpheres()
 {
     this->shader.setUniform("SphereCount", (int)this->spheres.size());
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->sphereBuffer);
@@ -260,7 +248,7 @@ void Renderer::setSpheres()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::setIndices()
+void Renderer::updateIndices()
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->indexBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->indices.size() * sizeof(int), this->indices.data(), GL_DYNAMIC_COPY);
@@ -268,7 +256,7 @@ void Renderer::setIndices()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::setMeshes()
+void Renderer::updateMeshes()
 {
     this->shader.setUniform("MeshCount", (int)this->meshes.size());
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->meshBuffer);
@@ -277,13 +265,14 @@ void Renderer::setMeshes()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::setAABBs()
+void Renderer::updateBoxes()
 {
-    this->shader.setUniform("AABBCount", (int)this->aabbs.size());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->aabbBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->aabbs.size() * sizeof(AABB), this->aabbs.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, this->aabbBuffer);
+    this->shader.setUniform("BoxCount", (int)this->boxes.size());
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->boxBuffer);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, this->boxes.size() * sizeof(Box), this->boxes.data(), GL_DYNAMIC_COPY);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, this->boxBuffer);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
+#pragma endregion
 
 }

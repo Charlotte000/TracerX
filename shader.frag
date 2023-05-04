@@ -50,7 +50,7 @@ struct Mesh
     int MaterialId;
 };
 
-struct AABB
+struct Box
 {
     vec3 Origin;
     vec3 Size;
@@ -107,10 +107,10 @@ layout (std430, binding = 5) buffer MeshBuffer
     Mesh Meshes[];
 };
 
-uniform int AABBCount;
-layout (std430, binding = 6) buffer AABBBuffer
+uniform int BoxCount;
+layout (std430, binding = 6) buffer BoxBuffer
 {
-    AABB AABBs[];
+    Box Boxes[];
 };
 
 #ifdef AlbedoMapCount
@@ -250,11 +250,11 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     return true;
 }
 
-bool AABBIntersection(in Ray ray, in AABB aabb, out CollisionManifold manifold)
+bool BoxIntersection(in Ray ray, in Box box, out CollisionManifold manifold)
 {
     vec3 m = 1.0 / ray.Direction;
-    vec3 n = m * (ray.Origin - aabb.Origin);
-    vec3 k = abs(m) * aabb.Size / 2.0;
+    vec3 n = m * (ray.Origin - box.Origin);
+    vec3 k = abs(m) * box.Size / 2.0;
     vec3 t1 = -n - k;
     vec3 t2 = -n + k;
     float tN = max(max(t1.x, t1.y), t1.z);
@@ -273,7 +273,7 @@ bool AABBIntersection(in Ray ray, in AABB aabb, out CollisionManifold manifold)
         ray.Origin + ray.Direction * depth,
         vec2(0, 0),
         normal,
-        aabb.MaterialId,
+        box.MaterialId,
         isFrontFace);
     return true;
 }
@@ -328,10 +328,10 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
         }
     }
 
-    for (int i = 0; i < AABBCount; i++)
+    for (int i = 0; i < BoxCount; i++)
     {
         CollisionManifold current;
-        if (AABBIntersection(ray, AABBs[i], current) && current.Depth < manifold.Depth)
+        if (BoxIntersection(ray, Boxes[i], current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }

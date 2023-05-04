@@ -6,7 +6,7 @@ set(imgui ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui)
 
 add_executable(
     ${PROJECT_NAME}
-    ${src}/Primitives/AABB.cpp
+    ${src}/Primitives/Box.cpp
     ${src}/Primitives/Mesh.cpp
     ${src}/Primitives/Sphere.cpp
     ${src}/Camera.cpp

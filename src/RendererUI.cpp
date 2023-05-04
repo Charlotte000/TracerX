@@ -153,7 +153,7 @@ void MaterailUI(RendererVisual& renderer)
             if (ImGui::ColorEdit3("Albedo", albedo, ImGuiColorEditFlags_Float))
             {
                 renderer.materials[i].albedoColor = sf::Vector3f(albedo[0], albedo[1], albedo[2]);
-                renderer.setMaterials();
+                renderer.updateMaterials();
                 renderer.reset();
             }
 
@@ -161,7 +161,7 @@ void MaterailUI(RendererVisual& renderer)
             {
                 if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.albedoMaps.size() - 1))
                 {
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
@@ -176,7 +176,7 @@ void MaterailUI(RendererVisual& renderer)
             if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
             {
                 renderer.materials[i].roughness = material.roughness;
-                renderer.setMaterials();
+                renderer.updateMaterials();
                 renderer.reset();
             }
 
@@ -186,14 +186,14 @@ void MaterailUI(RendererVisual& renderer)
                 if (ImGui::ColorEdit3("Metalness color", metalnessColor, ImGuiColorEditFlags_Float))
                 {
                     renderer.materials[i].metalnessColor = sf::Vector3f(metalnessColor[0], metalnessColor[1], metalnessColor[2]);
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
                 {
                     renderer.materials[i].metalness = material.metalness;
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
@@ -206,14 +206,14 @@ void MaterailUI(RendererVisual& renderer)
                 if (ImGui::ColorEdit3("Emission color", emissionColor, ImGuiColorEditFlags_Float))
                 {
                     renderer.materials[i].emissionColor = sf::Vector3f(emissionColor[0], emissionColor[1], emissionColor[2]);
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
                 {
                     renderer.materials[i].emissionStrength = material.emissionStrength;
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
@@ -226,14 +226,14 @@ void MaterailUI(RendererVisual& renderer)
                 if (ImGui::ColorEdit3("Fresnel color", fresnelColor, ImGuiColorEditFlags_Float))
                 {
                     renderer.materials[i].fresnelColor = sf::Vector3f(fresnelColor[0], fresnelColor[1], fresnelColor[2]);
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
                 {
                     renderer.materials[i].fresnelStrength = material.fresnelStrength;
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
@@ -245,7 +245,7 @@ void MaterailUI(RendererVisual& renderer)
                 if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
                 {
                     renderer.materials[i].refractionFactor = material.refractionFactor;
-                    renderer.setMaterials();
+                    renderer.updateMaterials();
                     renderer.reset();
                 }
 
@@ -254,6 +254,13 @@ void MaterailUI(RendererVisual& renderer)
 
             ImGui::TreePop();
         }
+    }
+
+    if (ImGui::Button("Add new material"))
+    {
+        renderer.materials.push_back(Material());
+        renderer.updateMaterials();
+        renderer.reset();
     }
 
     ImGui::End();
@@ -272,13 +279,13 @@ void GeometryUI(RendererVisual& renderer)
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
                     renderer.spheres[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
-                    renderer.setSpheres();
+                    renderer.updateSpheres();
                     renderer.reset();
                 }
 
                 if (ImGui::DragFloat("Radius", &renderer.spheres[i].radius, .001f))
                 {
-                    renderer.setSpheres();
+                    renderer.updateSpheres();
                     renderer.reset();
                 }
 
@@ -290,7 +297,7 @@ void GeometryUI(RendererVisual& renderer)
                             materialId != renderer.spheres[i].materialId)
                         {
                             renderer.spheres[i].materialId = materialId;
-                            renderer.setSpheres();
+                            renderer.updateSpheres();
                             renderer.reset();
                         }
                     }
@@ -301,28 +308,36 @@ void GeometryUI(RendererVisual& renderer)
                 ImGui::TreePop();
             }
         }
+        
+        if (ImGui::Button("Add new sphere"))
+        {
+            renderer.spheres.push_back(Sphere(sf::Vector3f(0, 0, 0), 0, 0));
+            renderer.updateSpheres();
+            renderer.reset();
+        }
+
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Boxes", "Boxes (%d)", (int)renderer.aabbs.size()))
+    if (ImGui::TreeNode("Boxes", "Boxes (%d)", (int)renderer.boxes.size()))
     {
-        for (int i = 0; i < renderer.aabbs.size(); i++)
+        for (int i = 0; i < renderer.boxes.size(); i++)
         {
             if (ImGui::TreeNode((void*)(intptr_t)i, "Box %i", i))
             {
-                float origin[3]{ renderer.aabbs[i].origin.x, renderer.aabbs[i].origin.y, renderer.aabbs[i].origin.z };
+                float origin[3]{ renderer.boxes[i].origin.x, renderer.boxes[i].origin.y, renderer.boxes[i].origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
-                    renderer.aabbs[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
-                    renderer.setAABBs();
+                    renderer.boxes[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
+                    renderer.updateBoxes();
                     renderer.reset();
                 }
 
-                float size[3]{ renderer.aabbs[i].size.x, renderer.aabbs[i].size.y, renderer.aabbs[i].size.z };
+                float size[3]{ renderer.boxes[i].size.x, renderer.boxes[i].size.y, renderer.boxes[i].size.z };
                 if (ImGui::DragFloat3("Size", size, .001f))
                 {
-                    renderer.aabbs[i].size = sf::Vector3f(size[0], size[1], size[2]);
-                    renderer.setAABBs();
+                    renderer.boxes[i].size = sf::Vector3f(size[0], size[1], size[2]);
+                    renderer.updateBoxes();
                     renderer.reset();
                 }
 
@@ -330,11 +345,11 @@ void GeometryUI(RendererVisual& renderer)
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
                     {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == renderer.aabbs[i].materialId) &&
-                            materialId != renderer.aabbs[i].materialId)
+                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == renderer.boxes[i].materialId) &&
+                            materialId != renderer.boxes[i].materialId)
                         {
-                            renderer.aabbs[i].materialId = materialId;
-                            renderer.setAABBs();
+                            renderer.boxes[i].materialId = materialId;
+                            renderer.updateBoxes();
                             renderer.reset();
                         }
                     }
@@ -345,6 +360,14 @@ void GeometryUI(RendererVisual& renderer)
                 ImGui::TreePop();
             }
         }
+
+        if (ImGui::Button("Add new box"))
+        {
+            renderer.boxes.push_back(Box(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), 0));
+            renderer.updateBoxes();
+            renderer.reset();
+        }
+
         ImGui::TreePop();
     }
 
@@ -363,8 +386,8 @@ void GeometryUI(RendererVisual& renderer)
                     sf::Vector3f offsetV(offset[0] - renderer.meshes[i].position.x, offset[1] - renderer.meshes[i].position.y, offset[2] - renderer.meshes[i].position.z);
                     renderer.reset();
                     renderer.meshes[i].offset(offsetV, renderer.indices, renderer.vertices);
-                    renderer.setMeshes();
-                    renderer.setVertices();
+                    renderer.updateMeshes();
+                    renderer.updateVertices();
                 }
 
                 float scale[3] = { renderer.meshes[i].size.x, renderer.meshes[i].size.y, renderer.meshes[i].size.z };
@@ -373,8 +396,8 @@ void GeometryUI(RendererVisual& renderer)
                     sf::Vector3f sizeV(scale[0] / renderer.meshes[i].size.x, scale[1] / renderer.meshes[i].size.y, scale[2] / renderer.meshes[i].size.z);
                     renderer.reset();
                     renderer.meshes[i].scale(sizeV, renderer.indices, renderer.vertices);
-                    renderer.setMeshes();
-                    renderer.setVertices();
+                    renderer.updateMeshes();
+                    renderer.updateVertices();
                 }
 
                 float rotation[3] = { renderer.meshes[i].rotation.x, renderer.meshes[i].rotation.y, renderer.meshes[i].rotation.z };
@@ -383,8 +406,8 @@ void GeometryUI(RendererVisual& renderer)
                     sf::Vector3f rotationV(rotation[0] - renderer.meshes[i].rotation.x, rotation[1] - renderer.meshes[i].rotation.y, rotation[2] - renderer.meshes[i].rotation.z);
                     renderer.reset();
                     renderer.meshes[i].rotate(rotationV, renderer.indices, renderer.vertices);
-                    renderer.setMeshes();
-                    renderer.setVertices();
+                    renderer.updateMeshes();
+                    renderer.updateVertices();
                 }
 
                 if (ImGui::BeginListBox("Material id"))
@@ -395,7 +418,7 @@ void GeometryUI(RendererVisual& renderer)
                             materialId != renderer.meshes[i].materialId)
                         {
                             renderer.meshes[i].materialId = materialId;
-                            renderer.setMeshes();
+                            renderer.updateMeshes();
                             renderer.reset();
                         }
                     }

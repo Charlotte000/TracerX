@@ -20,6 +20,8 @@ RendererVisual::RendererVisual(sf::Vector2i size, Camera camera, int sampleCount
 
 void RendererVisual::run()
 {
+    this->loadShader();
+
     sf::Mouse::setPosition(this->size / 2, this->window);
 
     if (!ImGui::SFML::Init(this->window))

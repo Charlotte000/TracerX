@@ -3,7 +3,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <GL/glew.h>
-#include <TracerX/Primitives/AABB.h>
+#include <TracerX/Primitives/Box.h>
 #include <TracerX/Primitives/Sphere.h>
 #include <TracerX/Camera.h>
 #include <TracerX/Environment.h>
@@ -19,7 +19,7 @@ class Renderer
 public:
     std::vector<Material> materials;
     std::vector<Sphere> spheres;
-    std::vector<AABB> aabbs;
+    std::vector<Box> boxes;
     std::vector<int> indices;
     std::vector<Vertex3> vertices;
     std::vector<Mesh> meshes;
@@ -36,19 +36,17 @@ public:
 
     Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
 
-    void loadScene();
-
     void run(int iterationCount, const std::string imagePath);
 
     int getPixelDifference();
 
-    void add(Sphere sphere, const Material material);
+    void add(Sphere sphere, const Material& material);
 
     void add(Sphere sphere);
 
-    void add(AABB aabb, const Material material);
+    void add(Box box, const Material& material);
 
-    void add(AABB aabb);
+    void add(Box box);
 
     int add(const Material& material);
 
@@ -58,17 +56,17 @@ public:
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward);
 
-    void setMaterials();
+    void updateMaterials();
 
-    void setVertices();
+    void updateVertices();
 
-    void setSpheres();
+    void updateSpheres();
 
-    void setIndices();
+    void updateIndices();
 
-    void setMeshes();
+    void updateMeshes();
 
-    void setAABBs();
+    void updateBoxes();
 
 protected:
     const std::string path = "../shader.frag";
@@ -79,7 +77,7 @@ protected:
     GLuint sphereBuffer;
     GLuint indexBuffer;
     GLuint meshBuffer;
-    GLuint aabbBuffer;
+    GLuint boxBuffer;
 
     void loadShader();
 

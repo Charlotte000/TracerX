@@ -18,8 +18,6 @@ int main()
     renderer.addCornellBox(white, white, red, green, white, white, lightSource);
     renderer.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
 
-    renderer.loadScene();
-
     renderer.run();
     return 0;
 }
