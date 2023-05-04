@@ -252,11 +252,18 @@ void MaterailUI(RendererVisual& renderer)
                 ImGui::TreePop();
             }
 
+            if (ImGui::Button("Delete"))
+            {
+                renderer.materials.erase(renderer.materials.begin() + i);
+                renderer.updateMaterials();
+                renderer.reset();
+            }
+
             ImGui::TreePop();
         }
     }
 
-    if (ImGui::Button("Add new material"))
+    if (ImGui::Button("Create"))
     {
         renderer.materials.push_back(Material());
         renderer.updateMaterials();
@@ -305,11 +312,18 @@ void GeometryUI(RendererVisual& renderer)
                     ImGui::EndListBox();
                 }
 
+                if (ImGui::Button("Delete"))
+                {
+                    renderer.spheres.erase(renderer.spheres.begin() + i);
+                    renderer.updateSpheres();
+                    renderer.reset();
+                }
+
                 ImGui::TreePop();
             }
         }
         
-        if (ImGui::Button("Add new sphere"))
+        if (ImGui::Button("Create"))
         {
             renderer.spheres.push_back(Sphere(sf::Vector3f(0, 0, 0), 0, 0));
             renderer.updateSpheres();
@@ -357,11 +371,18 @@ void GeometryUI(RendererVisual& renderer)
                     ImGui::EndListBox();
                 }
 
+                if (ImGui::Button("Delete"))
+                {
+                    renderer.boxes.erase(renderer.boxes.begin() + i);
+                    renderer.updateBoxes();
+                    renderer.reset();
+                }
+
                 ImGui::TreePop();
             }
         }
 
-        if (ImGui::Button("Add new box"))
+        if (ImGui::Button("Create"))
         {
             renderer.boxes.push_back(Box(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), 0));
             renderer.updateBoxes();
