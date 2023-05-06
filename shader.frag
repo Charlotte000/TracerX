@@ -67,7 +67,7 @@ struct CollisionManifold
     bool IsFrontFace;
 };
 
-uniform sampler2D Texture;
+uniform sampler2D OldBuffer;
 
 uniform vec2 WindowSize;
 uniform int SampleCount;
@@ -418,7 +418,7 @@ void main()
     newColor = (newColor * (1.0 + newColor / white / white)) / (1.0 + newColor);
 
     // Progressive rendering mixing
-    vec3 oldColor = texture(Texture, gl_FragCoord.xy / WindowSize).rgb;
+    vec3 oldColor = texture(OldBuffer, gl_FragCoord.xy / WindowSize).rgb;
     float weight = 1.0 / float(FrameCount);
     FragColor = vec4(mix(oldColor, newColor, weight), 1.0);
 }

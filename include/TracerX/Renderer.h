@@ -50,6 +50,8 @@ public:
 
     int add(const Material& material);
 
+    int addTexture(const std::string filePath);
+
     void addFile(const std::string filePath, sf::Vector3f offset = sf::Vector3f(0, 0, 0), sf::Vector3f scale = sf::Vector3f(1, 1, 1), sf::Vector3f rotation = sf::Vector3f(0, 0, 0));
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource);

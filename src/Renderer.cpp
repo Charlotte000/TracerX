@@ -159,6 +159,18 @@ int Renderer::add(const Material& material)
     return (int)(this->materials.size() - 1);
 }
 
+int Renderer::addTexture(const std::string filePath)
+{
+    sf::Texture texture;
+    if (!texture.loadFromFile(filePath))
+    {
+        throw std::runtime_error("Load file failed");
+    }
+
+    this->albedoMaps.push_back(texture);
+    return (int)(this->albedoMaps.size() - 1);
+}
+
 void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vector3f scale, sf::Vector3f rotation)
 {
     objl::Loader loader;
