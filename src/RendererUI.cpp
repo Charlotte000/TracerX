@@ -1,5 +1,6 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
+#include <ImGui/imgui_stdlib.h>
 
 #include <TracerX/RendererUI.h>
 
@@ -129,9 +130,8 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
     ImGui::Separator();
     ImGui::Spacing();
 
-    static char fileName[50] = "image.png";
-    static size_t fileNameSize = 50 * sizeof(char);
-    ImGui::InputText("Filename", fileName, fileNameSize);
+    static std::string fileName;
+    ImGui::InputText("Filename", &fileName);
     if (ImGui::Button("Save"))
     {
         target.getTexture().copyToImage().saveToFile(fileName);
@@ -449,6 +449,34 @@ void GeometryUI(RendererVisual& renderer)
 
                 ImGui::TreePop();
             }
+        }
+
+        if (ImGui::Button("Create"))
+        {
+            ImGui::OpenPopup("FileSelect");
+        }
+
+        if (ImGui::BeginPopupContextWindow("FileSelect"))
+        {
+            static std::string filePath;
+            ImGui::InputText("File path", &filePath);
+            if (ImGui::Button("Load"))
+            {
+                try
+                {
+                    renderer.addFile(filePath);
+                    renderer.updateIndices();
+                    renderer.updateMaterials();
+                    renderer.updateMeshes();
+                    renderer.updateVertices();
+                    renderer.reset();
+                }
+                catch (std::runtime_error&) { }
+
+                ImGui::CloseCurrentPopup();
+            }
+            
+            ImGui::EndPopup();
         }
 
         ImGui::TreePop();

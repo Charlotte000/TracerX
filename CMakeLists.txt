@@ -20,6 +20,7 @@ add_executable(
     ${src}/Vertex3.cpp
 
     ${imgui}/imgui_draw.cpp
+    ${imgui}/imgui_stdlib.cpp
     ${imgui}/imgui_tables.cpp
     ${imgui}/imgui_widgets.cpp
     ${imgui}/imgui-SFML.cpp
