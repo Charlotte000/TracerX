@@ -3,6 +3,7 @@
 #include <TracerX/RendererVisual.h>
 #include <TracerX/RendererUI.h>
 #include <stdexcept>
+#include <math.h>
 
 namespace TracerX
 {
