@@ -28,7 +28,7 @@ void Renderer::loadShader()
     shaderFile.close();
     if (!this->shader.loadFromMemory(
         "#version 430 core\n" +
-        (!this->albedoMaps.empty() ? "#define AlbedoMapCount " + std::to_string(this->albedoMaps.size()) + "\n" : "") +
+        (!this->textures.empty() ? "#define TextureCount " + std::to_string(this->textures.size()) + "\n" : "") +
         content,
         sf::Shader::Fragment))
     {
@@ -55,9 +55,9 @@ void Renderer::loadShader()
     this->shader.setUniform("FocusStrength", this->camera.focusStrength);
     this->shader.setUniform("FocalLength", this->camera.focalLength);
 
-    for (int i = 0; i < this->albedoMaps.size(); i++)
+    for (int i = 0; i < this->textures.size(); i++)
     {
-        this->shader.setUniform("AlbedoMaps[" + std::to_string(i) + ']', this->albedoMaps[i]);
+        this->shader.setUniform("Textures[" + std::to_string(i) + ']', this->textures[i]);
     }
 
     this->environment.set(this->shader, "Environment");
@@ -167,8 +167,8 @@ int Renderer::addTexture(const std::string filePath)
         throw std::runtime_error("Load file failed");
     }
 
-    this->albedoMaps.push_back(texture);
-    return (int)(this->albedoMaps.size() - 1);
+    this->textures.push_back(texture);
+    return (int)(this->textures.size() - 1);
 }
 
 void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vector3f scale, sf::Vector3f rotation)

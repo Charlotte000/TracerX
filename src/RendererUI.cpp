@@ -142,7 +142,7 @@ void MaterialUI(RendererVisual& renderer)
 
             if (ImGui::BeginMenu("Albedo map"))
             {
-                if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.albedoMaps.size() - 1))
+                if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.textures.size() - 1))
                 {
                     renderer.updateMaterials();
                     renderer.reset();
@@ -150,7 +150,7 @@ void MaterialUI(RendererVisual& renderer)
 
                 if (renderer.materials[i].albedoMapId >= 0)
                 {
-                    ImGui::Image(renderer.albedoMaps[renderer.materials[i].albedoMapId]);
+                    ImGui::Image(renderer.textures[renderer.materials[i].albedoMapId], sf::Vector2f(100, 100));
                 }
 
                 ImGui::EndMenu();

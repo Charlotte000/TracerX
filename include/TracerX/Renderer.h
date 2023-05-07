@@ -23,7 +23,7 @@ public:
     std::vector<int> indices;
     std::vector<Vertex3> vertices;
     std::vector<Mesh> meshes;
-    std::vector<sf::Texture> albedoMaps;
+    std::vector<sf::Texture> textures;
     Camera camera;
     sf::Vector2i size;
     Environment environment;

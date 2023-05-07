@@ -113,8 +113,8 @@ layout (std430, binding = 6) buffer BoxBuffer
     Box Boxes[];
 };
 
-#ifdef AlbedoMapCount
-uniform sampler2D AlbedoMaps[AlbedoMapCount];
+#ifdef TextureCount
+uniform sampler2D Textures[TextureCount];
 #endif
 
 const float SmallNumber = 0.001;
@@ -360,8 +360,8 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
         material.FresnelColor : 
         material.Metalness >= RandomValue() ? 
         material.MetalnessColor :
-#ifdef AlbedoMapCount
-        (material.AlbedoMapId >= 0 ? texture(AlbedoMaps[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
+#ifdef TextureCount
+        (material.AlbedoMapId >= 0 ? texture(Textures[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
 #endif
         material.AlbedoColor;
 }
