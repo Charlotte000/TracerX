@@ -7,7 +7,7 @@ namespace TracerX
 
 void InfoUI(RendererVisual& renderer, sf::RenderTexture& target);
 
-void MaterailUI(RendererVisual& renderer);
+void MaterialUI(RendererVisual& renderer);
 
 void GeometryUI(RendererVisual& renderer);
 

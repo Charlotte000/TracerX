@@ -1,7 +1,6 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
 #include <ImGui/imgui_stdlib.h>
-
 #include <TracerX/RendererUI.h>
 
 namespace TracerX
@@ -9,48 +8,31 @@ namespace TracerX
 
 void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
 {
-    ImGui::Begin("Info");
     ImGui::Text("Frame count: %d", renderer.frameCount);
-    ImGui::Text("FPS: %f", ImGui::GetIO().Framerate);
     ImGui::Text("Window size: %dx%d", renderer.size.x, renderer.size.y);
-
-    if (ImGui::TreeNode("Camera"))
+    if (ImGui::BeginMenu("Camera"))
     {
-        if (ImGui::TreeNode("Position"))
+        float position[3]{ renderer.camera.position.x, renderer.camera.position.y, renderer.camera.position.z };
+        if (ImGui::DragFloat3("Position", position, .01f))
         {
-            float position[3]{ renderer.camera.position.x, renderer.camera.position.y, renderer.camera.position.z };
-            if (ImGui::DragFloat3("", position, .01f))
-            {
-                renderer.camera.position = sf::Vector3f(position[0], position[1], position[2]);
-                renderer.reset();
-            }
-
-            ImGui::TreePop();
+            renderer.camera.position = sf::Vector3f(position[0], position[1], position[2]);
+            renderer.reset();
         }
 
-        if (ImGui::TreeNode("Forward"))
+        float forward[3]{ renderer.camera.forward.x, renderer.camera.forward.y, renderer.camera.forward.z };
+        if (ImGui::DragFloat3("Forward", forward, .01f))
         {
-            float forward[3]{ renderer.camera.forward.x, renderer.camera.forward.y, renderer.camera.forward.z };
-            if (ImGui::DragFloat3("", forward, .01f))
-            {
-                renderer.camera.position = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
-                renderer.reset();
-            }
-
-            ImGui::TreePop();
+            renderer.camera.position = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
+            renderer.reset();
         }
 
-        if (ImGui::TreeNode("Up"))
+        float up[3]{ renderer.camera.up.x, renderer.camera.up.y, renderer.camera.up.z };
+        if (ImGui::DragFloat3("Up", up, .01f))
         {
-            float up[3]{ renderer.camera.up.x, renderer.camera.up.y, renderer.camera.up.z };
-            if (ImGui::DragFloat3("", up, .01f))
-            {
-                renderer.camera.position = normalized(sf::Vector3f(up[0], up[1], up[2]));
-                renderer.reset();
-            }
-
-            ImGui::TreePop();
+            renderer.camera.position = normalized(sf::Vector3f(up[0], up[1], up[2]));
+            renderer.reset();
         }
+
 
         if (ImGui::DragFloat("Focal length", &renderer.camera.focalLength, 0.001f, 0, 1000))
         {
@@ -64,9 +46,9 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
             renderer.reset();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
-
+    
     if (ImGui::DragInt("Samples", &renderer.sampleCount, 0.01f, 0, 10000))
     {
         renderer.shader.setUniform("SampleCount", renderer.sampleCount);
@@ -79,12 +61,16 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
         renderer.reset();
     }
 
-    if (ImGui::SliderInt("Width subdivise", &renderer.subDivisor.x, 1, renderer.size.x))
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::SliderInt("Width subdivise", &renderer.subDivisor.x, 1, renderer.size.x, "%d", ImGuiSliderFlags_Logarithmic))
     {
         renderer.reset();
     }
 
-    if (ImGui::SliderInt("Height subdivise", &renderer.subDivisor.y, 1, renderer.size.y))
+    if (ImGui::SliderInt("Height subdivise", &renderer.subDivisor.y, 1, renderer.size.y, "%d", ImGuiSliderFlags_Logarithmic))
     {
         renderer.reset();
     }
@@ -136,18 +122,15 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
     {
         target.getTexture().copyToImage().saveToFile(fileName);
     }
-
-    ImGui::End();
 }
 
-void MaterailUI(RendererVisual& renderer)
+void MaterialUI(RendererVisual& renderer)
 {
-    ImGui::Begin("Materials");
     for (int i = 0; i < renderer.materials.size(); i++)
     {
         Material material = renderer.materials[i];
 
-        if (ImGui::TreeNode((void*)(intptr_t)i, "Material %i", i))
+        if (ImGui::BeginMenu(std::string("Material " + std::to_string(i)).c_str()))
         {
             float albedo[3]{ material.albedoColor.x, material.albedoColor.y, material.albedoColor.z };
             if (ImGui::ColorEdit3("Albedo", albedo, ImGuiColorEditFlags_Float))
@@ -157,7 +140,7 @@ void MaterailUI(RendererVisual& renderer)
                 renderer.reset();
             }
 
-            if (ImGui::TreeNode("Albedo map"))
+            if (ImGui::BeginMenu("Albedo map"))
             {
                 if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.albedoMaps.size() - 1))
                 {
@@ -170,7 +153,7 @@ void MaterailUI(RendererVisual& renderer)
                     ImGui::Image(renderer.albedoMaps[renderer.materials[i].albedoMapId]);
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
 
             if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
@@ -180,7 +163,7 @@ void MaterailUI(RendererVisual& renderer)
                 renderer.reset();
             }
 
-            if (ImGui::TreeNode("Metalness"))
+            if (ImGui::BeginMenu("Metalness"))
             {
                 float metalnessColor[3]{ material.metalnessColor.x, material.metalnessColor.y, material.metalnessColor.z };
                 if (ImGui::ColorEdit3("Metalness color", metalnessColor, ImGuiColorEditFlags_Float))
@@ -197,10 +180,10 @@ void MaterailUI(RendererVisual& renderer)
                     renderer.reset();
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
 
-            if (ImGui::TreeNode("Emission"))
+            if (ImGui::BeginMenu("Emission"))
             {
                 float emissionColor[3]{ material.emissionColor.x, material.emissionColor.y, material.emissionColor.z };
                 if (ImGui::ColorEdit3("Emission color", emissionColor, ImGuiColorEditFlags_Float))
@@ -217,10 +200,10 @@ void MaterailUI(RendererVisual& renderer)
                     renderer.reset();
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
 
-            if (ImGui::TreeNode("Fresnel"))
+            if (ImGui::BeginMenu("Fresnel"))
             {
                 float fresnelColor[3]{ material.fresnelColor.x, material.fresnelColor.y, material.fresnelColor.z };
                 if (ImGui::ColorEdit3("Fresnel color", fresnelColor, ImGuiColorEditFlags_Float))
@@ -237,19 +220,14 @@ void MaterailUI(RendererVisual& renderer)
                     renderer.reset();
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
 
-            if (ImGui::TreeNode("Transparency"))
+            if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
             {
-                if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
-                {
-                    renderer.materials[i].refractionFactor = material.refractionFactor;
-                    renderer.updateMaterials();
-                    renderer.reset();
-                }
-
-                ImGui::TreePop();
+                renderer.materials[i].refractionFactor = material.refractionFactor;
+                renderer.updateMaterials();
+                renderer.reset();
             }
 
             if (ImGui::Button("Delete"))
@@ -259,7 +237,7 @@ void MaterailUI(RendererVisual& renderer)
                 renderer.reset();
             }
 
-            ImGui::TreePop();
+            ImGui::EndMenu();
         }
     }
 
@@ -269,18 +247,15 @@ void MaterailUI(RendererVisual& renderer)
         renderer.updateMaterials();
         renderer.reset();
     }
-
-    ImGui::End();
 }
 
 void GeometryUI(RendererVisual& renderer)
 {
-    ImGui::Begin("Geometry");
-    if (ImGui::TreeNode("Spheres", "Spheres (%d)", (int)renderer.spheres.size()))
+    if (ImGui::BeginMenu(std::string("Spheres (" + std::to_string(renderer.spheres.size()) + ')').c_str()))
     {
         for (int i = 0; i < renderer.spheres.size(); i++)
         {
-            if (ImGui::TreeNode((void*)(intptr_t)i, "Sphere %i", i))
+            if (ImGui::BeginMenu(std::string("Sphere " + std::to_string(i)).c_str()))
             {
                 float origin[3]{ renderer.spheres[i].origin.x, renderer.spheres[i].origin.y, renderer.spheres[i].origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
@@ -312,6 +287,12 @@ void GeometryUI(RendererVisual& renderer)
                     ImGui::EndListBox();
                 }
 
+                if (ImGui::Button("Focus camera"))
+                {
+                    renderer.camera.focalLength = length(renderer.camera.position - renderer.spheres[i].origin);
+                    renderer.reset();
+                }
+
                 if (ImGui::Button("Delete"))
                 {
                     renderer.spheres.erase(renderer.spheres.begin() + i);
@@ -319,7 +300,7 @@ void GeometryUI(RendererVisual& renderer)
                     renderer.reset();
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
         }
         
@@ -330,14 +311,14 @@ void GeometryUI(RendererVisual& renderer)
             renderer.reset();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
 
-    if (ImGui::TreeNode("Boxes", "Boxes (%d)", (int)renderer.boxes.size()))
+    if (ImGui::BeginMenu(std::string("Boxes (" + std::to_string(renderer.boxes.size()) + ')').c_str()))
     {
         for (int i = 0; i < renderer.boxes.size(); i++)
         {
-            if (ImGui::TreeNode((void*)(intptr_t)i, "Box %i", i))
+            if (ImGui::BeginMenu(std::string("Box " + std::to_string(i)).c_str()))
             {
                 float origin[3]{ renderer.boxes[i].origin.x, renderer.boxes[i].origin.y, renderer.boxes[i].origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
@@ -371,6 +352,12 @@ void GeometryUI(RendererVisual& renderer)
                     ImGui::EndListBox();
                 }
 
+                if (ImGui::Button("Focus camera"))
+                {
+                    renderer.camera.focalLength = length(renderer.camera.position - renderer.boxes[i].origin);
+                    renderer.reset();
+                }
+
                 if (ImGui::Button("Delete"))
                 {
                     renderer.boxes.erase(renderer.boxes.begin() + i);
@@ -378,7 +365,7 @@ void GeometryUI(RendererVisual& renderer)
                     renderer.reset();
                 }
 
-                ImGui::TreePop();
+                ImGui::EndMenu();
             }
         }
 
@@ -389,14 +376,14 @@ void GeometryUI(RendererVisual& renderer)
             renderer.reset();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
 
-    if (ImGui::TreeNode("Meshes", "Meshes (%d)", (int)renderer.meshes.size()))
+    if (ImGui::BeginMenu(std::string("Meshes (" + std::to_string(renderer.meshes.size()) + ')').c_str()))
     {
         for (int i = 0; i < renderer.meshes.size(); i++)
         {
-            if (ImGui::TreeNode((void*)(intptr_t)i, "Mesh %i", i))
+            if (ImGui::BeginMenu(std::string("Mesh " + std::to_string(i)).c_str()))
             {
                 ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
                 ImGui::Text("Indices end: %i", renderer.meshes[i].indicesEnd);
@@ -447,7 +434,13 @@ void GeometryUI(RendererVisual& renderer)
                     ImGui::EndListBox();
                 }
 
-                ImGui::TreePop();
+                if (ImGui::Button("Focus camera"))
+                {
+                    renderer.camera.focalLength = length(renderer.camera.position - renderer.meshes[i].position);
+                    renderer.reset();
+                }
+
+                ImGui::EndMenu();
             }
         }
 
@@ -479,16 +472,13 @@ void GeometryUI(RendererVisual& renderer)
             ImGui::EndPopup();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
-
-    ImGui::End();
 }
 
 void EnvironmentUI(RendererVisual& renderer)
 {
-    ImGui::Begin("Envorinment");
-    if (ImGui::TreeNode("Sun"))
+    if (ImGui::BeginMenu("Sun"))
     {
         float sunColor[3]{ renderer.environment.sunColor.x, renderer.environment.sunColor.y, renderer.environment.sunColor.z };
         if (ImGui::ColorEdit3("Color", sunColor, ImGuiColorEditFlags_Float))
@@ -518,10 +508,10 @@ void EnvironmentUI(RendererVisual& renderer)
             renderer.reset();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
 
-    if (ImGui::TreeNode("Sky"))
+    if (ImGui::BeginMenu("Sky"))
     {
         float horizon[3]{ renderer.environment.skyColorHorizon.x, renderer.environment.skyColorHorizon.y, renderer.environment.skyColorHorizon.z };
         if (ImGui::ColorEdit3("Horizon", horizon, ImGuiColorEditFlags_Float))
@@ -539,7 +529,7 @@ void EnvironmentUI(RendererVisual& renderer)
             renderer.reset();
         }
 
-        ImGui::TreePop();
+        ImGui::EndMenu();
     }
 
     float ground[3]{ renderer.environment.groundColor.x, renderer.environment.groundColor.y, renderer.environment.groundColor.z };
@@ -555,8 +545,6 @@ void EnvironmentUI(RendererVisual& renderer)
         renderer.environment.set(renderer.shader, "Environment");
         renderer.reset();
     }
-
-    ImGui::End();
 }
 
 }

@@ -66,10 +66,36 @@ void RendererVisual::run()
 
         ImGui::SFML::Update(this->window, clock.restart());
 
-        InfoUI(*this, this->buffer1);
-        MaterailUI(*this);
-        GeometryUI(*this);
-        EnvironmentUI(*this);
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("Info"))
+        {
+            InfoUI(*this, this->buffer1);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Material"))
+        {
+            MaterialUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Geometry"))
+        {
+            GeometryUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Environment"))
+        {
+            EnvironmentUI(*this);
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text("FPS: %i", (int)roundf(ImGui::GetIO().Framerate));
+
+        ImGui::EndMainMenuBar();
 
         int subWidth = this->size.x / this->subDivisor.x;
         int subHeight = this->size.y / this->subDivisor.y;
