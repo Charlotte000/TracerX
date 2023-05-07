@@ -13,4 +13,6 @@ void GeometryUI(RendererVisual& renderer);
 
 void EnvironmentUI(RendererVisual& renderer);
 
+void TextureUI(RendererVisual& renderer);
+
 }

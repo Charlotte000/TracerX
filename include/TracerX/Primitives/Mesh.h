@@ -1,9 +1,8 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <set>
 #include <vector>
-
+#include <SFML/Graphics.hpp>
 #include <TracerX/Vertex3.h>
 #include <TracerX/VectorMath.h>
 

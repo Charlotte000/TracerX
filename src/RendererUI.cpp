@@ -547,4 +547,43 @@ void EnvironmentUI(RendererVisual& renderer)
     }
 }
 
+void TextureUI(RendererVisual& renderer)
+{
+    for (int i = 0; i < renderer.textures.size(); i++)
+    {
+        if (ImGui::BeginMenu(std::string("Texture " + std::to_string(i)).c_str()))
+        {
+            ImGui::Image(renderer.textures[i], sf::Vector2f(100, 100));
+
+            if (ImGui::Button("Delete"))
+            {
+                renderer.textures.erase(renderer.textures.begin() + i);
+                renderer.updateTextures();
+            }
+
+            ImGui::EndMenu();
+        }
+    }
+
+    if (ImGui::Button("Create"))
+    {
+        ImGui::OpenPopup("TextureSelect");
+    }
+
+    if (ImGui::BeginPopupContextWindow("TextureSelect"))
+    {
+        static std::string filePath;
+        ImGui::InputText("File path", &filePath);
+        if (ImGui::Button("Load"))
+        {
+            renderer.addTexture(filePath);
+            renderer.updateTextures();
+            renderer.reset();
+            ImGui::CloseCurrentPopup();
+        }
+        
+        ImGui::EndPopup();   
+    }
+}
+
 }

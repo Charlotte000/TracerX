@@ -1,8 +1,7 @@
 #pragma once
 
-#include <iostream>
-#include <SFML/Graphics.hpp>
 #include <GL/glew.h>
+#include <SFML/Graphics.hpp>
 #include <TracerX/Primitives/Box.h>
 #include <TracerX/Primitives/Sphere.h>
 #include <TracerX/Camera.h>
@@ -70,8 +69,9 @@ public:
 
     void updateBoxes();
 
+    void updateTextures();
+
 protected:
-    const std::string path = "../shader.frag";
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;
     GLuint materialBuffer;
@@ -84,6 +84,9 @@ protected:
     void loadShader();
 
     void clear();
+
+private:
+    static const std::string ShaderCode;
 };
 
 }

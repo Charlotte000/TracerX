@@ -1,5 +1,5 @@
-#include <TracerX/Environment.h>
 #include <TracerX/VectorMath.h>
+#include <TracerX/Environment.h>
 
 namespace TracerX
 {

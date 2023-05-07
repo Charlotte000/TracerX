@@ -1,6 +1,6 @@
+#include <limits>
 #include <TracerX/VectorMath.h>
 #include <TracerX/Primitives/Mesh.h>
-#include <limits>
 
 namespace TracerX
 {

@@ -28,7 +28,6 @@ add_executable(
 )
 
 add_compile_definitions(GLEW_STATIC)
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shader.frag DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system GLEW GL)
 target_include_directories(

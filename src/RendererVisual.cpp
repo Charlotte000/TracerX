@@ -1,9 +1,9 @@
+#include <math.h>
+#include <stdexcept>
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
-#include <TracerX/RendererVisual.h>
 #include <TracerX/RendererUI.h>
-#include <stdexcept>
-#include <math.h>
+#include <TracerX/RendererVisual.h>
 
 namespace TracerX
 {
@@ -89,6 +89,12 @@ void RendererVisual::run()
         if (ImGui::BeginMenu("Environment"))
         {
             EnvironmentUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Texture"))
+        {
+            TextureUI(*this);
             ImGui::EndMenu();
         }
 
