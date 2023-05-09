@@ -6,7 +6,7 @@
 namespace TracerX
 {
 
-void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
+void InfoUI(Renderer& renderer, sf::RenderTexture& target)
 {
     ImGui::Text("Frame count: %d", renderer.frameCount);
     ImGui::Text("Window size: %dx%d", renderer.size.x, renderer.size.y);
@@ -124,7 +124,7 @@ void InfoUI(RendererVisual& renderer, sf::RenderTexture& target)
     }
 }
 
-void MaterialUI(RendererVisual& renderer)
+void MaterialUI(Renderer& renderer)
 {
     for (int i = 0; i < renderer.materials.size(); i++)
     {
@@ -249,7 +249,7 @@ void MaterialUI(RendererVisual& renderer)
     }
 }
 
-void GeometryUI(RendererVisual& renderer)
+void GeometryUI(Renderer& renderer)
 {
     if (ImGui::BeginMenu(std::string("Spheres (" + std::to_string(renderer.spheres.size()) + ')').c_str()))
     {
@@ -476,7 +476,7 @@ void GeometryUI(RendererVisual& renderer)
     }
 }
 
-void EnvironmentUI(RendererVisual& renderer)
+void EnvironmentUI(Renderer& renderer)
 {
     if (ImGui::BeginMenu("Sun"))
     {
@@ -547,7 +547,7 @@ void EnvironmentUI(RendererVisual& renderer)
     }
 }
 
-void TextureUI(RendererVisual& renderer)
+void TextureUI(Renderer& renderer)
 {
     for (int i = 0; i < renderer.textures.size(); i++)
     {

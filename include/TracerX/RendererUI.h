@@ -1,18 +1,18 @@
 #pragma once
 
-#include <TracerX/RendererVisual.h>
+#include <TracerX/Renderer.h>
 
 namespace TracerX
 {
 
-void InfoUI(RendererVisual& renderer, sf::RenderTexture& target);
+void InfoUI(Renderer& renderer, sf::RenderTexture& target);
 
-void MaterialUI(RendererVisual& renderer);
+void MaterialUI(Renderer& renderer);
 
-void GeometryUI(RendererVisual& renderer);
+void GeometryUI(Renderer& renderer);
 
-void EnvironmentUI(RendererVisual& renderer);
+void EnvironmentUI(Renderer& renderer);
 
-void TextureUI(RendererVisual& renderer);
+void TextureUI(Renderer& renderer);
 
 }

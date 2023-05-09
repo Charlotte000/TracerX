@@ -1,4 +1,4 @@
-#include <TracerX/RendererVisual.h>
+#include <TracerX/Renderer.h>
 #include <SFML/Graphics.hpp>
 
 using namespace TracerX;
@@ -7,7 +7,7 @@ using namespace sf;
 int main()
 {
     Camera camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
-    RendererVisual renderer(Vector2i(900, 900), camera, 5, 5);
+    Renderer renderer(Vector2i(900, 900), camera, 5, 5);
     renderer.subDivisor = Vector2i(2, 2);
 
     Material red(Vector3f(1, 0, 0), 1);

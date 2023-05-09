@@ -32,10 +32,17 @@ public:
     int maxBounceCount = 0;
     int subStage = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
+    sf::RenderWindow window;
+    sf::RenderTexture windowBuffer;
+    bool isProgressive = false;
+    bool isCameraControl = false;
+    bool showCursor = true;
 
     Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
 
-    void run(int iterationCount, const std::string imagePath);
+    void run();
+
+    void runHeadless(int iterationCount, const std::string imagePath);
 
     int getPixelDifference();
 
@@ -71,6 +78,8 @@ public:
 
     void updateTextures();
 
+    void reset();
+
 protected:
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;
@@ -87,6 +96,7 @@ protected:
 
 private:
     static const std::string ShaderCode;
+    sf::RectangleShape cursor;
 };
 
 }

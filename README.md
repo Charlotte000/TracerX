@@ -66,5 +66,6 @@ int main()
 
 # External libraries
 - [SFML/SFML](https://github.com/SFML/SFML): Used for rendering images and creating windows
+- [glfw/glfw](https://github.com/glfw/glfw): Used for OpenGL API 
 - [ocornut/imgui](https://github.com/ocornut/imgui) / [SFML/imgui-sfml](https://github.com/SFML/imgui-sfml): Used for rendering user interface
 - [Bly7/OBJ-Loader](https://github.com/Bly7/OBJ-Loader): Used for loading obj files

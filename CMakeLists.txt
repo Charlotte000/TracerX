@@ -1,37 +1,46 @@
 cmake_minimum_required(VERSION 3.10)
 project(TracerX)
 
-set(src ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set(imgui ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui)
-
-add_executable(
-    ${PROJECT_NAME}
-    ${src}/Primitives/Box.cpp
-    ${src}/Primitives/Mesh.cpp
-    ${src}/Primitives/Sphere.cpp
-    ${src}/Camera.cpp
-    ${src}/Environment.cpp
-    ${src}/main.cpp
-    ${src}/Material.cpp
-    ${src}/Renderer.cpp
-    ${src}/RendererUI.cpp
-    ${src}/RendererVisual.cpp
-    ${src}/VectorMath.cpp
-    ${src}/Vertex3.cpp
-
-    ${imgui}/imgui_draw.cpp
-    ${imgui}/imgui_stdlib.cpp
-    ${imgui}/imgui_tables.cpp
-    ${imgui}/imgui_widgets.cpp
-    ${imgui}/imgui-SFML.cpp
-    ${imgui}/imgui.cpp
+set(
+    SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Box.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Mesh.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Sphere.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Camera.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererUI.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/VectorMath.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Vertex3.cpp
 )
+
+set(
+    IMGUI
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_draw.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_stdlib.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_tables.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_widgets.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui-SFML.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui.cpp
+)
+
+set(INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_library(
+    ${PROJECT_NAME}
+    ${SRC}
+    ${IMGUI}
+)
+
+add_subdirectory(GUI)
+add_subdirectory(CLI)
 
 add_compile_definitions(GLEW_STATIC)
 
-target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system GLEW GL)
+target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system GLEW GL glfw)
 target_include_directories(
     ${PROJECT_NAME}
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE ${INCLUDE}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs
 )

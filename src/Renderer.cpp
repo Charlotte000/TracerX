@@ -1,7 +1,10 @@
 #include <stdexcept>
 #include <GL/glew.h>
 #include <OBJ-Loader/OBJLoader.h>
+#include <ImGui/imgui.h>
+#include <ImGui/imgui-SFML.h>
 #include <SFML/Graphics.hpp>
+#include <TracerX/RendererUI.h>
 #include <TracerX/Renderer.h>
 
 namespace TracerX
@@ -10,14 +13,23 @@ namespace TracerX
 Renderer::Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount)
     : camera(camera), size(size), sampleCount(sampleCount), maxBounceCount(maxBounceCount)
 {
+    this->window.create(sf::VideoMode(this->size.x, this->size.y), "Ray Tracing");
+    this->windowBuffer.create(this->size.x, this->size.y);
+
     this->buffer1.create(this->size.x, this->size.y);
     this->buffer2.create(this->size.x, this->size.y);
+
+    this->cursor.setFillColor(sf::Color::Transparent);
+    this->cursor.setOutlineColor(sf::Color::Red);
+    this->cursor.setOutlineThickness(1);
 }
 
 void Renderer::loadShader()
 {
-    if (glewInit() != GLEW_OK)
+    GLenum err = glewInit();
+    if (err != GLEW_OK)
     {
+        std::cerr << glewGetErrorString(err) << std::endl;
         throw std::runtime_error("GLEW initialization failed");
     }
 
@@ -54,30 +66,137 @@ void Renderer::loadShader()
     this->shader.setUniform("CameraUp", this->camera.up);
 }
 
-void Renderer::run(int iterationCount, const std::string imagePath)
+void Renderer::run()
 {
     this->loadShader();
 
-    int subWidth = this->size.x / this->subDivisor.x;
-    int subHeight = this->size.y / this->subDivisor.y;
-    while (this->frameCount <= iterationCount)
-    {
-        this->shader.setUniform("FrameCount", this->frameCount);
+    sf::Mouse::setPosition(this->size / 2, this->window);
 
+    if (!ImGui::SFML::Init(this->window))
+    {
+        throw std::runtime_error("ImGui initialization failed");
+    }
+
+    sf::Clock clock;
+    while (this->window.isOpen())
+    {
+        sf::Event event;
+        while (this->window.pollEvent(event))
+        {
+            ImGui::SFML::ProcessEvent(event);
+
+            if (event.type == sf::Event::Closed || event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape)
+            {
+                this->window.close();
+            }
+
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter && this->isCameraControl)
+            {
+                this->isCameraControl = false;
+                this->window.setMouseCursorVisible(true);
+            }
+        }
+
+        if (this->isCameraControl)
+        {
+            this->camera.move(this->window);
+        }
+
+        if (!this->isProgressive)
+        {
+            this->clear();
+        }
+
+        // Update shader parameters
+        this->shader.setUniform("FrameCount", this->frameCount);
+        this->shader.setUniform("CameraPosition", this->camera.position);
+        this->shader.setUniform("CameraForward", this->camera.forward);
+        this->shader.setUniform("CameraUp", this->camera.up);
+
+        // Update UI
+        ImGui::SFML::Update(this->window, clock.restart());
+
+        // Calculate subframe coordinate
+        int subWidth = this->size.x / this->subDivisor.x;
+        int subHeight = this->size.y / this->subDivisor.y;
         int y = this->subStage / this->subDivisor.x;
         int x = this->subStage - y * this->subDivisor.x;
         x *= subWidth;
         y *= subHeight;
 
+        // Get new and old draw buffer 
         sf::RenderTexture* newBuffer = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
+        sf::Sprite newSprite(newBuffer->getTexture());
+
         sf::RenderTexture* oldBuffer = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
         sf::Sprite oldSprite(oldBuffer->getTexture());
-        sf::Sprite newSprite(newBuffer->getTexture());
+        
+        // Ray trace into new buffer
         oldSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
         oldSprite.setPosition((float)x, (float)y);
         newBuffer->draw(oldSprite, &this->shader);
         newBuffer->display();
+        
+        // Draw to window buffer
+        newSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
+        newSprite.setPosition((float)x, (float)y);
+        this->windowBuffer.draw(newSprite);
+        this->windowBuffer.display();
 
+        // Draw window
+        this->window.clear();
+        this->window.draw(sf::Sprite(this->windowBuffer.getTexture()));
+
+        if (this->showCursor)
+        {
+            this->cursor.setSize(sf::Vector2f((float)subWidth, (float)subHeight));
+            this->cursor.setPosition(sf::Vector2f((float)x, (float)y));
+            this->window.draw(this->cursor);
+        }
+
+        // Draw UI
+        ImGui::BeginMainMenuBar();
+        if (ImGui::BeginMenu("Info"))
+        {
+            InfoUI(*this, this->buffer1);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Material"))
+        {
+            MaterialUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Geometry"))
+        {
+            GeometryUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Environment"))
+        {
+            EnvironmentUI(*this);
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Texture"))
+        {
+            TextureUI(*this);
+            ImGui::EndMenu();
+        }
+
+        ImGui::Separator();
+
+        ImGui::Text("FPS: %i", (int)roundf(ImGui::GetIO().Framerate));
+
+        ImGui::EndMainMenuBar();
+
+        ImGui::SFML::Render(this->window);
+
+        this->window.display();
+        
+        // Update subframe
         this->subStage++;
         if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
         {
@@ -86,7 +205,77 @@ void Renderer::run(int iterationCount, const std::string imagePath)
         }
     }
 
+    ImGui::SFML::Shutdown();
+}
+
+void Renderer::runHeadless(int iterationCount, const std::string imagePath)
+{
+    this->window.setVisible(false);
+
+    this->loadShader();
+
+    int subWidth = this->size.x / this->subDivisor.x;
+    int subHeight = this->size.y / this->subDivisor.y;
+    int subCount = this->subDivisor.x * this->subDivisor.y;
+    while (this->frameCount <= iterationCount)
+    {
+        // Update shader parameters
+        this->shader.setUniform("FrameCount", this->frameCount);
+
+        // Calculate subframe coordinate
+        int y = this->subStage / this->subDivisor.x;
+        int x = this->subStage - y * this->subDivisor.x;
+        x *= subWidth;
+        y *= subHeight;
+
+        // Get new and old draw buffer 
+        sf::RenderTexture* newBuffer = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
+        sf::Sprite newSprite(newBuffer->getTexture());
+
+        sf::RenderTexture* oldBuffer = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
+        sf::Sprite oldSprite(oldBuffer->getTexture());
+        
+        // Ray trace into new buffer
+        oldSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
+        oldSprite.setPosition((float)x, (float)y);
+        newBuffer->draw(oldSprite, &this->shader);
+        newBuffer->display();
+        
+        // Update subframe
+        this->subStage++;
+        if (this->subStage >= subCount)
+        {
+            this->subStage = 0;
+            this->frameCount++;
+        }
+
+        // Print progress
+        static const int barWidth = 50;
+        float progress = (float)(this->subStage) / subCount;
+        int progressWidth = progress * barWidth;
+        std::cout << std::nounitbuf;
+        std::cout << "\x1b[F[" << std::string(progressWidth, '#');
+        std::cout << std::string(barWidth - progressWidth, ' ') << "] ";
+        std::cout << (int)(progress * 100) << "%  " << std::endl;
+
+        progress = (float)(this->frameCount - 1) / iterationCount;
+        progressWidth = progress * barWidth;
+        std::cout << '[' << std::string(progressWidth, '#');
+        std::cout << std::string(barWidth - progressWidth, ' ') << "] ";
+        std::cout << (int)(progress * 100) << '%';
+        std::cout << std::flush;
+    }
+
+    std::cout << std::endl;
+
     this->buffer1.getTexture().copyToImage().saveToFile(imagePath);
+}
+
+void Renderer::reset()
+{
+    this->frameCount = 1;
+    this->subStage = 0;
+    this->isProgressive = false;
 }
 
 int Renderer::getPixelDifference()
@@ -107,6 +296,15 @@ int Renderer::getPixelDifference()
     }
 
     return result;
+}
+
+void Renderer::clear()
+{
+    this->buffer1.clear();
+    this->buffer1.display();
+    this->buffer2.clear();
+    this->buffer2.display();
+    this->frameCount = 1;
 }
 
 #pragma region Add
@@ -221,15 +419,6 @@ void Renderer::addCornellBox(const Material up, const Material down, const Mater
     this->add(Box(sf::Vector3f(0, 0, -3.5f), sf::Vector3f(2, 2, 1)), backward);
 }
 #pragma endregion
-
-void Renderer::clear()
-{
-    this->buffer1.clear();
-    this->buffer1.display();
-    this->buffer2.clear();
-    this->buffer2.display();
-    this->frameCount = 1;
-}
 
 #pragma region Updates
 void Renderer::updateMaterials()
