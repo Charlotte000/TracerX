@@ -38,7 +38,7 @@ add_subdirectory(CLI)
 
 add_compile_definitions(GLEW_STATIC)
 
-target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system GLEW GL glfw)
+target_link_libraries(${PROJECT_NAME} sfml-graphics sfml-window sfml-system GLEW GL)
 target_include_directories(
     ${PROJECT_NAME}
     PRIVATE ${INCLUDE}

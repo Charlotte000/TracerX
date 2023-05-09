@@ -116,44 +116,6 @@ void Renderer::run()
         // Update UI
         ImGui::SFML::Update(this->window, clock.restart());
 
-        // Calculate subframe coordinate
-        int subWidth = this->size.x / this->subDivisor.x;
-        int subHeight = this->size.y / this->subDivisor.y;
-        int y = this->subStage / this->subDivisor.x;
-        int x = this->subStage - y * this->subDivisor.x;
-        x *= subWidth;
-        y *= subHeight;
-
-        // Get new and old draw buffer 
-        sf::RenderTexture* newBuffer = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
-        sf::Sprite newSprite(newBuffer->getTexture());
-
-        sf::RenderTexture* oldBuffer = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
-        sf::Sprite oldSprite(oldBuffer->getTexture());
-        
-        // Ray trace into new buffer
-        oldSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
-        oldSprite.setPosition((float)x, (float)y);
-        newBuffer->draw(oldSprite, &this->shader);
-        newBuffer->display();
-        
-        // Draw to window buffer
-        newSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
-        newSprite.setPosition((float)x, (float)y);
-        this->windowBuffer.draw(newSprite);
-        this->windowBuffer.display();
-
-        // Draw window
-        this->window.clear();
-        this->window.draw(sf::Sprite(this->windowBuffer.getTexture()));
-
-        if (this->showCursor)
-        {
-            this->cursor.setSize(sf::Vector2f((float)subWidth, (float)subHeight));
-            this->cursor.setPosition(sf::Vector2f((float)x, (float)y));
-            this->window.draw(this->cursor);
-        }
-
         // Draw UI
         ImGui::BeginMainMenuBar();
         if (ImGui::BeginMenu("Info"))
@@ -192,10 +154,48 @@ void Renderer::run()
 
         ImGui::EndMainMenuBar();
 
+        // Calculate subframe coordinate
+        int subWidth = this->size.x / this->subDivisor.x;
+        int subHeight = this->size.y / this->subDivisor.y;
+        int y = this->subStage / this->subDivisor.x;
+        int x = this->subStage - y * this->subDivisor.x;
+        x *= subWidth;
+        y *= subHeight;
+
+        // Get new and old draw buffer 
+        sf::RenderTexture* newBuffer = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
+        sf::Sprite newSprite(newBuffer->getTexture());
+
+        sf::RenderTexture* oldBuffer = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
+        sf::Sprite oldSprite(oldBuffer->getTexture());
+        
+        // Ray trace into new buffer
+        oldSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
+        oldSprite.setPosition((float)x, (float)y);
+        newBuffer->draw(oldSprite, &this->shader);
+        newBuffer->display();
+        
+        // Draw to window buffer
+        newSprite.setTextureRect(sf::IntRect(x, y, subWidth, subHeight));
+        newSprite.setPosition((float)x, (float)y);
+        this->windowBuffer.draw(newSprite);
+        this->windowBuffer.display();
+
+        // Draw window
+        this->window.clear();
+        this->window.draw(sf::Sprite(this->windowBuffer.getTexture()));
+
+        if (this->showCursor)
+        {
+            this->cursor.setSize(sf::Vector2f((float)subWidth, (float)subHeight));
+            this->cursor.setPosition(sf::Vector2f((float)x, (float)y));
+            this->window.draw(this->cursor);
+        }
+
         ImGui::SFML::Render(this->window);
 
-        this->window.display();
-        
+        this->window.display(); 
+
         // Update subframe
         this->subStage++;
         if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
