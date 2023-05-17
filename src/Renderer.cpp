@@ -309,26 +309,26 @@ void Renderer::clear()
 }
 
 #pragma region Add
-void Renderer::add(Sphere& sphere, const Material& material)
+void Renderer::add(Sphere sphere, const Material& material)
 {
     int materialId = this->add(material);
     sphere.materialId = materialId;
     this->spheres.push_back(sphere);
 }
 
-void Renderer::add(Sphere& sphere)
+void Renderer::add(Sphere sphere)
 {
     this->spheres.push_back(sphere);
 }
 
-void Renderer::add(Box& box, const Material& material)
+void Renderer::add(Box box, const Material& material)
 {
     int materialId = this->add(material);
     box.materialId = materialId;
     this->boxes.push_back(box);
 }
 
-void Renderer::add(Box& box)
+void Renderer::add(Box box)
 {
     this->boxes.push_back(box);
 }
@@ -402,13 +402,13 @@ void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vect
     }
 }
 
-void Renderer::addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward, const Material& lightSource)
+void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource)
 {
     this->addCornellBox(up, down, left, right, forward, backward);
     this->add(Box(sf::Vector3f(0, .998f, 0), sf::Vector3f(.5f, .001f, .5f)), lightSource);
 }
 
-void Renderer::addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward)
+void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward)
 {
     this->add(Box(sf::Vector3f(0, 1.5f, -1), sf::Vector3f(2, 1, 4)), up);
     this->add(Box(sf::Vector3f(0, -1.5f, -1), sf::Vector3f(2, 1, 4)), down);
