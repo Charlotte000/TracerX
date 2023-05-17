@@ -8,7 +8,6 @@ namespace TracerX
 
 void InfoUI(Renderer& renderer, sf::RenderTexture& target)
 {
-    ImGui::Text("Frame count: %d", renderer.frameCount);
     ImGui::Text("Window size: %dx%d", renderer.size.x, renderer.size.y);
     if (ImGui::BeginMenu("Camera"))
     {
@@ -22,14 +21,14 @@ void InfoUI(Renderer& renderer, sf::RenderTexture& target)
         float forward[3]{ renderer.camera.forward.x, renderer.camera.forward.y, renderer.camera.forward.z };
         if (ImGui::DragFloat3("Forward", forward, .01f))
         {
-            renderer.camera.position = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
+            renderer.camera.forward = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
             renderer.reset();
         }
 
         float up[3]{ renderer.camera.up.x, renderer.camera.up.y, renderer.camera.up.z };
         if (ImGui::DragFloat3("Up", up, .01f))
         {
-            renderer.camera.position = normalized(sf::Vector3f(up[0], up[1], up[2]));
+            renderer.camera.up = normalized(sf::Vector3f(up[0], up[1], up[2]));
             renderer.reset();
         }
 
@@ -387,6 +386,8 @@ void GeometryUI(Renderer& renderer)
             {
                 ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
                 ImGui::Text("Indices end: %i", renderer.meshes[i].indicesEnd);
+                ImGui::Text("Bounding box min: (%f, %f, %f)", renderer.meshes[i].boxMin.x, renderer.meshes[i].boxMin.y, renderer.meshes[i].boxMin.z);
+                ImGui::Text("Bounding box max: (%f, %f, %f)", renderer.meshes[i].boxMax.x, renderer.meshes[i].boxMax.y, renderer.meshes[i].boxMax.z);
 
                 float offset[3] = { renderer.meshes[i].position.x, renderer.meshes[i].position.y, renderer.meshes[i].position.z };
                 if (ImGui::DragFloat3("Offset", offset, .01f))
@@ -399,7 +400,7 @@ void GeometryUI(Renderer& renderer)
                 }
 
                 float scale[3] = { renderer.meshes[i].size.x, renderer.meshes[i].size.y, renderer.meshes[i].size.z };
-                if (ImGui::DragFloat3("Scale", scale, .01f))
+                if (ImGui::DragFloat3("Scale", scale, .01f) && scale[0] != 0 && scale[1] != 0 && scale[2] != 0)
                 {
                     sf::Vector3f sizeV(scale[0] / renderer.meshes[i].size.x, scale[1] / renderer.meshes[i].size.y, scale[2] / renderer.meshes[i].size.z);
                     renderer.reset();

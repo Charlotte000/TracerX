@@ -11,6 +11,7 @@ Material::Material(sf::Vector3f albedoColor, float roughness, sf::Vector3f metal
 Material Material::LightSource(sf::Vector3f color, float strength)
 {
     Material m;
+    m.roughness = 0;
     m.emissionColor = color;
     m.emissionStrength = strength;
     return m;
@@ -18,11 +19,25 @@ Material Material::LightSource(sf::Vector3f color, float strength)
 
 Material Material::Transparent(sf::Vector3f albedoColor, float refractionFactor, sf::Vector3f fresnelColor, float fresnelStrength)
 {
-    Material m(albedoColor, 1);
+    Material m(albedoColor);
     m.refractionFactor = refractionFactor;
     m.fresnelColor = fresnelColor;
     m.fresnelStrength = fresnelStrength;
     return m;
+}
+
+bool operator==(const Material& a, const Material& b)
+{
+    return a.albedoColor == b.albedoColor &&
+        a.albedoMapId == b.albedoMapId &&
+        a.roughness == b.roughness &&
+        a.emissionColor == b.emissionColor &&
+        a.emissionStrength == b.emissionStrength &&
+        a.metalnessColor == b.metalnessColor &&
+        a.metalness == b.metalness &&
+        a.fresnelColor == b.fresnelColor &&
+        a.fresnelStrength == b.fresnelStrength &&
+        a.refractionFactor == b.refractionFactor;
 }
 
 }
