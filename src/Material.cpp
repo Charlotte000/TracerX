@@ -3,8 +3,8 @@
 namespace TracerX
 {
 
-Material::Material(sf::Vector3f albedoColor, float roughness, sf::Vector3f metalnessColor, float metalness, sf::Vector3f emissionColor, float emissionStrength, sf::Vector3f fresnelColor, float fresnelStrength, float refractionFactor)
-    : albedoColor(albedoColor), roughness(roughness), emissionColor(emissionColor), emissionStrength(emissionStrength), metalnessColor(metalnessColor), metalness(metalness), fresnelColor(fresnelColor), fresnelStrength(fresnelStrength), refractionFactor(refractionFactor)
+Material::Material(sf::Vector3f albedoColor, float roughness, sf::Vector3f metalnessColor, float metalness, sf::Vector3f emissionColor, float emissionStrength, sf::Vector3f fresnelColor, float fresnelStrength, float refractionFactor, float density)
+    : albedoColor(albedoColor), roughness(roughness), emissionColor(emissionColor), emissionStrength(emissionStrength), metalnessColor(metalnessColor), metalness(metalness), fresnelColor(fresnelColor), fresnelStrength(fresnelStrength), refractionFactor(refractionFactor), density(density)
 {
 }
 
@@ -26,6 +26,13 @@ Material Material::Transparent(sf::Vector3f albedoColor, float refractionFactor,
     return m;
 }
 
+Material Material::ConstantDensity(sf::Vector3f albedoColor, float density)
+{
+    Material m(albedoColor);
+    m.density = density;
+    return m;
+}
+
 bool operator==(const Material& a, const Material& b)
 {
     return a.albedoColor == b.albedoColor &&
@@ -37,7 +44,8 @@ bool operator==(const Material& a, const Material& b)
         a.metalness == b.metalness &&
         a.fresnelColor == b.fresnelColor &&
         a.fresnelStrength == b.fresnelStrength &&
-        a.refractionFactor == b.refractionFactor;
+        a.refractionFactor == b.refractionFactor &&
+        a.density == b.density;
 }
 
 }

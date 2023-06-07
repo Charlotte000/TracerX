@@ -229,6 +229,13 @@ void MaterialUI(Renderer& renderer)
                 renderer.reset();
             }
 
+            if (ImGui::DragFloat("Density", &material.density, .001f, 0, 100))
+            {
+                renderer.materials[i].density = material.density;
+                renderer.updateMaterials();
+                renderer.reset();
+            }
+
             if (ImGui::Button("Delete"))
             {
                 renderer.materials.erase(renderer.materials.begin() + i);

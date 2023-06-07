@@ -510,6 +510,7 @@ struct Material
     float EmissionStrength;
     float FresnelStrength;
     float RefractionFactor;
+    float Density;
 };
 
 struct Sphere
@@ -830,6 +831,31 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = Materials[manifold.MaterialId];
+
+    if (material.Density > 0)
+    {
+        if (manifold.IsFrontFace)
+        {
+            ray.Origin = manifold.Point;
+            return;
+        }
+
+        float depth = -log(RandomValue()) / material.Density;
+        if (depth < manifold.Depth)
+        {
+            ray.Origin += ray.Direction * depth;
+            ray.Direction = RandomVector3();
+
+            ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
+            ray.Color *= material.AlbedoColor;
+        }
+        else
+        {
+            ray.Origin = manifold.Point;
+        }
+
+        return;
+    }
 
     vec3 reactedDir = material.RefractionFactor > 0 ?
         refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
