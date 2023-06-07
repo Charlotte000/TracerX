@@ -27,6 +27,8 @@ struct Mesh
     void scale(sf::Vector3f scale, const std::vector<int>& indices, std::vector<Vertex3>& verticies);
 
     void rotate(sf::Vector3f rotation, const std::vector<int>& indices, std::vector<Vertex3>& verticies);
+
+    void updateAABB(const std::vector<int>& indices, const std::vector<Vertex3>& verticies);
 };
 
 }

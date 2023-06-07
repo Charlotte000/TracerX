@@ -13,17 +13,17 @@ Environment::Environment(sf::Vector3f skyColorHorizon, sf::Vector3f skyColorZeni
 {
 }
 
-void Environment::set(sf::Shader& shader, const std::string name)
+void Environment::set(sf::Shader& shader) const
 {
-    shader.setUniform(name + ".SkyColorHorizon", this->skyColorHorizon);
-    shader.setUniform(name + ".SkyColorZenith", this->skyColorZenith);
-    shader.setUniform(name + ".GroundColor", this->groundColor);
-    shader.setUniform(name + ".SunColor", this->sunColor);
-    shader.setUniform(name + ".SunDirection", this->sunDirection);
-    shader.setUniform(name + ".SunFocus", this->sunFocus);
-    shader.setUniform(name + ".SunIntensity", this->sunIntensity);
-    shader.setUniform(name + ".SkyIntensity", this->skyIntensity);
-    shader.setUniform(name + ".Enabled", this->enabled);
+    shader.setUniform("Environment.SkyColorHorizon", this->skyColorHorizon);
+    shader.setUniform("Environment.SkyColorZenith", this->skyColorZenith);
+    shader.setUniform("Environment.GroundColor", this->groundColor);
+    shader.setUniform("Environment.SunColor", this->sunColor);
+    shader.setUniform("Environment.SunDirection", this->sunDirection);
+    shader.setUniform("Environment.SunFocus", this->sunFocus);
+    shader.setUniform("Environment.SunIntensity", this->sunIntensity);
+    shader.setUniform("Environment.SkyIntensity", this->skyIntensity);
+    shader.setUniform("Environment.Enabled", this->enabled);
 }
 
 }

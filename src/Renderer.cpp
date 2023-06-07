@@ -59,7 +59,7 @@ void Renderer::loadShader()
     this->shader.setUniform("FocusStrength", this->camera.focusStrength);
     this->shader.setUniform("FocalLength", this->camera.focalLength);
 
-    this->environment.set(this->shader, "Environment");
+    this->environment.set(this->shader);
 
     this->shader.setUniform("CameraPosition", this->camera.position);
     this->shader.setUniform("CameraForward", this->camera.forward);
@@ -279,7 +279,7 @@ void Renderer::reset()
     this->isProgressive = false;
 }
 
-int Renderer::getPixelDifference()
+int Renderer::getPixelDifference() const
 {
     sf::Image image1 = this->buffer1.getTexture().copyToImage();
     sf::Image image2 = this->buffer2.getTexture().copyToImage();
@@ -325,11 +325,13 @@ void Renderer::add(Box box, const Material& material)
 {
     int materialId = this->add(material);
     box.materialId = materialId;
+    box.updateAABB();
     this->boxes.push_back(box);
 }
 
 void Renderer::add(Box box)
 {
+    box.updateAABB();
     this->boxes.push_back(box);
 }
 
@@ -398,6 +400,7 @@ void Renderer::addFile(const std::string filePath, sf::Vector3f offset, sf::Vect
         myMesh.scale(scale, this->indices, this->vertices);
         myMesh.rotate(rotation, this->indices, this->vertices);
         myMesh.offset(offset, this->indices, this->vertices);
+        myMesh.updateAABB(this->indices, this->vertices);
         this->meshes.push_back(myMesh);
     }
 }
@@ -422,7 +425,7 @@ void Renderer::addCornellBox(const Material up, const Material down, const Mater
 #pragma endregion
 
 #pragma region Updates
-void Renderer::updateMaterials()
+void Renderer::updateMaterials() const
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->materialBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->materials.size() * sizeof(Material), this->materials.data(), GL_DYNAMIC_COPY);
@@ -430,7 +433,7 @@ void Renderer::updateMaterials()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::updateVertices()
+void Renderer::updateVertices() const
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->vertexBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->vertices.size() * sizeof(Vertex3), this->vertices.data(), GL_DYNAMIC_COPY);
@@ -447,7 +450,7 @@ void Renderer::updateSpheres()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void Renderer::updateIndices()
+void Renderer::updateIndices() const
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->indexBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, this->indices.size() * sizeof(int), this->indices.data(), GL_DYNAMIC_COPY);
@@ -545,6 +548,8 @@ struct Box
     vec3 Origin;
     vec3 Size;
     vec3 Rotation;
+    vec3 BoxMin;
+    vec3 BoxMax;
     int MaterialId;
 };
 
@@ -623,7 +628,7 @@ uniform struct
     bool Enabled;
 } Environment;
 
-vec3 GetEnvironmentLight(Ray ray)
+vec3 GetEnvironmentLight(in Ray ray)
 {    
     float skyGradientT = pow(smoothstep(0.0, 0.4, ray.Direction.y), 0.35);
     vec3 skyGradient = mix(Environment.SkyColorHorizon, Environment.SkyColorZenith, skyGradientT);
@@ -850,9 +855,9 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     {
         Mesh mesh = Meshes[i];
 
-        for (int index = mesh.IndicesStart; index < mesh.IndicesEnd; index += 3)
+        if (AABBIntersection(ray, invRayDir, mesh.BoxMin, mesh.BoxMax))
         {
-            if (AABBIntersection(ray, invRayDir, mesh.BoxMin, mesh.BoxMax))
+            for (int index = mesh.IndicesStart; index < mesh.IndicesEnd; index += 3)
             {
                 Vertex v1 = Vertices[Indices[index]];
                 Vertex v2 = Vertices[Indices[index + 1]];
@@ -870,7 +875,8 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     for (int i = 0; i < BoxCount; i++)
     {
         CollisionManifold current;
-        if (BoxIntersection(ray, Boxes[i], current) && current.Depth < manifold.Depth)
+        if (AABBIntersection(ray, invRayDir, Boxes[i].BoxMin, Boxes[i].BoxMax) &&
+            BoxIntersection(ray, Boxes[i], current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }

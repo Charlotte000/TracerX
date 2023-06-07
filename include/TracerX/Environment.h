@@ -22,7 +22,7 @@ struct Environment
 
     Environment(sf::Vector3f skyColorHorizon, sf::Vector3f skyColorZenith, sf::Vector3f groundColor, sf::Vector3f sunColor, sf::Vector3f sunDirection, float sunFocus, float sunIntensity, float skyIntensity);
 
-    void set(sf::Shader& shader, const std::string name);
+    void set(sf::Shader& shader) const;
 };
 
 }

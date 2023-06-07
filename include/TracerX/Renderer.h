@@ -44,7 +44,7 @@ public:
 
     void runHeadless(int iterationCount, const std::string imagePath);
 
-    int getPixelDifference();
+    int getPixelDifference() const;
 
     void add(Sphere sphere, const Material& material);
 
@@ -64,13 +64,13 @@ public:
 
     void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward);
 
-    void updateMaterials();
+    void updateMaterials() const;
 
-    void updateVertices();
+    void updateVertices() const;
 
     void updateSpheres();
 
-    void updateIndices();
+    void updateIndices() const;
 
     void updateMeshes();
 
