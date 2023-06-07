@@ -683,16 +683,17 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
 
     bool isFrontFace = tN > SmallNumber;
     float depth = isFrontFace ? tN : tF;
-    vec3 point = ray.Origin + ray.Direction * depth;
 
-    vec3 uvPoint = -normalize(point);
-    float theta = acos(-uvPoint.y);
-    float phi = atan(-uvPoint.z, uvPoint.x) + PI;
+    vec3 point = ray.Origin + ray.Direction * depth;
+    vec3 normal = (point - sphere.Origin) / sphere.Radius * (isFrontFace ? 1.0 : -1.0);
+
+    float theta = acos(normal.y);
+    float phi = atan(normal.z, -normal.x) + PI;
     manifold = CollisionManifold(
         depth,
         point,
         vec2(phi / (2 * PI), theta / PI),
-        normalize(point - sphere.Origin) * (isFrontFace ? 1.0 : -1.0),
+        normal,
         sphere.MaterialId,
         isFrontFace);
     return true;
@@ -720,7 +721,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     float u = dot(edge13, dao) * invDet;
     float v = -dot(edge12, dao) * invDet;
     float w = 1.0 - u - v;
-        
+    
     if (dst < SmallNumber || u < 0.0 || v < 0.0 || u + v > 1.0)
     {
         return false;
