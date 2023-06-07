@@ -516,6 +516,7 @@ struct Material
 struct Sphere
 {
     vec3 Origin;
+    vec3 Rotation;
     float Radius;
     int MaterialId;
 };
@@ -661,6 +662,27 @@ vec3 RandomVector3()
     return normalize(vec3(x, y, z));
 }
 
+vec3 RotateX(in vec3 v, in float angle)
+{
+    float cosX = cos(angle);
+    float sinX = sin(angle);
+    return vec3(v.x, v.y * cosX - v.z * sinX, v.y * sinX + v.z * cosX);
+}
+
+vec3 RotateY(in vec3 v, in float angle)
+{
+    float cosY = cos(angle);
+    float sinY = sin(angle);
+    return vec3(v.x * cosY + v.z * sinY, v.y, -v.x * sinY + v.z * cosY);
+}
+
+vec3 RotateZ(in vec3 v, in float angle)
+{
+    float cosZ = cos(angle);
+    float sinZ = sin(angle);
+    return vec3(v.x * cosZ - v.y * sinZ, v.x * sinZ + v.y * cosZ, v.z);
+}
+
 bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold manifold)
 {
     vec3 offset = ray.Origin - sphere.Origin;
@@ -689,8 +711,9 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     vec3 point = ray.Origin + ray.Direction * depth;
     vec3 normal = (point - sphere.Origin) / sphere.Radius * (isFrontFace ? 1.0 : -1.0);
 
-    float theta = acos(normal.y);
-    float phi = atan(normal.z, -normal.x) + PI;
+    vec3 uv = RotateZ(RotateY(RotateX(normal, sphere.Rotation.x), sphere.Rotation.y), sphere.Rotation.z);
+    float theta = acos(uv.y);
+    float phi = atan(uv.z, -uv.x) + PI;
     manifold = CollisionManifold(
         depth,
         point,
@@ -804,15 +827,17 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
 
         for (int index = mesh.IndicesStart; index < mesh.IndicesEnd; index += 3)
         {
-            CollisionManifold current;
-            Vertex v1 = Vertices[Indices[index]];
-            Vertex v2 = Vertices[Indices[index + 1]];
-            Vertex v3 = Vertices[Indices[index + 2]];
-            if (AABBIntersection(ray, invRayDir, mesh.BoxMin, mesh.BoxMax) &&
-                TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) &&
-                current.Depth < manifold.Depth)
+            if (AABBIntersection(ray, invRayDir, mesh.BoxMin, mesh.BoxMax))
             {
-                manifold = current;
+                Vertex v1 = Vertices[Indices[index]];
+                Vertex v2 = Vertices[Indices[index + 1]];
+                Vertex v3 = Vertices[Indices[index + 2]];
+            
+                CollisionManifold current;
+                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth)
+                {
+                    manifold = current;
+                }
             }
         }
     }

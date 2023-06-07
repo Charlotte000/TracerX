@@ -272,6 +272,14 @@ void GeometryUI(Renderer& renderer)
                     renderer.reset();
                 }
 
+                float rotation[3] = { sphere.rotation.x, sphere.rotation.y, sphere.rotation.z };
+                if (ImGui::DragFloat3("Rotate", rotation, .01f))
+                {
+                    sphere.rotation = sf::Vector3f(rotation[0], rotation[1], rotation[2]);
+                    renderer.updateSpheres();
+                    renderer.reset();
+                }
+
                 if (ImGui::BeginListBox("Material id"))
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
