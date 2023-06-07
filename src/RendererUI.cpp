@@ -32,7 +32,6 @@ void InfoUI(Renderer& renderer, sf::RenderTexture& target)
             renderer.reset();
         }
 
-
         if (ImGui::DragFloat("Focal length", &renderer.camera.focalLength, 0.001f, 0, 1000))
         {
             renderer.shader.setUniform("FocalLength", renderer.camera.focalLength);
@@ -127,29 +126,29 @@ void MaterialUI(Renderer& renderer)
 {
     for (int i = 0; i < renderer.materials.size(); i++)
     {
-        Material material = renderer.materials[i];
-
         if (ImGui::BeginMenu(std::string("Material " + std::to_string(i)).c_str()))
         {
+            Material& material = renderer.materials[i];
+            
             float albedo[3]{ material.albedoColor.x, material.albedoColor.y, material.albedoColor.z };
             if (ImGui::ColorEdit3("Albedo", albedo, ImGuiColorEditFlags_Float))
             {
-                renderer.materials[i].albedoColor = sf::Vector3f(albedo[0], albedo[1], albedo[2]);
+                material.albedoColor = sf::Vector3f(albedo[0], albedo[1], albedo[2]);
                 renderer.updateMaterials();
                 renderer.reset();
             }
 
             if (ImGui::BeginMenu("Albedo map"))
             {
-                if (ImGui::SliderInt("Albedo map id", &renderer.materials[i].albedoMapId, -1, renderer.textures.size() - 1))
+                if (ImGui::SliderInt("Albedo map id", &material.albedoMapId, -1, renderer.textures.size() - 1))
                 {
                     renderer.updateMaterials();
                     renderer.reset();
                 }
 
-                if (renderer.materials[i].albedoMapId >= 0)
+                if (material.albedoMapId >= 0)
                 {
-                    ImGui::Image(renderer.textures[renderer.materials[i].albedoMapId], sf::Vector2f(100, 100));
+                    ImGui::Image(renderer.textures[material.albedoMapId], sf::Vector2f(100, 100));
                 }
 
                 ImGui::EndMenu();
@@ -157,7 +156,6 @@ void MaterialUI(Renderer& renderer)
 
             if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
             {
-                renderer.materials[i].roughness = material.roughness;
                 renderer.updateMaterials();
                 renderer.reset();
             }
@@ -167,14 +165,13 @@ void MaterialUI(Renderer& renderer)
                 float metalnessColor[3]{ material.metalnessColor.x, material.metalnessColor.y, material.metalnessColor.z };
                 if (ImGui::ColorEdit3("Metalness color", metalnessColor, ImGuiColorEditFlags_Float))
                 {
-                    renderer.materials[i].metalnessColor = sf::Vector3f(metalnessColor[0], metalnessColor[1], metalnessColor[2]);
+                    material.metalnessColor = sf::Vector3f(metalnessColor[0], metalnessColor[1], metalnessColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
                 {
-                    renderer.materials[i].metalness = material.metalness;
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -187,14 +184,13 @@ void MaterialUI(Renderer& renderer)
                 float emissionColor[3]{ material.emissionColor.x, material.emissionColor.y, material.emissionColor.z };
                 if (ImGui::ColorEdit3("Emission color", emissionColor, ImGuiColorEditFlags_Float))
                 {
-                    renderer.materials[i].emissionColor = sf::Vector3f(emissionColor[0], emissionColor[1], emissionColor[2]);
+                    material.emissionColor = sf::Vector3f(emissionColor[0], emissionColor[1], emissionColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
                 {
-                    renderer.materials[i].emissionStrength = material.emissionStrength;
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -207,14 +203,13 @@ void MaterialUI(Renderer& renderer)
                 float fresnelColor[3]{ material.fresnelColor.x, material.fresnelColor.y, material.fresnelColor.z };
                 if (ImGui::ColorEdit3("Fresnel color", fresnelColor, ImGuiColorEditFlags_Float))
                 {
-                    renderer.materials[i].fresnelColor = sf::Vector3f(fresnelColor[0], fresnelColor[1], fresnelColor[2]);
+                    material.fresnelColor = sf::Vector3f(fresnelColor[0], fresnelColor[1], fresnelColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
 
                 if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
                 {
-                    renderer.materials[i].fresnelStrength = material.fresnelStrength;
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -224,14 +219,12 @@ void MaterialUI(Renderer& renderer)
 
             if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
             {
-                renderer.materials[i].refractionFactor = material.refractionFactor;
                 renderer.updateMaterials();
                 renderer.reset();
             }
 
             if (ImGui::DragFloat("Density", &material.density, .001f, 0, 100))
             {
-                renderer.materials[i].density = material.density;
                 renderer.updateMaterials();
                 renderer.reset();
             }
@@ -263,15 +256,17 @@ void GeometryUI(Renderer& renderer)
         {
             if (ImGui::BeginMenu(std::string("Sphere " + std::to_string(i)).c_str()))
             {
-                float origin[3]{ renderer.spheres[i].origin.x, renderer.spheres[i].origin.y, renderer.spheres[i].origin.z };
+                Sphere& sphere = renderer.spheres[i];
+
+                float origin[3]{ sphere.origin.x, sphere.origin.y, sphere.origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
-                    renderer.spheres[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
+                    sphere.origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     renderer.updateSpheres();
                     renderer.reset();
                 }
 
-                if (ImGui::DragFloat("Radius", &renderer.spheres[i].radius, .001f))
+                if (ImGui::DragFloat("Radius", &sphere.radius, .001f))
                 {
                     renderer.updateSpheres();
                     renderer.reset();
@@ -281,10 +276,10 @@ void GeometryUI(Renderer& renderer)
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
                     {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == renderer.spheres[i].materialId) &&
-                            materialId != renderer.spheres[i].materialId)
+                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), sphere.materialId) &&
+                            materialId != sphere.materialId)
                         {
-                            renderer.spheres[i].materialId = materialId;
+                            sphere.materialId = materialId;
                             renderer.updateSpheres();
                             renderer.reset();
                         }
@@ -295,7 +290,7 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - renderer.spheres[i].origin);
+                    renderer.camera.focalLength = length(renderer.camera.position - sphere.origin);
                     renderer.reset();
                 }
 
@@ -326,18 +321,20 @@ void GeometryUI(Renderer& renderer)
         {
             if (ImGui::BeginMenu(std::string("Box " + std::to_string(i)).c_str()))
             {
-                float origin[3]{ renderer.boxes[i].origin.x, renderer.boxes[i].origin.y, renderer.boxes[i].origin.z };
+                Box& box = renderer.boxes[i];
+
+                float origin[3]{ box.origin.x, box.origin.y, box.origin.z };
                 if (ImGui::DragFloat3("Origin", origin, .001f))
                 {
-                    renderer.boxes[i].origin = sf::Vector3f(origin[0], origin[1], origin[2]);
+                    box.origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     renderer.updateBoxes();
                     renderer.reset();
                 }
 
-                float size[3]{ renderer.boxes[i].size.x, renderer.boxes[i].size.y, renderer.boxes[i].size.z };
+                float size[3]{ box.size.x, box.size.y, box.size.z };
                 if (ImGui::DragFloat3("Size", size, .001f))
                 {
-                    renderer.boxes[i].size = sf::Vector3f(size[0], size[1], size[2]);
+                    box.size = sf::Vector3f(size[0], size[1], size[2]);
                     renderer.updateBoxes();
                     renderer.reset();
                 }
@@ -346,10 +343,10 @@ void GeometryUI(Renderer& renderer)
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
                     {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == renderer.boxes[i].materialId) &&
-                            materialId != renderer.boxes[i].materialId)
+                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == box.materialId) &&
+                            materialId != box.materialId)
                         {
-                            renderer.boxes[i].materialId = materialId;
+                            box.materialId = materialId;
                             renderer.updateBoxes();
                             renderer.reset();
                         }
@@ -360,7 +357,7 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - renderer.boxes[i].origin);
+                    renderer.camera.focalLength = length(renderer.camera.position - box.origin);
                     renderer.reset();
                 }
 
@@ -391,37 +388,39 @@ void GeometryUI(Renderer& renderer)
         {
             if (ImGui::BeginMenu(std::string("Mesh " + std::to_string(i)).c_str()))
             {
-                ImGui::Text("Indices start: %i", renderer.meshes[i].indicesStart);
-                ImGui::Text("Indices end: %i", renderer.meshes[i].indicesEnd);
-                ImGui::Text("Bounding box min: (%f, %f, %f)", renderer.meshes[i].boxMin.x, renderer.meshes[i].boxMin.y, renderer.meshes[i].boxMin.z);
-                ImGui::Text("Bounding box max: (%f, %f, %f)", renderer.meshes[i].boxMax.x, renderer.meshes[i].boxMax.y, renderer.meshes[i].boxMax.z);
+                Mesh& mesh = renderer.meshes[i];
 
-                float offset[3] = { renderer.meshes[i].position.x, renderer.meshes[i].position.y, renderer.meshes[i].position.z };
+                ImGui::Text("Indices start: %i", mesh.indicesStart);
+                ImGui::Text("Indices end: %i", mesh.indicesEnd);
+                ImGui::Text("Bounding box min: (%f, %f, %f)", mesh.boxMin.x, mesh.boxMin.y, mesh.boxMin.z);
+                ImGui::Text("Bounding box max: (%f, %f, %f)", mesh.boxMax.x, mesh.boxMax.y, mesh.boxMax.z);
+
+                float offset[3] = { mesh.position.x, mesh.position.y, mesh.position.z };
                 if (ImGui::DragFloat3("Offset", offset, .01f))
                 {
-                    sf::Vector3f offsetV(offset[0] - renderer.meshes[i].position.x, offset[1] - renderer.meshes[i].position.y, offset[2] - renderer.meshes[i].position.z);
+                    sf::Vector3f offsetV = sf::Vector3f(offset[0], offset[1], offset[2]) - mesh.position;
                     renderer.reset();
-                    renderer.meshes[i].offset(offsetV, renderer.indices, renderer.vertices);
+                    mesh.offset(offsetV, renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
                 }
 
-                float scale[3] = { renderer.meshes[i].size.x, renderer.meshes[i].size.y, renderer.meshes[i].size.z };
+                float scale[3] = { mesh.size.x, mesh.size.y, mesh.size.z };
                 if (ImGui::DragFloat3("Scale", scale, .01f) && scale[0] != 0 && scale[1] != 0 && scale[2] != 0)
                 {
-                    sf::Vector3f sizeV(scale[0] / renderer.meshes[i].size.x, scale[1] / renderer.meshes[i].size.y, scale[2] / renderer.meshes[i].size.z);
+                    sf::Vector3f sizeV(scale[0] / mesh.size.x, scale[1] / mesh.size.y, scale[2] / mesh.size.z);
                     renderer.reset();
-                    renderer.meshes[i].scale(sizeV, renderer.indices, renderer.vertices);
+                    mesh.scale(sizeV, renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
                 }
 
-                float rotation[3] = { renderer.meshes[i].rotation.x, renderer.meshes[i].rotation.y, renderer.meshes[i].rotation.z };
+                float rotation[3] = { mesh.rotation.x, mesh.rotation.y, mesh.rotation.z };
                 if (ImGui::DragFloat3("Rotate", rotation, .01f))
                 {
-                    sf::Vector3f rotationV(rotation[0] - renderer.meshes[i].rotation.x, rotation[1] - renderer.meshes[i].rotation.y, rotation[2] - renderer.meshes[i].rotation.z);
+                    sf::Vector3f rotationV = sf::Vector3f(rotation[0], rotation[1], rotation[2]) - mesh.rotation;
                     renderer.reset();
-                    renderer.meshes[i].rotate(rotationV, renderer.indices, renderer.vertices);
+                    mesh.rotate(rotationV, renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
                 }
@@ -430,10 +429,10 @@ void GeometryUI(Renderer& renderer)
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
                     {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == renderer.meshes[i].materialId) &&
-                            materialId != renderer.meshes[i].materialId)
+                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == mesh.materialId) &&
+                            materialId != mesh.materialId)
                         {
-                            renderer.meshes[i].materialId = materialId;
+                            mesh.materialId = materialId;
                             renderer.updateMeshes();
                             renderer.reset();
                         }
@@ -444,7 +443,7 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - renderer.meshes[i].position);
+                    renderer.camera.focalLength = length(renderer.camera.position - mesh.position);
                     renderer.reset();
                 }
 
@@ -584,13 +583,18 @@ void TextureUI(Renderer& renderer)
         ImGui::InputText("File path", &filePath);
         if (ImGui::Button("Load"))
         {
-            renderer.addTexture(filePath);
-            renderer.updateTextures();
-            renderer.reset();
+            try
+            {
+                renderer.addTexture(filePath);
+                renderer.updateTextures();
+                renderer.reset();
+            }
+            catch (std::runtime_error&) { }
+
             ImGui::CloseCurrentPopup();
         }
         
-        ImGui::EndPopup();   
+        ImGui::EndPopup();
     }
 }
 
