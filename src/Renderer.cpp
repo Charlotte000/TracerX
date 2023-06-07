@@ -544,6 +544,7 @@ struct Box
 {
     vec3 Origin;
     vec3 Size;
+    vec3 Rotation;
     int MaterialId;
 };
 
@@ -662,25 +663,47 @@ vec3 RandomVector3()
     return normalize(vec3(x, y, z));
 }
 
-vec3 RotateX(in vec3 v, in float angle)
+vec3 Rotate(in vec3 v, in vec3 angle)
 {
-    float cosX = cos(angle);
-    float sinX = sin(angle);
-    return vec3(v.x, v.y * cosX - v.z * sinX, v.y * sinX + v.z * cosX);
+    vec3 result = v;
+
+    float cosX = cos(angle.x);
+    float sinX = sin(angle.x);
+    result = vec3(result.x, result.y * cosX - result.z * sinX, result.y * sinX + result.z * cosX);
+
+    float cosY = cos(angle.y);
+    float sinY = sin(angle.y);
+    result = vec3(result.x * cosY + result.z * sinY, result.y, -result.x * sinY + result.z * cosY);
+
+    float cosZ = cos(angle.z);
+    float sinZ = sin(angle.z);
+    result = vec3(result.x * cosZ - result.y * sinZ, result.x * sinZ + result.y * cosZ, result.z);
+    
+    return result;
 }
 
-vec3 RotateY(in vec3 v, in float angle)
+vec3 RotateInv(in vec3 v, in vec3 angle)
 {
-    float cosY = cos(angle);
-    float sinY = sin(angle);
-    return vec3(v.x * cosY + v.z * sinY, v.y, -v.x * sinY + v.z * cosY);
+    vec3 result = v;
+
+    float cosZ = cos(angle.z);
+    float sinZ = sin(angle.z);
+    result = vec3(result.x * cosZ - result.y * sinZ, result.x * sinZ + result.y * cosZ, result.z);
+
+    float cosY = cos(angle.y);
+    float sinY = sin(angle.y);
+    result = vec3(result.x * cosY + result.z * sinY, result.y, -result.x * sinY + result.z * cosY);
+
+    float cosX = cos(angle.x);
+    float sinX = sin(angle.x);
+    result = vec3(result.x, result.y * cosX - result.z * sinX, result.y * sinX + result.z * cosX);
+    
+    return result;
 }
 
-vec3 RotateZ(in vec3 v, in float angle)
+Ray Rotate(in Ray ray, in vec3 origin, in vec3 angle)
 {
-    float cosZ = cos(angle);
-    float sinZ = sin(angle);
-    return vec3(v.x * cosZ - v.y * sinZ, v.x * sinZ + v.y * cosZ, v.z);
+    return Ray(Rotate(ray.Origin - origin, angle) + origin, Rotate(ray.Direction, angle), ray.Color, ray.IncomingLight);
 }
 
 bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold manifold)
@@ -711,7 +734,7 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     vec3 point = ray.Origin + ray.Direction * depth;
     vec3 normal = (point - sphere.Origin) / sphere.Radius * (isFrontFace ? 1.0 : -1.0);
 
-    vec3 uv = RotateZ(RotateY(RotateX(normal, sphere.Rotation.x), sphere.Rotation.y), sphere.Rotation.z);
+    vec3 uv = Rotate(normal, -sphere.Rotation);
     float theta = acos(uv.y);
     float phi = atan(uv.z, -uv.x) + PI;
     manifold = CollisionManifold(
@@ -764,8 +787,9 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
 
 bool BoxIntersection(in Ray ray, in Box box, out CollisionManifold manifold)
 {
-    vec3 m = 1.0 / ray.Direction;
-    vec3 n = m * (ray.Origin - box.Origin);
+    Ray rotatedRay = Rotate(ray, box.Origin, -box.Rotation);
+    vec3 m = 1.0 / rotatedRay.Direction;
+    vec3 n = m * (rotatedRay.Origin - box.Origin);
     vec3 k = abs(m) * box.Size / 2.0;
     vec3 t1 = -n - k;
     vec3 t2 = -n + k;
@@ -778,7 +802,8 @@ bool BoxIntersection(in Ray ray, in Box box, out CollisionManifold manifold)
 
     bool isFrontFace = tN > SmallNumber;
 
-    vec3 normal = -sign(ray.Direction) * (isFrontFace ?  step(vec3(tN), t1) : step(t2, vec3(tF)));
+    vec3 normal = -sign(rotatedRay.Direction) * (isFrontFace ?  step(vec3(tN), t1) : step(t2, vec3(tF)));
+    normal = RotateInv(normal, box.Rotation);
     float depth = isFrontFace? tN : tF;
     manifold = CollisionManifold(
         depth,
