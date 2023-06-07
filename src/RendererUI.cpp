@@ -536,6 +536,12 @@ void EnvironmentUI(Renderer& renderer)
             renderer.reset();
         }
 
+        if (ImGui::DragFloat("Intensity", &renderer.environment.skyIntensity, 0.0001f, 0, 2))
+        {
+            renderer.environment.set(renderer.shader, "Environment");
+            renderer.reset();
+        }
+
         ImGui::EndMenu();
     }
 

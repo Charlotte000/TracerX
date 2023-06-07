@@ -617,6 +617,7 @@ uniform struct
     vec3 SunDirection;
     float SunFocus;
     float SunIntensity;
+    float SkyIntensity;
     bool Enabled;
 } Environment;
 
@@ -628,7 +629,7 @@ vec3 GetEnvironmentLight(Ray ray)
     
     float groundToSkyT = smoothstep(-0.01, 0.0, ray.Direction.y);
     float sunMask = groundToSkyT >= 1.0 ? 1.0 : 0.0;
-    return mix(Environment.GroundColor, skyGradient, groundToSkyT) + Environment.SunColor * sun * sunMask;
+    return mix(Environment.GroundColor, skyGradient, groundToSkyT) * Environment.SkyIntensity + Environment.SunColor * sun * sunMask;
 }
 
 float RandomValue()
