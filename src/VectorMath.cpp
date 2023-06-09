@@ -17,6 +17,11 @@ sf::Vector3f mult(const sf::Vector3f& a, const sf::Vector3f& b)
     return sf::Vector3f(a.x * b.x, a.y * b.y, a.z * b.z);
 }
 
+sf::Vector3f div(const sf::Vector3f& a, const sf::Vector3f& b)
+{
+    return sf::Vector3f(a.x / b.x, a.y / b.y, a.z / b.z);
+}
+
 float dot(const sf::Vector3f& a, const sf::Vector3f& b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;

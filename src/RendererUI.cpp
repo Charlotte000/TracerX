@@ -11,24 +11,20 @@ void InfoUI(Renderer& renderer, sf::RenderTexture& target)
     ImGui::Text("Window size: %dx%d", renderer.size.x, renderer.size.y);
     if (ImGui::BeginMenu("Camera"))
     {
-        float position[3]{ renderer.camera.position.x, renderer.camera.position.y, renderer.camera.position.z };
-        if (ImGui::DragFloat3("Position", position, .01f))
+        if (ImGui::DragFloat3("Position", (float*)&renderer.camera.position, .01f))
         {
-            renderer.camera.position = sf::Vector3f(position[0], position[1], position[2]);
             renderer.reset();
         }
 
-        float forward[3]{ renderer.camera.forward.x, renderer.camera.forward.y, renderer.camera.forward.z };
-        if (ImGui::DragFloat3("Forward", forward, .01f))
+        if (ImGui::DragFloat3("Forward", (float*)&renderer.camera.forward, .01f))
         {
-            renderer.camera.forward = normalized(sf::Vector3f(forward[0], forward[1], forward[2]));
+            renderer.camera.forward = normalized(renderer.camera.forward);
             renderer.reset();
         }
 
-        float up[3]{ renderer.camera.up.x, renderer.camera.up.y, renderer.camera.up.z };
-        if (ImGui::DragFloat3("Up", up, .01f))
+        if (ImGui::DragFloat3("Up", (float*)&renderer.camera.up, .01f))
         {
-            renderer.camera.up = normalized(sf::Vector3f(up[0], up[1], up[2]));
+            renderer.camera.up = normalized(renderer.camera.up);
             renderer.reset();
         }
 
@@ -130,10 +126,8 @@ void MaterialUI(Renderer& renderer)
         {
             Material& material = renderer.materials[i];
             
-            float albedo[3]{ material.albedoColor.x, material.albedoColor.y, material.albedoColor.z };
-            if (ImGui::ColorEdit3("Albedo", albedo, ImGuiColorEditFlags_Float))
+            if (ImGui::ColorEdit3("Albedo", (float*)&material.albedoColor, ImGuiColorEditFlags_Float))
             {
-                material.albedoColor = sf::Vector3f(albedo[0], albedo[1], albedo[2]);
                 renderer.updateMaterials();
                 renderer.reset();
             }
@@ -162,10 +156,8 @@ void MaterialUI(Renderer& renderer)
 
             if (ImGui::BeginMenu("Metalness"))
             {
-                float metalnessColor[3]{ material.metalnessColor.x, material.metalnessColor.y, material.metalnessColor.z };
-                if (ImGui::ColorEdit3("Metalness color", metalnessColor, ImGuiColorEditFlags_Float))
+                if (ImGui::ColorEdit3("Metalness color", (float*)&material.metalnessColor, ImGuiColorEditFlags_Float))
                 {
-                    material.metalnessColor = sf::Vector3f(metalnessColor[0], metalnessColor[1], metalnessColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -181,10 +173,8 @@ void MaterialUI(Renderer& renderer)
 
             if (ImGui::BeginMenu("Emission"))
             {
-                float emissionColor[3]{ material.emissionColor.x, material.emissionColor.y, material.emissionColor.z };
-                if (ImGui::ColorEdit3("Emission color", emissionColor, ImGuiColorEditFlags_Float))
+                if (ImGui::ColorEdit3("Emission color", (float*)&material.emissionColor, ImGuiColorEditFlags_Float))
                 {
-                    material.emissionColor = sf::Vector3f(emissionColor[0], emissionColor[1], emissionColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -200,10 +190,8 @@ void MaterialUI(Renderer& renderer)
 
             if (ImGui::BeginMenu("Fresnel"))
             {
-                float fresnelColor[3]{ material.fresnelColor.x, material.fresnelColor.y, material.fresnelColor.z };
-                if (ImGui::ColorEdit3("Fresnel color", fresnelColor, ImGuiColorEditFlags_Float))
+                if (ImGui::ColorEdit3("Fresnel color", (float*)&material.fresnelColor, ImGuiColorEditFlags_Float))
                 {
-                    material.fresnelColor = sf::Vector3f(fresnelColor[0], fresnelColor[1], fresnelColor[2]);
                     renderer.updateMaterials();
                     renderer.reset();
                 }
@@ -258,10 +246,8 @@ void GeometryUI(Renderer& renderer)
             {
                 Sphere& sphere = renderer.spheres[i];
 
-                float origin[3]{ sphere.origin.x, sphere.origin.y, sphere.origin.z };
-                if (ImGui::DragFloat3("Origin", origin, .001f))
+                if (ImGui::DragFloat3("Origin", (float*)&sphere.origin, .001f))
                 {
-                    sphere.origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     renderer.updateSpheres();
                     renderer.reset();
                 }
@@ -272,10 +258,8 @@ void GeometryUI(Renderer& renderer)
                     renderer.reset();
                 }
 
-                float rotation[3] = { sphere.rotation.x, sphere.rotation.y, sphere.rotation.z };
-                if (ImGui::DragFloat3("Rotate", rotation, .01f))
+                if (ImGui::DragFloat3("Rotate", (float*)&sphere.rotation, .01f))
                 {
-                    sphere.rotation = sf::Vector3f(rotation[0], rotation[1], rotation[2]);
                     renderer.updateSpheres();
                     renderer.reset();
                 }
@@ -284,7 +268,7 @@ void GeometryUI(Renderer& renderer)
                 {
                     for (int materialId = 0; materialId < renderer.materials.size(); materialId++)
                     {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), sphere.materialId) &&
+                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == sphere.materialId) &&
                             materialId != sphere.materialId)
                         {
                             sphere.materialId = materialId;
@@ -334,28 +318,22 @@ void GeometryUI(Renderer& renderer)
                 ImGui::Text("Bounding box min: (%f, %f, %f)", box.boxMin.x, box.boxMin.y, box.boxMin.z);
                 ImGui::Text("Bounding box max: (%f, %f, %f)", box.boxMax.x, box.boxMax.y, box.boxMax.z);
 
-                float origin[3]{ box.origin.x, box.origin.y, box.origin.z };
-                if (ImGui::DragFloat3("Origin", origin, .001f))
+                if (ImGui::DragFloat3("Origin", (float*)&box.origin, .001f))
                 {
-                    box.origin = sf::Vector3f(origin[0], origin[1], origin[2]);
                     box.updateAABB();
                     renderer.updateBoxes();
                     renderer.reset();
                 }
 
-                float size[3]{ box.size.x, box.size.y, box.size.z };
-                if (ImGui::DragFloat3("Size", size, .001f))
+                if (ImGui::DragFloat3("Size", (float*)&box.size, .001f))
                 {
-                    box.size = sf::Vector3f(size[0], size[1], size[2]);
                     box.updateAABB();
                     renderer.updateBoxes();
                     renderer.reset();
                 }
 
-                float rotation[3] = { box.rotation.x, box.rotation.y, box.rotation.z };
-                if (ImGui::DragFloat3("Rotate", rotation, .01f))
+                if (ImGui::DragFloat3("Rotate", (float*)&box.rotation, .01f))
                 {
-                    box.rotation = sf::Vector3f(rotation[0], rotation[1], rotation[2]);
                     box.updateAABB();
                     renderer.updateBoxes();
                     renderer.reset();
@@ -417,33 +395,30 @@ void GeometryUI(Renderer& renderer)
                 ImGui::Text("Bounding box min: (%f, %f, %f)", mesh.boxMin.x, mesh.boxMin.y, mesh.boxMin.z);
                 ImGui::Text("Bounding box max: (%f, %f, %f)", mesh.boxMax.x, mesh.boxMax.y, mesh.boxMax.z);
 
-                float offset[3] = { mesh.position.x, mesh.position.y, mesh.position.z };
-                if (ImGui::DragFloat3("Offset", offset, .01f))
+                sf::Vector3f offset = mesh.position;
+                if (ImGui::DragFloat3("Offset", (float*)&offset, .01f))
                 {
-                    sf::Vector3f offsetV = sf::Vector3f(offset[0], offset[1], offset[2]) - mesh.position;
-                    mesh.offset(offsetV, renderer.indices, renderer.vertices);
+                    mesh.offset(offset - mesh.position, renderer.indices, renderer.vertices);
                     mesh.updateAABB(renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
                     renderer.reset();
                 }
 
-                float scale[3] = { mesh.size.x, mesh.size.y, mesh.size.z };
-                if (ImGui::DragFloat3("Scale", scale, .01f) && scale[0] != 0 && scale[1] != 0 && scale[2] != 0)
+                sf::Vector3f scale = mesh.size;
+                if (ImGui::DragFloat3("Scale", (float*)&scale, .01f) && scale.x != 0 && scale.y != 0 && scale.z != 0)
                 {
-                    sf::Vector3f sizeV(scale[0] / mesh.size.x, scale[1] / mesh.size.y, scale[2] / mesh.size.z);
-                    mesh.scale(sizeV, renderer.indices, renderer.vertices);
+                    mesh.scale(div(scale, mesh.size), renderer.indices, renderer.vertices);
                     mesh.updateAABB(renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
                     renderer.reset();
                 }
 
-                float rotation[3] = { mesh.rotation.x, mesh.rotation.y, mesh.rotation.z };
-                if (ImGui::DragFloat3("Rotate", rotation, .01f))
+                sf::Vector3f rotation = mesh.rotation;
+                if (ImGui::DragFloat3("Rotate", (float*)&rotation, .01f))
                 {
-                    sf::Vector3f rotationV = sf::Vector3f(rotation[0], rotation[1], rotation[2]) - mesh.rotation;
-                    mesh.rotate(rotationV, renderer.indices, renderer.vertices);
+                    mesh.rotate(rotation - mesh.rotation, renderer.indices, renderer.vertices);
                     mesh.updateAABB(renderer.indices, renderer.vertices);
                     renderer.updateMeshes();
                     renderer.updateVertices();
@@ -512,18 +487,15 @@ void EnvironmentUI(Renderer& renderer)
 {
     if (ImGui::BeginMenu("Sun"))
     {
-        float sunColor[3]{ renderer.environment.sunColor.x, renderer.environment.sunColor.y, renderer.environment.sunColor.z };
-        if (ImGui::ColorEdit3("Color", sunColor, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3("Color", (float*)&renderer.environment.sunColor, ImGuiColorEditFlags_Float))
         {
-            renderer.environment.sunColor = sf::Vector3f(sunColor[0], sunColor[1], sunColor[2]);
             renderer.environment.set(renderer.shader);
             renderer.reset();
         }
 
-        float sunDirection[3]{ renderer.environment.sunDirection.x, renderer.environment.sunDirection.y, renderer.environment.sunDirection.z };
-        if (ImGui::DragFloat3("Direction", sunDirection, 0.001f))
+        if (ImGui::DragFloat3("Direction", (float*)&renderer.environment.sunDirection, 0.001f))
         {
-            renderer.environment.sunDirection = normalized(sf::Vector3f(sunDirection[0], sunDirection[1], sunDirection[2]));
+            renderer.environment.sunDirection = normalized(renderer.environment.sunDirection);
             renderer.environment.set(renderer.shader);
             renderer.reset();
         }
@@ -545,10 +517,8 @@ void EnvironmentUI(Renderer& renderer)
 
     if (ImGui::BeginMenu("Sky"))
     {
-        float horizon[3]{ renderer.environment.skyColorHorizon.x, renderer.environment.skyColorHorizon.y, renderer.environment.skyColorHorizon.z };
-        if (ImGui::ColorEdit3("Horizon", horizon, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3("Horizon", (float*)&renderer.environment.skyColorHorizon, ImGuiColorEditFlags_Float))
         {
-            renderer.environment.skyColorHorizon = sf::Vector3f(horizon[0], horizon[1], horizon[2]);
             renderer.environment.set(renderer.shader);
             renderer.reset();
         }
@@ -570,10 +540,8 @@ void EnvironmentUI(Renderer& renderer)
         ImGui::EndMenu();
     }
 
-    float ground[3]{ renderer.environment.groundColor.x, renderer.environment.groundColor.y, renderer.environment.groundColor.z };
-    if (ImGui::ColorEdit3("Ground", ground, ImGuiColorEditFlags_Float))
+    if (ImGui::ColorEdit3("Ground", (float*)&renderer.environment.groundColor, ImGuiColorEditFlags_Float))
     {
-        renderer.environment.groundColor = sf::Vector3f(ground[0], ground[1], ground[2]);
         renderer.environment.set(renderer.shader);
         renderer.reset();
     }

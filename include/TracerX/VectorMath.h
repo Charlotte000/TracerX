@@ -9,6 +9,8 @@ sf::Vector3f cross(const sf::Vector3f& a, const sf::Vector3f& b);
 
 sf::Vector3f mult(const sf::Vector3f& a, const sf::Vector3f& b);
 
+sf::Vector3f div(const sf::Vector3f& a, const sf::Vector3f& b);
+
 float dot(const sf::Vector3f& a, const sf::Vector3f& b);
 
 sf::Vector3f normalized(const sf::Vector3f& v);

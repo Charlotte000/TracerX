@@ -885,6 +885,15 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     return !isinf(manifold.Depth);
 }
 
+vec3 GetAlbedo(in CollisionManifold manifold)
+{
+    Material material = Materials[manifold.MaterialId];
+    vec3 albedoMap = material.AlbedoMapId >= 0 ?
+        texture(Textures[material.AlbedoMapId], manifold.TextureCoordinate).rgb :
+        vec3(1);
+    return material.AlbedoColor * albedoMap;
+}
+
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = Materials[manifold.MaterialId];
@@ -904,7 +913,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
             ray.Direction = RandomVector3();
 
             ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
-            ray.Color *= material.AlbedoColor;
+            ray.Color *= GetAlbedo(manifold);
         }
         else
         {
@@ -930,8 +939,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
         material.FresnelColor : 
         material.Metalness >= RandomValue() ? 
         material.MetalnessColor :
-        (material.AlbedoMapId >= 0 ? texture(Textures[material.AlbedoMapId], manifold.TextureCoordinate).rgb : vec3(1)) *
-        material.AlbedoColor;
+        GetAlbedo(manifold);
 }
 
 vec3 SendRay(in Ray ray)
