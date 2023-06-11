@@ -414,14 +414,14 @@ void Renderer::addCornellBox(const Material up, const Material down, const Mater
 
 void Renderer::addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward)
 {
-    this->add(Box(sf::Vector3f(0, 1.5f, -1), sf::Vector3f(2, 1, 4)), up);
-    this->add(Box(sf::Vector3f(0, -1.5f, -1), sf::Vector3f(2, 1, 4)), down);
+    this->add(Box(sf::Vector3f(0, 1.5f, -.5f), sf::Vector3f(2, 1, 3)), up);
+    this->add(Box(sf::Vector3f(0, -1.5f, -.5f), sf::Vector3f(2, 1, 3)), down);
 
-    this->add(Box(sf::Vector3f(1.5f, 0, -1), sf::Vector3f(1, 2, 4)), left);
-    this->add(Box(sf::Vector3f(-1.5f, 0, -1), sf::Vector3f(1, 2, 4)), right);
+    this->add(Box(sf::Vector3f(1.5f, 0, -.5f), sf::Vector3f(1, 2, 3)), left);
+    this->add(Box(sf::Vector3f(-1.5f, 0, -.5f), sf::Vector3f(1, 2, 3)), right);
 
     this->add(Box(sf::Vector3f(0, 0, 1.5f), sf::Vector3f(2, 2, 1)), forward);
-    this->add(Box(sf::Vector3f(0, 0, -3.5f), sf::Vector3f(2, 2, 1)), backward);
+    this->add(Box(sf::Vector3f(0, 0, -2.5f), sf::Vector3f(2, 2, 1)), backward);
 }
 #pragma endregion
 

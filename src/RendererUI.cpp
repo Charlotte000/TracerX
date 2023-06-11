@@ -288,7 +288,8 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - sphere.origin);
+                    renderer.camera.lookAt(sphere.origin);
+                    renderer.shader.setUniform("FocalLength", renderer.camera.focalLength);
                     renderer.reset();
                 }
 
@@ -363,7 +364,8 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - box.origin);
+                    renderer.camera.lookAt(box.origin);
+                    renderer.shader.setUniform("FocalLength", renderer.camera.focalLength);
                     renderer.reset();
                 }
 
@@ -449,7 +451,8 @@ void GeometryUI(Renderer& renderer)
 
                 if (ImGui::Button("Focus camera"))
                 {
-                    renderer.camera.focalLength = length(renderer.camera.position - mesh.position);
+                    renderer.camera.lookAt(mesh.position);
+                    renderer.shader.setUniform("FocalLength", renderer.camera.focalLength);
                     renderer.reset();
                 }
 

@@ -65,4 +65,11 @@ void Camera::move(const sf::RenderWindow& window)
     this->forward = rotateAroundAxis(this->forward, this->up, -mouseDelta.x);
 }
 
+void Camera::lookAt(sf::Vector3f position)
+{
+    this->forward = normalized(position - this->position);
+    this->up = normalized(cross(cross(this->forward, this->up), this->forward));
+    this->focalLength = length(this->position - position);
+}
+
 }

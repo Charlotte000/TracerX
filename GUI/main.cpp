@@ -6,7 +6,7 @@ using namespace sf;
 
 int main()
 {
-    Camera camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
+    Camera camera(Vector3f(0, 0, -2), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
     Renderer renderer(Vector2i(900, 900), camera, 5, 5);
     renderer.subDivisor = Vector2i(2, 2);
 
