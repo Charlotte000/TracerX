@@ -29,6 +29,7 @@ Material Material::Transparent(sf::Vector3f albedoColor, float refractionFactor,
 Material Material::ConstantDensity(sf::Vector3f albedoColor, float density)
 {
     Material m(albedoColor);
+    m.refractionFactor = 1.0f;
     m.density = density;
     return m;
 }

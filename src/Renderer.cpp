@@ -885,9 +885,14 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
     return !isinf(manifold.Depth);
 }
 
-vec3 GetAlbedo(in CollisionManifold manifold)
+vec3 GetColor(in CollisionManifold manifold)
 {
     Material material = Materials[manifold.MaterialId];
+    if (material.Metalness >= RandomValue())
+    {
+        return material.MetalnessColor;
+    }
+
     vec3 albedoMap = material.AlbedoMapId >= 0 ?
         texture(Textures[material.AlbedoMapId], manifold.TextureCoordinate).rgb :
         vec3(1);
@@ -898,48 +903,60 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = Materials[manifold.MaterialId];
 
-    if (material.Density > 0)
+    // Fresnel
+    if (material.FresnelStrength > 0.0 &&
+        1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
     {
-        if (manifold.IsFrontFace)
-        {
-            ray.Origin = manifold.Point;
-            return;
-        }
+        ray.Origin = manifold.Point;
+        ray.Direction = reflect(ray.Direction, manifold.Normal);
 
-        float depth = -log(RandomValue()) / material.Density;
-        if (depth < manifold.Depth)
+        ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
+        ray.Color *= material.FresnelColor;
+        return;
+    }
+
+    // Refraction
+    if (material.RefractionFactor > 0.0)
+    {
+        vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
+        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor);
+
+        // Density
+        if (material.Density > 0.0)
         {
+            float depth = -log(RandomValue()) / material.Density;
+            if (manifold.IsFrontFace || depth >= manifold.Depth)
+            {
+                ray.Origin = manifold.Point;
+                ray.Direction = normalize(mix(reflectedDir, refractedDir, material.Roughness));
+                return;
+            }
+
             ray.Origin += ray.Direction * depth;
             ray.Direction = RandomVector3();
 
             ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
-            ray.Color *= GetAlbedo(manifold);
+            ray.Color *= GetColor(manifold);
+            return;
         }
-        else
-        {
-            ray.Origin = manifold.Point;
-        }
+        
+        ray.Origin = manifold.Point;
+        ray.Direction = normalize(mix(reflectedDir, refractedDir, material.Roughness));
 
+        ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
+        ray.Color *= GetColor(manifold);
         return;
     }
 
-    vec3 reactedDir = material.RefractionFactor > 0 ?
-        refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? material.RefractionFactor : 1.0 / material.RefractionFactor) :
-        normalize(RandomVector3() + manifold.Normal);
+    // Diffuse
     vec3 reflectedDir = reflect(ray.Direction, manifold.Normal);
-
-    float fresnelValue = material.FresnelStrength > 0.0 ? 1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) : 0.0;
-    float fresnelMask = fresnelValue >= RandomValue() ? 0.0 : 1.0;
+    vec3 randomDir = normalize(RandomVector3() + manifold.Normal);
 
     ray.Origin = manifold.Point;
-    ray.Direction = normalize(mix(reflectedDir, reactedDir, material.Roughness * fresnelMask));
+    ray.Direction = normalize(mix(reflectedDir, randomDir, material.Roughness));
 
     ray.IncomingLight += material.EmissionColor * material.EmissionStrength * ray.Color;
-    ray.Color *= material.FresnelStrength > 0.0 && fresnelMask < 1.0 ? 
-        material.FresnelColor : 
-        material.Metalness >= RandomValue() ? 
-        material.MetalnessColor :
-        GetAlbedo(manifold);
+    ray.Color *= GetColor(manifold);
 }
 
 vec3 SendRay(in Ray ray)
