@@ -11,6 +11,12 @@ void InfoUI(Renderer& renderer, sf::RenderTexture& target)
     ImGui::Text("Window size: %dx%d", renderer.size.x, renderer.size.y);
     if (ImGui::BeginMenu("Camera"))
     {
+        if (ImGui::SliderAngle("FOV", &renderer.camera.fov, 0, 360.0f))
+        {
+            renderer.shader.setUniform("CameraFOV", renderer.camera.fov);
+            renderer.reset();
+        }
+
         if (ImGui::DragFloat3("Position", (float*)&renderer.camera.position, .01f))
         {
             renderer.reset();

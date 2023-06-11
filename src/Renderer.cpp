@@ -64,6 +64,7 @@ void Renderer::loadShader()
     this->shader.setUniform("CameraPosition", this->camera.position);
     this->shader.setUniform("CameraForward", this->camera.forward);
     this->shader.setUniform("CameraUp", this->camera.up);
+    this->shader.setUniform("CameraFOV", this->camera.fov);
 }
 
 void Renderer::run()
@@ -575,6 +576,7 @@ uniform float FocalLength;
 uniform vec3 CameraUp;
 uniform vec3 CameraPosition;
 uniform vec3 CameraForward;
+uniform float CameraFOV;
 
 layout (std430, binding = 1) buffer MaterialBuffer
 {
@@ -668,7 +670,12 @@ vec3 RandomVector3()
     return normalize(vec3(x, y, z));
 }
 
-vec3 Rotate(in vec3 v, in vec3 angle)
+vec3 RotateAxis(in vec3 v, in vec3 axis, in float angle)
+{
+    return v * cos(angle) + cross(axis, v) * sin(angle) + axis * dot(axis, v) * (1 - cos(angle));
+}
+
+vec3 RotateXYZ(in vec3 v, in vec3 angle)
 {
     vec3 result = v;
 
@@ -687,7 +694,7 @@ vec3 Rotate(in vec3 v, in vec3 angle)
     return result;
 }
 
-vec3 RotateInv(in vec3 v, in vec3 angle)
+vec3 RotateZYX(in vec3 v, in vec3 angle)
 {
     vec3 result = v;
 
@@ -706,9 +713,9 @@ vec3 RotateInv(in vec3 v, in vec3 angle)
     return result;
 }
 
-Ray Rotate(in Ray ray, in vec3 origin, in vec3 angle)
+Ray RotateXYZ(in Ray ray, in vec3 origin, in vec3 angle)
 {
-    return Ray(Rotate(ray.Origin - origin, angle) + origin, Rotate(ray.Direction, angle), ray.Color, ray.IncomingLight);
+    return Ray(RotateXYZ(ray.Origin - origin, angle) + origin, RotateXYZ(ray.Direction, angle), ray.Color, ray.IncomingLight);
 }
 
 bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold manifold)
@@ -739,7 +746,7 @@ bool SphereIntersection(in Ray ray, in Sphere sphere, out CollisionManifold mani
     vec3 point = ray.Origin + ray.Direction * depth;
     vec3 normal = (point - sphere.Origin) / sphere.Radius * (isFrontFace ? 1.0 : -1.0);
 
-    vec3 uv = Rotate(normal, -sphere.Rotation);
+    vec3 uv = RotateXYZ(normal, -sphere.Rotation);
     float theta = acos(uv.y);
     float phi = atan(uv.z, -uv.x) + PI;
     manifold = CollisionManifold(
@@ -792,7 +799,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
 
 bool BoxIntersection(in Ray ray, in Box box, out CollisionManifold manifold)
 {
-    Ray rotatedRay = Rotate(ray, box.Origin, -box.Rotation);
+    Ray rotatedRay = RotateXYZ(ray, box.Origin, -box.Rotation);
     vec3 m = 1.0 / rotatedRay.Direction;
     vec3 n = m * (rotatedRay.Origin - box.Origin);
     vec3 k = abs(m) * box.Size / 2.0;
@@ -808,7 +815,7 @@ bool BoxIntersection(in Ray ray, in Box box, out CollisionManifold manifold)
     bool isFrontFace = tN > SmallNumber;
 
     vec3 normal = -sign(rotatedRay.Direction) * (isFrontFace ?  step(vec3(tN), t1) : step(t2, vec3(tF)));
-    normal = RotateInv(normal, box.Rotation);
+    normal = RotateZYX(normal, box.Rotation);
     float depth = isFrontFace? tN : tF;
     manifold = CollisionManifold(
         depth,
@@ -998,10 +1005,10 @@ vec3 SendRayFlow(in Ray ray)
 
 void main()
 {
-    float aspectRatio = WindowSize.x / WindowSize.y;
-    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(aspectRatio, 1);
-    Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
-
+    float aspectRatio = WindowSize.y / WindowSize.x;
+    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio);
+    Ray ray = Ray(CameraPosition, RotateAxis(RotateAxis(CameraForward, CameraRight, CameraFOV * coord.y), CameraUp, -CameraFOV * coord.x), vec3(1), vec3(0));
+    
     vec3 newColor = SendRayFlow(ray);
 
     // Tone mapping
