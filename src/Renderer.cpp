@@ -670,11 +670,6 @@ vec3 RandomVector3()
     return normalize(vec3(x, y, z));
 }
 
-vec3 RotateAxis(in vec3 v, in vec3 axis, in float angle)
-{
-    return v * cos(angle) + cross(axis, v) * sin(angle) + axis * dot(axis, v) * (1 - cos(angle));
-}
-
 vec3 RotateXYZ(in vec3 v, in vec3 angle)
 {
     vec3 result = v;
@@ -1005,10 +1000,11 @@ vec3 SendRayFlow(in Ray ray)
 
 void main()
 {
-    float aspectRatio = WindowSize.y / WindowSize.x;
-    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio);
-    Ray ray = Ray(CameraPosition, RotateAxis(RotateAxis(CameraForward, CameraRight, CameraFOV * coord.y), CameraUp, -CameraFOV * coord.x), vec3(1), vec3(0));
-    
+    float aspectRatio = WindowSize.y / WindowSize.x;    
+    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(CameraFOV / 2);
+    Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
+
+
     vec3 newColor = SendRayFlow(ray);
 
     // Tone mapping
