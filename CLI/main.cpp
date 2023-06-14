@@ -6,7 +6,7 @@ using namespace sf;
 
 int main()
 {
-    Camera camera(Vector3f(0, 0, -3), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
+    Camera camera(Vector3f(0, 0, -2), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
     Renderer renderer(Vector2i(900, 900), camera, 5, 5);
     renderer.subDivisor = Vector2i(2, 2);
 
@@ -15,10 +15,10 @@ int main()
     Material white(Vector3f(1, 1, 1), 1);
     Material lightSource = Material::LightSource(Vector3f(1, 1, 1), 2);
     Material glass = Material::Transparent(Vector3f(1, 1, 1), .5f, Vector3f(1, 1, 1), .4f);
-    
+
     renderer.addCornellBox(white, white, red, green, white, white, lightSource);
     renderer.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
 
-    renderer.runHeadless(10, "image.png");
+    renderer.runHeadless(1000, "image.png");
     return 0;
 }
