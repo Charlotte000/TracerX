@@ -7,7 +7,7 @@
 namespace TracerX
 {
 
-Renderer::Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount)
+Renderer::Renderer(sf::Vector2i size, Camera& camera, int sampleCount, int maxBounceCount)
     : camera(camera), size(size), sampleCount(sampleCount), maxBounceCount(maxBounceCount)
 {
     this->window.create(sf::VideoMode(this->size.x, this->size.y), "Ray Tracing");
@@ -77,7 +77,7 @@ void Renderer::renderFrame()
     sf::Sprite newSprite(this->targetTexture->getTexture());
     sf::Sprite oldSprite(this->bufferTargetTexture->getTexture());
     oldSprite.setTextureRect(this->subFrame);
-    oldSprite.setPosition(sf::Vector2f(this->subFrame.left, this->subFrame.top));
+    oldSprite.setPosition((float)this->subFrame.left, (float)this->subFrame.top);
     this->targetTexture->draw(oldSprite, &this->shader);
     this->targetTexture->display();
 
@@ -111,30 +111,28 @@ int Renderer::getPixelDifference() const
 }
 
 #pragma region Add
-void Renderer::add(Sphere sphere, const Material& material)
+void Renderer::add(const Sphere& sphere, const Material& material)
 {
-    int materialId = this->add(material);
-    sphere.materialId = materialId;
+    this->spheres.push_back(sphere);
+    this->spheres.back().materialId = this->add(material);
+}
+
+void Renderer::add(const Sphere& sphere)
+{
     this->spheres.push_back(sphere);
 }
 
-void Renderer::add(Sphere sphere)
+void Renderer::add(const Box& box, const Material& material)
 {
-    this->spheres.push_back(sphere);
+    this->boxes.push_back(box);
+    this->boxes.back().materialId = this->add(material);
+    this->boxes.back().updateAABB();
 }
 
-void Renderer::add(Box box, const Material& material)
+void Renderer::add(const Box& box)
 {
-    int materialId = this->add(material);
-    box.materialId = materialId;
-    box.updateAABB();
     this->boxes.push_back(box);
-}
-
-void Renderer::add(Box box)
-{
-    box.updateAABB();
-    this->boxes.push_back(box);
+    this->boxes.back().updateAABB();
 }
 
 int Renderer::add(const Material& material)
@@ -185,7 +183,7 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
 
         Mesh myMesh((int)this->indices.size(), (int)this->indices.size() + (int)mesh.Indices.size(), materialId);
 
-        int verticesOffset = this->vertices.size();
+        int verticesOffset = (int)this->vertices.size();
         for (auto index : mesh.Indices)
         {
             this->indices.push_back(index + verticesOffset);

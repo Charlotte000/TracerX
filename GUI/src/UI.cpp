@@ -184,7 +184,7 @@ void MaterialUI(Application& app)
 
             if (ImGui::BeginMenu("Albedo map"))
             {
-                if (ImGui::SliderInt("Albedo map id", &material.albedoMapId, -1, app.textures.size() - 1))
+                if (ImGui::SliderInt("Albedo map id", &material.albedoMapId, -1, (int)app.textures.size() - 1))
                 {
                     app.updateMaterials();
                     app.reset();

@@ -9,7 +9,7 @@ namespace CLI
 class Application : public TracerX::Renderer
 {
 public:
-    Application(sf::Vector2i size, TracerX::Camera camera, int sampleCount, int maxBounceCount);
+    Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount);
 
     void run(int iterationCount, const std::string& imagePath);
 };

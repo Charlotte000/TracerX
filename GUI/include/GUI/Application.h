@@ -13,7 +13,7 @@ public:
     bool isCameraControl = false;
     bool showCursor = true;
 
-    Application(sf::Vector2i size, TracerX::Camera camera, int sampleCount, int maxBounceCount);
+    Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount);
 
     void run();
 
