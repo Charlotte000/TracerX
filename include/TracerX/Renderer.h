@@ -33,16 +33,11 @@ public:
     int subStage = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
     sf::RenderWindow window;
-    sf::RenderTexture windowBuffer;
-    bool isProgressive = false;
-    bool isCameraControl = false;
-    bool showCursor = true;
+    sf::RenderTexture* targetTexture;
 
     Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
 
-    void run();
-
-    void runHeadless(int iterationCount, const std::string imagePath);
+    void renderFrame();
 
     int getPixelDifference() const;
 
@@ -56,13 +51,13 @@ public:
 
     int add(const Material& material);
 
-    int addTexture(const std::string filePath);
+    int addTexture(const std::string& filePath);
 
-    void addFile(const std::string filePath, sf::Vector3f offset = sf::Vector3f(0, 0, 0), sf::Vector3f scale = sf::Vector3f(1, 1, 1), sf::Vector3f rotation = sf::Vector3f(0, 0, 0));
+    void addFile(const std::string& filePath, sf::Vector3f offset = sf::Vector3f(0, 0, 0), sf::Vector3f scale = sf::Vector3f(1, 1, 1), sf::Vector3f rotation = sf::Vector3f(0, 0, 0));
 
-    void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward, const Material lightSource);
+    void addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward, const Material& lightSource);
 
-    void addCornellBox(const Material up, const Material down, const Material left, const Material right, const Material forward, const Material backward);
+    void addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward);
 
     void updateMaterials() const;
 
@@ -78,25 +73,22 @@ public:
 
     void updateTextures();
 
-    void reset();
-
 protected:
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;
+    sf::RenderTexture* bufferTargetTexture;
     GLuint materialBuffer;
     GLuint vertexBuffer;
     GLuint sphereBuffer;
     GLuint indexBuffer;
     GLuint meshBuffer;
     GLuint boxBuffer;
+    sf::IntRect subFrame;
 
     void loadShader();
 
-    void clear();
-
 private:
     static const std::string ShaderCode;
-    sf::RectangleShape cursor;
 };
 
 }

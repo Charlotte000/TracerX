@@ -10,19 +10,8 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererUI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/VectorMath.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Vertex3.cpp
-)
-
-set(
-    IMGUI
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_draw.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_stdlib.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_tables.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_widgets.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui-SFML.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui.cpp
 )
 
 set(INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -30,7 +19,6 @@ set(INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_library(
     ${PROJECT_NAME}
     ${SRC}
-    ${IMGUI}
 )
 
 add_subdirectory(GUI)
