@@ -72,4 +72,15 @@ void Camera::lookAt(sf::Vector3f position)
     this->focalLength = length(this->position - position);
 }
 
+void Camera::set(sf::Shader& shader) const
+{
+    shader.setUniform("Camera.Position", this->position);
+    shader.setUniform("Camera.Forward", this->forward);
+    shader.setUniform("Camera.Up", this->up);
+    shader.setUniform("Camera.Right", cross(this->forward, this->up));
+    shader.setUniform("Camera.FocalLength", this->focalLength);
+    shader.setUniform("Camera.FocusStrength", this->focusStrength);
+    shader.setUniform("Camera.FOV", this->fov);
+}
+
 }

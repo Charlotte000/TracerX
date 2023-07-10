@@ -19,6 +19,8 @@ struct Camera
     void move(const sf::RenderWindow& window);
 
     void lookAt(sf::Vector3f position);
+
+    void set(sf::Shader& shader) const;
 };
 
 }

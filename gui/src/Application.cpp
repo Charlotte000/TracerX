@@ -70,9 +70,7 @@ void Application::run()
 
         // Update shader parameters
         this->shader.setUniform("FrameCount", this->frameCount);
-        this->shader.setUniform("CameraPosition", this->camera.position);
-        this->shader.setUniform("CameraForward", this->camera.forward);
-        this->shader.setUniform("CameraUp", this->camera.up);
+        this->camera.set(this->shader);
 
         // Render frame
         this->renderFrame();

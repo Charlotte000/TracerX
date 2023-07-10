@@ -48,15 +48,9 @@ void Renderer::loadShader()
     this->shader.setUniform("WindowSize", (sf::Vector2f)this->size);
     this->shader.setUniform("SampleCount", this->sampleCount);
     this->shader.setUniform("MaxBouceCount", this->maxBounceCount);
-    this->shader.setUniform("FocusStrength", this->camera.focusStrength);
-    this->shader.setUniform("FocalLength", this->camera.focalLength);
 
     this->environment.set(this->shader);
-
-    this->shader.setUniform("CameraPosition", this->camera.position);
-    this->shader.setUniform("CameraForward", this->camera.forward);
-    this->shader.setUniform("CameraUp", this->camera.up);
-    this->shader.setUniform("CameraFOV", this->camera.fov);
+    this->camera.set(this->shader);
 }
 
 void Renderer::renderFrame()
@@ -293,6 +287,30 @@ const std::string Renderer::ShaderCode = R"(
 
 out vec4 FragColor;
 
+struct Cam
+{
+    vec3 Position;
+    vec3 Forward;
+    vec3 Up;
+    vec3 Right;
+    float FOV;
+    float FocalLength;
+    float FocusStrength;
+};
+
+struct Env
+{
+    vec3 SkyColorHorizon;
+    vec3 SkyColorZenith;
+    vec3 GroundColor;
+    vec3 SunColor;
+    vec3 SunDirection;
+    float SunFocus;
+    float SunIntensity;
+    float SkyIntensity;
+    bool Enabled;
+};
+
 struct Ray
 {
     vec3 Origin;
@@ -369,13 +387,8 @@ uniform vec2 WindowSize;
 uniform int SampleCount;
 uniform int MaxBouceCount;
 uniform int FrameCount;
-uniform float FocusStrength;
-uniform float FocalLength;
-
-uniform vec3 CameraUp;
-uniform vec3 CameraPosition;
-uniform vec3 CameraForward;
-uniform float CameraFOV;
+uniform Cam Camera;
+uniform Env Environment;
 
 layout (std430, binding = 1) buffer MaterialBuffer
 {
@@ -413,21 +426,7 @@ layout (std430, binding = 6) buffer BoxBuffer
 uniform sampler2D Textures[MAX_TEXTURE_COUNT];
 
 const float SmallNumber = 0.001;
-vec3 CameraRight = cross(CameraForward, CameraUp);
 uint Seed = uint((gl_FragCoord.x + gl_FragCoord.y * gl_FragCoord.x / WindowSize.x) * 549856.0) + uint(FrameCount) * 5458u;
-
-uniform struct
-{
-    vec3 SkyColorHorizon;
-    vec3 SkyColorZenith;
-    vec3 GroundColor;
-    vec3 SunColor;
-    vec3 SunDirection;
-    float SunFocus;
-    float SunIntensity;
-    float SkyIntensity;
-    bool Enabled;
-} Environment;
 
 vec3 GetEnvironmentLight(in Ray ray)
 {    
@@ -783,13 +782,13 @@ vec3 SendRay(in Ray ray)
 
 vec3 SendRayFlow(in Ray ray)
 {
-    vec3 focalPoint = ray.Origin + ray.Direction * FocalLength;
+    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalLength;
     
     vec3 resultLight = vec3(0);
     for (int i = 0; i < SampleCount; i++)
     {
-        vec2 jitter = RandomVector2() * FocusStrength;
-        vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * CameraUp;
+        vec2 jitter = RandomVector2() * Camera.FocusStrength;
+        vec3 jitterOrigin = ray.Origin + jitter.x * Camera.Right + jitter.y * Camera.Up;
         vec3 jitterDirection = normalize(focalPoint - jitterOrigin);
         resultLight += SendRay(Ray(jitterOrigin, jitterDirection, ray.Color, ray.IncomingLight));
     }
@@ -800,9 +799,8 @@ vec3 SendRayFlow(in Ray ray)
 void main()
 {
     float aspectRatio = WindowSize.y / WindowSize.x;
-    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(CameraFOV / 2);
-    Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
-
+    vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(Camera.FOV / 2);
+    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + Camera.Right * coord.x + Camera.Up * coord.y), vec3(1), vec3(0));
 
     vec3 newColor = SendRayFlow(ray);
 

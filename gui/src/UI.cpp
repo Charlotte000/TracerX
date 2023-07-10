@@ -57,7 +57,6 @@ void InfoUI(Application& app)
     {
         if (ImGui::SliderAngle("FOV", &app.camera.fov, 0, 180.0f))
         {
-            app.shader.setUniform("CameraFOV", app.camera.fov);
             app.reset();
         }
 
@@ -80,13 +79,11 @@ void InfoUI(Application& app)
 
         if (ImGui::DragFloat("Focal length", &app.camera.focalLength, 0.001f, 0, 1000))
         {
-            app.shader.setUniform("FocalLength", app.camera.focalLength);
             app.reset();
         }
 
         if (ImGui::DragFloat("Focal strength", &app.camera.focusStrength, 0.0001f, 0, 1000))
         {
-            app.shader.setUniform("FocusStrength", app.camera.focusStrength);
             app.reset();
         }
 
