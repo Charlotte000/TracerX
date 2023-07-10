@@ -18,7 +18,7 @@ add_executable(
 
 target_include_directories(
     ${PROJECT_NAME}GUI
-    PRIVATE ${INCLUDE}
+    PRIVATE ${CORE_INCLUDE}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs
 )
