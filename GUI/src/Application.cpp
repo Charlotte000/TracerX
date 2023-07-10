@@ -7,7 +7,7 @@
 namespace GUI
 {
 
-Application::Application(sf::Vector2i size, TracerX::Camera camera, int sampleCount, int maxBounceCount)
+Application::Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount)
     : Renderer(size, camera, sampleCount, maxBounceCount)
 {
     this->windowBuffer.create(this->size.x, this->size.y);
@@ -80,7 +80,7 @@ void Application::run()
         // Draw to window buffer
         sf::Sprite newSprite(this->targetTexture->getTexture());
         newSprite.setTextureRect(this->subFrame);
-        newSprite.setPosition(sf::Vector2f(this->subFrame.left, this->subFrame.top));
+        newSprite.setPosition((float)this->subFrame.left, (float)this->subFrame.top);
         this->windowBuffer.draw(newSprite);
         this->windowBuffer.display();
 
@@ -90,8 +90,8 @@ void Application::run()
 
         if (this->showCursor)
         {
-            this->cursor.setSize(sf::Vector2f(this->subFrame.width, this->subFrame.height));
-            this->cursor.setPosition(sf::Vector2f(this->subFrame.left, this->subFrame.top));
+            this->cursor.setSize(sf::Vector2f((float)this->subFrame.width, (float)this->subFrame.height));
+            this->cursor.setPosition((float)this->subFrame.left, (float)this->subFrame.top);
             this->window.draw(this->cursor);
         }
 

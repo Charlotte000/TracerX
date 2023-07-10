@@ -35,19 +35,19 @@ public:
     sf::RenderWindow window;
     sf::RenderTexture* targetTexture;
 
-    Renderer(sf::Vector2i size, Camera camera, int sampleCount, int maxBounceCount);
+    Renderer(sf::Vector2i size, Camera& camera, int sampleCount, int maxBounceCount);
 
     void renderFrame();
 
     int getPixelDifference() const;
 
-    void add(Sphere sphere, const Material& material);
+    void add(const Sphere& sphere, const Material& material);
 
-    void add(Sphere sphere);
+    void add(const Sphere& sphere);
 
-    void add(Box box, const Material& material);
+    void add(const Box& box, const Material& material);
 
-    void add(Box box);
+    void add(const Box& box);
 
     int add(const Material& material);
 

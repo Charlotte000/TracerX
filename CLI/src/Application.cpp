@@ -4,7 +4,7 @@
 namespace CLI
 {
 
-Application::Application(sf::Vector2i size, TracerX::Camera camera, int sampleCount, int maxBounceCount)
+Application::Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount)
     : Renderer(size, camera, sampleCount, maxBounceCount)
 {
 }
@@ -28,14 +28,14 @@ void Application::run(int iterationCount, const std::string& imagePath)
         // Print progress
         static const int barWidth = 50;
         float progress = (float)(this->subStage) / subCount;
-        int progressWidth = progress * barWidth;
+        int progressWidth = (int)(progress * barWidth);
         std::cout << std::nounitbuf;
         std::cout << "\x1b[F[" << std::string(progressWidth, '#');
         std::cout << std::string(barWidth - progressWidth, ' ') << "] ";
         std::cout << (int)(progress * 100) << "%  " << std::endl;
 
         progress = (float)(this->frameCount - 1) / iterationCount;
-        progressWidth = progress * barWidth;
+        progressWidth = (int)(progress * barWidth);
         std::cout << '[' << std::string(progressWidth, '#');
         std::cout << std::string(barWidth - progressWidth, ' ') << "] ";
         std::cout << (int)(progress * 100) << '%';
