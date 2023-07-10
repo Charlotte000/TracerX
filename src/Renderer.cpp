@@ -177,9 +177,9 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
     for (const objl::Mesh& mesh : loader.LoadedMeshes)
     {
         Material material;
-        material.albedoColor = sf::Vector3f(mesh.MeshMaterial.Kd.X, mesh.MeshMaterial.Kd.Y, mesh.MeshMaterial.Kd.Z);
+        material.albedoColor = *(sf::Vector3f*)&mesh.MeshMaterial.Kd;
         material.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
-        material.metalnessColor = sf::Vector3f(mesh.MeshMaterial.Ka.X, mesh.MeshMaterial.Ka.Y, mesh.MeshMaterial.Ka.Z);
+        material.metalnessColor = *(sf::Vector3f*)&mesh.MeshMaterial.Ka;
         material.metalness = mesh.MeshMaterial.Ka.X;
         int materialId = this->add(material);
 
@@ -194,9 +194,9 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
         for (const objl::Vertex& vertex : mesh.Vertices)
         {
             this->vertices.push_back(Vertex3(
-                sf::Vector3f(vertex.Position.X, vertex.Position.Y, vertex.Position.Z),
-                sf::Vector3f(vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z),
-                sf::Vector2f(vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y)));
+                *(sf::Vector3f*)&vertex.Position,
+                *(sf::Vector3f*)&vertex.Normal,
+                *(sf::Vector2f*)&vertex.TextureCoordinate));
         }
         
         myMesh.scale(scale, this->indices, this->vertices);
@@ -801,7 +801,7 @@ vec3 SendRayFlow(in Ray ray)
 
 void main()
 {
-    float aspectRatio = WindowSize.y / WindowSize.x;    
+    float aspectRatio = WindowSize.y / WindowSize.x;
     vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(CameraFOV / 2);
     Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
 

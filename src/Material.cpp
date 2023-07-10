@@ -8,13 +8,9 @@ Material::Material(sf::Vector3f albedoColor, float roughness, sf::Vector3f metal
 {
 }
 
-Material Material::LightSource(sf::Vector3f color, float strength)
+Material Material::LightSource(sf::Vector3f emissionColor, float emissionStrength)
 {
-    Material m;
-    m.roughness = 0;
-    m.emissionColor = color;
-    m.emissionStrength = strength;
-    return m;
+    return Material(sf::Vector3f(0, 0, 0), 0, sf::Vector3f(1, 1, 1), 0, emissionColor, emissionStrength);
 }
 
 Material Material::Transparent(sf::Vector3f albedoColor, float refractionFactor, sf::Vector3f fresnelColor, float fresnelStrength)
@@ -32,6 +28,16 @@ Material Material::ConstantDensity(sf::Vector3f albedoColor, float density)
     m.refractionFactor = 1.0f;
     m.density = density;
     return m;
+}
+
+Material Material::Matte(sf::Vector3f albedoColor, float metalness)
+{
+    return Material(albedoColor, 1, sf::Vector3f(1, 1, 1), metalness);
+}
+
+Material Material::Mirror()
+{
+    return Material(sf::Vector3f(1, 1, 1), 0, sf::Vector3f(1, 1, 1), 1);
 }
 
 bool operator==(const Material& a, const Material& b)
