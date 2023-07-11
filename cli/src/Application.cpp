@@ -21,14 +21,11 @@ void Application::run(int iterationCount, const std::string& imagePath)
     this->updateBoxes();
     this->updateTextures();
 
-    int subWidth = this->size.x / this->subDivisor.x;
-    int subHeight = this->size.y / this->subDivisor.y;
+    int subWidth = this->size.value.x / this->subDivisor.x;
+    int subHeight = this->size.value.y / this->subDivisor.y;
     int subCount = this->subDivisor.x * this->subDivisor.y;
-    while (this->frameCount <= iterationCount)
+    while (this->frameCount.value <= iterationCount)
     {
-        // Update shader parameters
-        this->shader.setUniform("FrameCount", this->frameCount);
-
         this->renderFrame();
 
         // Print progress
@@ -40,7 +37,7 @@ void Application::run(int iterationCount, const std::string& imagePath)
         std::cout << std::string(barWidth - progressWidth, ' ') << "] ";
         std::cout << (int)(progress * 100) << "%  " << std::endl;
 
-        progress = (float)(this->frameCount - 1) / iterationCount;
+        progress = (float)(this->frameCount.value - 1) / iterationCount;
         progressWidth = (int)(progress * barWidth);
         std::cout << '[' << std::string(progressWidth, '#');
         std::cout << std::string(barWidth - progressWidth, ' ') << "] ";

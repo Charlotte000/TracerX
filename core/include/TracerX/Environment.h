@@ -2,27 +2,26 @@
 
 #include <SFML/Graphics.hpp>
 #include <TracerX/VectorMath.h>
+#include <TracerX/UBO.h>
 
 namespace TracerX
 {
 
 struct Environment
 {
-    sf::Vector3f skyColorHorizon = sf::Vector3f(1, 1, 1);
-    sf::Vector3f skyColorZenith = sf::Vector3f(.5f, .5f, 1);
-    sf::Vector3f groundColor = sf::Vector3f(.5f, .5f, .5f);
-    sf::Vector3f sunColor = sf::Vector3f(1, 1, 1);
-    sf::Vector3f sunDirection = normalized(sf::Vector3f(0, -1, -1));
-    float sunFocus = 800;
-    float sunIntensity = 10;
-    float skyIntensity = .01f;
-    bool enabled = true;
+    UBO<sf::Vector3f> skyColorHorizon;
+    UBO<sf::Vector3f> skyColorZenith;
+    UBO<sf::Vector3f> groundColor;
+    UBO<sf::Vector3f> sunColor;
+    UBO<sf::Vector3f> sunDirection;
+    UBO<float> sunFocus;
+    UBO<float> sunIntensity;
+    UBO<float> skyIntensity;
+    UBO<bool> enabled;
 
-    Environment();
+    void create(sf::Shader* shader);
 
-    Environment(sf::Vector3f skyColorHorizon, sf::Vector3f skyColorZenith, sf::Vector3f groundColor, sf::Vector3f sunColor, sf::Vector3f sunDirection, float sunFocus, float sunIntensity, float skyIntensity);
-
-    void set(sf::Shader& shader) const;
+    void updateShader();
 };
 
 }

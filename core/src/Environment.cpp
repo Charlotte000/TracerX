@@ -4,26 +4,30 @@
 namespace TracerX
 {
 
-Environment::Environment()
+void Environment::create(sf::Shader* shader)
 {
+    this->skyColorHorizon.create(shader, "Environment.SkyColorHorizon", sf::Vector3f(1, 1, 1));
+    this->skyColorZenith.create(shader, "Environment.SkyColorZenith", sf::Vector3f(.5f, .5f, 1));
+    this->groundColor.create(shader, "Environment.GroundColor", sf::Vector3f(.5f, .5f, .5f));
+    this->sunColor.create(shader, "Environment.SunColor", sf::Vector3f(1, 1, 1));
+    this->sunDirection.create(shader, "Environment.SunDirection", normalized(sf::Vector3f(0, -1, -1)));
+    this->sunFocus.create(shader, "Environment.SunFocus", 800);
+    this->sunIntensity.create(shader, "Environment.SunIntensity", 10);
+    this->skyIntensity.create(shader, "Environment.SkyIntensity", .01f);
+    this->enabled.create(shader, "Environment.Enabled", true);
 }
 
-Environment::Environment(sf::Vector3f skyColorHorizon, sf::Vector3f skyColorZenith, sf::Vector3f groundColor, sf::Vector3f sunColor, sf::Vector3f sunDirection, float sunFocus, float sunIntensity, float skyIntensity)
-    : skyColorHorizon(skyColorHorizon), skyColorZenith(skyColorZenith), groundColor(groundColor), sunColor(sunColor), sunDirection(normalized(sunDirection)), sunFocus(sunFocus), sunIntensity(sunIntensity), skyIntensity(skyIntensity)
+void Environment::updateShader()
 {
-}
-
-void Environment::set(sf::Shader& shader) const
-{
-    shader.setUniform("Environment.SkyColorHorizon", this->skyColorHorizon);
-    shader.setUniform("Environment.SkyColorZenith", this->skyColorZenith);
-    shader.setUniform("Environment.GroundColor", this->groundColor);
-    shader.setUniform("Environment.SunColor", this->sunColor);
-    shader.setUniform("Environment.SunDirection", this->sunDirection);
-    shader.setUniform("Environment.SunFocus", this->sunFocus);
-    shader.setUniform("Environment.SunIntensity", this->sunIntensity);
-    shader.setUniform("Environment.SkyIntensity", this->skyIntensity);
-    shader.setUniform("Environment.Enabled", this->enabled);
+    this->skyColorHorizon.updateShader();
+    this->skyColorZenith.updateShader();
+    this->groundColor.updateShader();
+    this->sunColor.updateShader();
+    this->sunDirection.updateShader();
+    this->sunFocus.updateShader();
+    this->sunIntensity.updateShader();
+    this->skyIntensity.updateShader();
+    this->enabled.updateShader();
 }
 
 }

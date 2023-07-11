@@ -10,12 +10,18 @@ namespace TracerX
 void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount)
 {
     this->camera = camera;
-    this->size = size;
-    this->sampleCount = sampleCount;
-    this->maxBounceCount = maxBounceCount;
-    this->buffer1.create(this->size.x, this->size.y);
-    this->buffer2.create(this->size.x, this->size.y);
+    this->buffer1.create(size.x, size.y);
+    this->buffer2.create(size.x, size.y);
+
     this->loadShader();
+
+    this->size.create(&this->shader, "WindowSize", (sf::Vector2f)size);
+    this->frameCount.create(&this->shader, "FrameCount", 1);
+    this->maxBounceCount.create(&this->shader, "MaxBouceCount", maxBounceCount);
+    this->sampleCount.create(&this->shader, "SampleCount", sampleCount);
+    this->environment.create(&this->shader);
+    this->camera.create(&this->shader);
+
 }
 
 void Renderer::loadShader()
@@ -46,19 +52,20 @@ void Renderer::loadShader()
     this->updateMeshes();
     this->updateBoxes();
     this->updateTextures();
-    
-    this->shader.setUniform("WindowSize", (sf::Vector2f)this->size);
-    this->shader.setUniform("SampleCount", this->sampleCount);
-    this->shader.setUniform("MaxBouceCount", this->maxBounceCount);
-
-    this->environment.set(this->shader);
-    this->camera.set(this->shader);
 }
 
 void Renderer::renderFrame()
 {
+    // Update shader parameters
+    this->maxBounceCount.updateShader();
+    this->sampleCount.updateShader();
+    this->frameCount.updateShader();
+    this->size.updateShader();
+    this->environment.updateShader();
+    this->camera.updateShader();
+
     // Calculate subframe coordinate
-    sf::Vector2i size = sf::Vector2i(this->size.x / this->subDivisor.x, this->size.y / this->subDivisor.y);
+    sf::Vector2i size = sf::Vector2i(this->size.value.x / this->subDivisor.x, this->size.value.y / this->subDivisor.y);
     int y = this->subStage / this->subDivisor.x;
     int x = this->subStage - y * this->subDivisor.x;
     x *= size.x;
@@ -66,8 +73,8 @@ void Renderer::renderFrame()
     this->subFrame = sf::IntRect(x, y, size.x, size.y);
 
     // Swap target textures
-    this->targetTexture = (this->frameCount & 1) == 1 ? &this->buffer1 : &this->buffer2;
-    this->bufferTargetTexture = (this->frameCount & 1) == 1 ? &this->buffer2 : &this->buffer1;
+    this->targetTexture = (this->frameCount.value & 1) == 1 ? &this->buffer1 : &this->buffer2;
+    this->bufferTargetTexture = (this->frameCount.value & 1) == 1 ? &this->buffer2 : &this->buffer1;
     
     // Ray trace into new buffer
     sf::Sprite newSprite(this->targetTexture->getTexture());
@@ -82,7 +89,7 @@ void Renderer::renderFrame()
     if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
     {
         this->subStage = 0;
-        this->frameCount++;
+        this->frameCount.value++;
     }
 }
 
@@ -92,9 +99,9 @@ int Renderer::getPixelDifference() const
     sf::Image image2 = this->buffer2.getTexture().copyToImage();
 
     int result = 0;
-    for (int x = 0; x < this->size.x; x++)
+    for (int x = 0; x < this->size.value.x; x++)
     {
-        for (int y = 0; y < this->size.y; y++)
+        for (int y = 0; y < this->size.value.y; y++)
         {
             if (image1.getPixel(x, y) != image2.getPixel(x, y))
             {

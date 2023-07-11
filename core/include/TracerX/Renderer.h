@@ -9,6 +9,7 @@
 #include <TracerX/Vertex3.h>
 #include <TracerX/Primitives/Mesh.h>
 #include <TracerX/Material.h>
+#include <TracerX/UBO.h>
 
 namespace TracerX
 {
@@ -16,6 +17,7 @@ namespace TracerX
 class Renderer
 {
 public:
+    // SSBO
     std::vector<Material> materials;
     std::vector<Sphere> spheres;
     std::vector<Box> boxes;
@@ -23,13 +25,16 @@ public:
     std::vector<Vertex3> vertices;
     std::vector<Mesh> meshes;
     std::vector<sf::Texture> textures;
+
+    // UBO
+    UBO<sf::Vector2f> size;
+    UBO<int> frameCount;
+    UBO<int> sampleCount;
+    UBO<int> maxBounceCount;
     Camera camera;
-    sf::Vector2i size;
     Environment environment;
-    sf::Shader shader;
-    int frameCount = 1;
-    int sampleCount = 0;
-    int maxBounceCount = 0;
+
+    // Non shader 
     int subStage = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
     sf::RenderTexture* targetTexture;
@@ -88,6 +93,7 @@ protected:
 
 private:
     static const std::string ShaderCode;
+    sf::Shader shader;
 };
 
 }

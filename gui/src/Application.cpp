@@ -11,7 +11,7 @@ void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int s
 {
     this->window.create(sf::VideoMode(size.x, size.y), "Path Tracing");
     Renderer::create(size, camera, sampleCount, maxBounceCount);
-    this->windowBuffer.create(this->size.x, this->size.y);
+    this->windowBuffer.create(size.x, size.y);
     
     this->cursor.setFillColor(sf::Color::Transparent);
     this->cursor.setOutlineColor(sf::Color::Red);
@@ -28,7 +28,7 @@ void Application::run()
     this->updateBoxes();
     this->updateTextures();
 
-    sf::Mouse::setPosition(this->size / 2, this->window);
+    sf::Mouse::setPosition((sf::Vector2i)this->size.value / 2, this->window);
 
     if (!ImGui::SFML::Init(this->window))
     {
@@ -69,10 +69,6 @@ void Application::run()
         ImGui::SFML::Update(this->window, clock.restart());
         UI(*this);
 
-        // Update shader parameters
-        this->shader.setUniform("FrameCount", this->frameCount);
-        this->camera.set(this->shader);
-
         // Render frame
         this->renderFrame();
         
@@ -105,7 +101,7 @@ void Application::run()
 
 void Application::reset()
 {
-    this->frameCount = 1;
+    this->frameCount.value = 1;
     this->subStage = 0;
     this->isProgressive = false;
 }
@@ -116,7 +112,7 @@ void Application::clear()
     this->buffer1.display();
     this->buffer2.clear();
     this->buffer2.display();
-    this->frameCount = 1;
+    this->frameCount.value = 1;
 }
 
 }

@@ -45,17 +45,17 @@ void UI(Application& app)
     ImGui::Separator();
 
     ImGui::Text("FPS: %-4i", (int)roundf(ImGui::GetIO().Framerate));
-    ImGui::Text("Frame: %-4i", app.frameCount);
+    ImGui::Text("Frame: %-4i", app.frameCount.value);
     ImGui::ProgressBar((float)app.subStage / app.subDivisor.x / app.subDivisor.y);
     ImGui::EndMainMenuBar();
 }
 
 void InfoUI(Application& app)
 {
-    ImGui::Text("Window size: %dx%d", app.size.x, app.size.y);
+    ImGui::Text("Window size: %dx%d", (int)app.size.value.x, (int)app.size.value.y);
     if (ImGui::BeginMenu("Camera"))
     {
-        if (ImGui::SliderAngle("FOV", &app.camera.fov, 0, 180.0f))
+        if (ImGui::SliderAngle("FOV", &app.camera.fov.value, 0, 180.0f))
         {
             app.reset();
         }
@@ -65,24 +65,24 @@ void InfoUI(Application& app)
             app.reset();
         }
 
-        if (ImGui::DragFloat3("Forward", (float*)&app.camera.forward, .01f))
+        if (ImGui::DragFloat3("Forward", (float*)&app.camera.forward.value, .01f))
         {
-            app.camera.forward = TracerX::normalized(app.camera.forward);
+            app.camera.forward.value = TracerX::normalized(app.camera.forward.value);
             app.reset();
         }
 
-        if (ImGui::DragFloat3("Up", (float*)&app.camera.up, .01f))
+        if (ImGui::DragFloat3("Up", (float*)&app.camera.up.value, .01f))
         {
-            app.camera.up = TracerX::normalized(app.camera.up);
+            app.camera.up.value = TracerX::normalized(app.camera.up.value);
             app.reset();
         }
 
-        if (ImGui::DragFloat("Focal length", &app.camera.focalLength, 0.001f, 0, 1000))
+        if (ImGui::DragFloat("Focal length", &app.camera.focalLength.value, 0.001f, 0, 1000))
         {
             app.reset();
         }
 
-        if (ImGui::DragFloat("Focal strength", &app.camera.focusStrength, 0.0001f, 0, 1000))
+        if (ImGui::DragFloat("Focal strength", &app.camera.focusStrength.value, 0.0001f, 0, 1000))
         {
             app.reset();
         }
@@ -90,15 +90,13 @@ void InfoUI(Application& app)
         ImGui::EndMenu();
     }
     
-    if (ImGui::DragInt("Samples", &app.sampleCount, 0.01f, 0, 10000))
+    if (ImGui::DragInt("Samples", &app.sampleCount.value, 0.01f, 0, 10000))
     {
-        app.shader.setUniform("SampleCount", app.sampleCount);
         app.reset();
     }
 
-    if (ImGui::DragInt("Max bounce", &app.maxBounceCount, 0.01f, 0, 10000))
+    if (ImGui::DragInt("Max bounce", &app.maxBounceCount.value, 0.01f, 0, 10000))
     {
-        app.shader.setUniform("MaxBouceCount", app.maxBounceCount);
         app.reset();
     }
 
@@ -106,12 +104,12 @@ void InfoUI(Application& app)
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.x, "%d", ImGuiSliderFlags_Logarithmic))
+    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.value.x, "%d", ImGuiSliderFlags_Logarithmic))
     {
         app.reset();
     }
 
-    if (ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.y, "%d", ImGuiSliderFlags_Logarithmic))
+    if (ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.value.y, "%d", ImGuiSliderFlags_Logarithmic))
     {
         app.reset();
     }
@@ -122,7 +120,7 @@ void InfoUI(Application& app)
     ImGui::Separator();
     ImGui::Spacing();
 
-    static int totalPixels = app.size.x * app.size.y;
+    static int totalPixels = app.size.value.x * app.size.value.y;
     static int pixelDifference = totalPixels;
     static float differencePercentage = 100;
     if (ImGui::Button("Update pixel difference"))
@@ -139,7 +137,7 @@ void InfoUI(Application& app)
 
     if (ImGui::Checkbox("Camera control", &app.isCameraControl))
     {
-        sf::Mouse::setPosition(app.size / 2, app.window);
+        sf::Mouse::setPosition((sf::Vector2i)app.size.value / 2, app.window);
         app.window.setMouseCursorVisible(false);
         app.reset();
     }
@@ -330,7 +328,6 @@ void GeometryUI(Application& app)
                 if (ImGui::Button("Focus camera"))
                 {
                     app.camera.lookAt(sphere.origin);
-                    app.shader.setUniform("FocalLength", app.camera.focalLength);
                     app.reset();
                 }
 
@@ -406,7 +403,6 @@ void GeometryUI(Application& app)
                 if (ImGui::Button("Focus camera"))
                 {
                     app.camera.lookAt(box.origin);
-                    app.shader.setUniform("FocalLength", app.camera.focalLength);
                     app.reset();
                 }
 
@@ -493,7 +489,6 @@ void GeometryUI(Application& app)
                 if (ImGui::Button("Focus camera"))
                 {
                     app.camera.lookAt(mesh.position);
-                    app.shader.setUniform("FocalLength", app.camera.focalLength);
                     app.reset();
                 }
 
@@ -537,28 +532,24 @@ void EnvironmentUI(Application& app)
 {
     if (ImGui::BeginMenu("Sun"))
     {
-        if (ImGui::ColorEdit3("Color", (float*)&app.environment.sunColor, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3("Color", (float*)&app.environment.sunColor.value, ImGuiColorEditFlags_Float))
         {
-            app.environment.set(app.shader);
             app.reset();
         }
 
-        if (ImGui::DragFloat3("Direction", (float*)&app.environment.sunDirection, 0.001f))
+        if (ImGui::DragFloat3("Direction", (float*)&app.environment.sunDirection.value, 0.001f))
         {
-            app.environment.sunDirection = TracerX::normalized(app.environment.sunDirection);
-            app.environment.set(app.shader);
+            app.environment.sunDirection.value = TracerX::normalized(app.environment.sunDirection.value);
             app.reset();
         }
 
-        if (ImGui::DragFloat("Focus", &app.environment.sunFocus, 1, 0, 10000))
+        if (ImGui::DragFloat("Focus", &app.environment.sunFocus.value, 1, 0, 10000))
         {
-            app.environment.set(app.shader);
             app.reset();
         }
 
-        if (ImGui::DragFloat("Intensity", &app.environment.sunIntensity, 0.001f, 0, 100000))
+        if (ImGui::DragFloat("Intensity", &app.environment.sunIntensity.value, 0.001f, 0, 100000))
         {
-            app.environment.set(app.shader);
             app.reset();
         }
 
@@ -567,38 +558,31 @@ void EnvironmentUI(Application& app)
 
     if (ImGui::BeginMenu("Sky"))
     {
-        if (ImGui::ColorEdit3("Horizon", (float*)&app.environment.skyColorHorizon, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3("Horizon", (float*)&app.environment.skyColorHorizon.value, ImGuiColorEditFlags_Float))
         {
-            app.environment.set(app.shader);
             app.reset();
         }
 
-        float zenith[3]{ app.environment.skyColorZenith.x, app.environment.skyColorZenith.y, app.environment.skyColorZenith.z };
-        if (ImGui::ColorEdit3("Zenith", zenith, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3("Zenith", (float*)&app.environment.skyColorZenith.value, ImGuiColorEditFlags_Float))
         {
-            app.environment.skyColorZenith = sf::Vector3f(zenith[0], zenith[1], zenith[2]);
-            app.environment.set(app.shader);
             app.reset();
         }
 
-        if (ImGui::DragFloat("Intensity", &app.environment.skyIntensity, 0.0001f, 0, 2))
+        if (ImGui::DragFloat("Intensity", &app.environment.skyIntensity.value, 0.0001f, 0, 2))
         {
-            app.environment.set(app.shader);
             app.reset();
         }
 
         ImGui::EndMenu();
     }
 
-    if (ImGui::ColorEdit3("Ground", (float*)&app.environment.groundColor, ImGuiColorEditFlags_Float))
+    if (ImGui::ColorEdit3("Ground", (float*)&app.environment.groundColor.value, ImGuiColorEditFlags_Float))
     {
-        app.environment.set(app.shader);
         app.reset();
     }
 
-    if (ImGui::Checkbox("Enable", &app.environment.enabled))
+    if (ImGui::Checkbox("Enable", &app.environment.enabled.value))
     {
-        app.environment.set(app.shader);
         app.reset();
     }
 }
