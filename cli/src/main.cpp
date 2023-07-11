@@ -8,8 +8,8 @@ using namespace sf;
 
 int main()
 {
-    Camera camera(Vector3f(0, 0, -2), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f);
-    Application app(Vector2i(900, 900), camera, 5, 5);
+    Application app;
+    app.create(Vector2i(900, 900), Camera(Vector3f(0, 0, -2), Vector3f(0, 0, 1), Vector3f(0, 1, 0), 3, .005f), 5, 5);
     app.subDivisor = Vector2i(10, 10);
 
     Material red(Vector3f(1, 0, 0), 1);

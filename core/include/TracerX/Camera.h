@@ -14,6 +14,8 @@ struct Camera
     float focusStrength;
     float fov = 3.1415f / 2;
 
+    Camera();
+
     Camera(sf::Vector3f position, sf::Vector3f forward, sf::Vector3f up, float focalLength, float focusStrength);
 
     void move(const sf::RenderWindow& window);

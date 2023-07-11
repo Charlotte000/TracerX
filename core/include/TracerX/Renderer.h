@@ -32,10 +32,9 @@ public:
     int maxBounceCount = 0;
     int subStage = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
-    sf::RenderWindow window;
     sf::RenderTexture* targetTexture;
 
-    Renderer(sf::Vector2i size, Camera& camera, int sampleCount, int maxBounceCount);
+    void create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount);
 
     void renderFrame();
 

@@ -4,16 +4,22 @@
 namespace CLI
 {
 
-Application::Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount)
-    : Renderer(size, camera, sampleCount, maxBounceCount)
+void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int sampleCount, int maxBounceCount)
 {
+    this->window.create(sf::VideoMode(size.x, size.y), "Path Tracing");
+    this->window.setVisible(false);
+    Renderer::create(size, camera, sampleCount, maxBounceCount);
 }
 
 void Application::run(int iterationCount, const std::string& imagePath)
 {
-    this->window.setVisible(false);
-
-    this->loadShader();
+    this->updateMaterials();
+    this->updateVertices();
+    this->updateSpheres();
+    this->updateIndices();
+    this->updateMeshes();
+    this->updateBoxes();
+    this->updateTextures();
 
     int subWidth = this->size.x / this->subDivisor.x;
     int subHeight = this->size.y / this->subDivisor.y;

@@ -4,6 +4,10 @@
 namespace TracerX
 {
 
+Camera::Camera()
+{
+}
+
 Camera::Camera(sf::Vector3f position, sf::Vector3f forward, sf::Vector3f up, float focalLength, float focusStrength)
     : up(up), forward(forward), position(position), focalLength(focalLength), focusStrength(focusStrength)
 {

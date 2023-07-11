@@ -12,8 +12,9 @@ public:
     bool isProgressive = false;
     bool isCameraControl = false;
     bool showCursor = true;
+    sf::RenderWindow window;
 
-    Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount);
+    void create(sf::Vector2i size, const TracerX::Camera& camera, int sampleCount, int maxBounceCount);
 
     void run();
 

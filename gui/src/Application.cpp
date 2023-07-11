@@ -7,9 +7,10 @@
 namespace GUI
 {
 
-Application::Application(sf::Vector2i size, TracerX::Camera& camera, int sampleCount, int maxBounceCount)
-    : Renderer(size, camera, sampleCount, maxBounceCount)
+void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int sampleCount, int maxBounceCount)
 {
+    this->window.create(sf::VideoMode(size.x, size.y), "Path Tracing");
+    Renderer::create(size, camera, sampleCount, maxBounceCount);
     this->windowBuffer.create(this->size.x, this->size.y);
     
     this->cursor.setFillColor(sf::Color::Transparent);

@@ -7,10 +7,12 @@
 namespace TracerX
 {
 
-Renderer::Renderer(sf::Vector2i size, Camera& camera, int sampleCount, int maxBounceCount)
-    : camera(camera), size(size), sampleCount(sampleCount), maxBounceCount(maxBounceCount)
+void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount)
 {
-    this->window.create(sf::VideoMode(this->size.x, this->size.y), "Ray Tracing");
+    this->camera = camera;
+    this->size = size;
+    this->sampleCount = sampleCount;
+    this->maxBounceCount = maxBounceCount;
     this->buffer1.create(this->size.x, this->size.y);
     this->buffer2.create(this->size.x, this->size.y);
     this->loadShader();
