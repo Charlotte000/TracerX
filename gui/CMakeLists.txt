@@ -2,6 +2,7 @@ set(
     IMGUI
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_draw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_stdlib.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_UBO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui_widgets.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/ImGui/imgui-SFML.cpp

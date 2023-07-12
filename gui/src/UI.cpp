@@ -4,6 +4,7 @@
 #include <ImGui/imgui.h>
 #include <ImGui/imgui-SFML.h>
 #include <ImGui/imgui_stdlib.h>
+#include <ImGui/imgui_UBO.h>
 
 namespace GUI
 {
@@ -55,34 +56,12 @@ void InfoUI(Application& app)
     ImGui::Text("Window size: %dx%d", (int)app.size.value.x, (int)app.size.value.y);
     if (ImGui::BeginMenu("Camera"))
     {
-        if (ImGui::SliderAngle("FOV", &app.camera.fov.value, 0, 180.0f))
-        {
-            app.reset();
-        }
-
-        if (ImGui::DragFloat3("Position", (float*)&app.camera.position, .01f))
-        {
-            app.reset();
-        }
-
-        if (ImGui::DragFloat3("Forward", (float*)&app.camera.forward.value, .01f))
-        {
-            app.camera.forward.value = TracerX::normalized(app.camera.forward.value);
-            app.reset();
-        }
-
-        if (ImGui::DragFloat3("Up", (float*)&app.camera.up.value, .01f))
-        {
-            app.camera.up.value = TracerX::normalized(app.camera.up.value);
-            app.reset();
-        }
-
-        if (ImGui::DragFloat("Focal length", &app.camera.focalLength.value, 0.001f, 0, 1000))
-        {
-            app.reset();
-        }
-
-        if (ImGui::DragFloat("Focal strength", &app.camera.focusStrength.value, 0.0001f, 0, 1000))
+        if (ImGui::SliderAngleUBO("FOV", app.camera.fov, 0, 180.0f) |
+            ImGui::DragVector3fUBO("Position", app.camera.position, .01f) |
+            ImGui::DragVector3fUBONormalize("Forward", app.camera.forward, .01f) |
+            ImGui::DragVector3fUBONormalize("Up", app.camera.up, .01f) |
+            ImGui::DragFloatUBO("Focal length", app.camera.focalLength, 0.001f, 0, 1000) |
+            ImGui::DragFloatUBO("Focal strength", app.camera.focusStrength, 0.0001f, 0, 1000))
         {
             app.reset();
         }
@@ -90,12 +69,8 @@ void InfoUI(Application& app)
         ImGui::EndMenu();
     }
     
-    if (ImGui::DragInt("Samples", &app.sampleCount.value, 0.01f, 0, 10000))
-    {
-        app.reset();
-    }
-
-    if (ImGui::DragInt("Max bounce", &app.maxBounceCount.value, 0.01f, 0, 10000))
+    if (ImGui::DragIntUBO("Samples", app.sampleCount, 0.01f, 0, 10000) |
+        ImGui::DragIntUBO("Max bounce", app.maxBounceCount, 0.01f, 0, 10000))
     {
         app.reset();
     }
@@ -104,12 +79,8 @@ void InfoUI(Application& app)
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.value.x, "%d", ImGuiSliderFlags_Logarithmic))
-    {
-        app.reset();
-    }
-
-    if (ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.value.y, "%d", ImGuiSliderFlags_Logarithmic))
+    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.value.x, "%d", ImGuiSliderFlags_Logarithmic) |
+        ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.value.y, "%d", ImGuiSliderFlags_Logarithmic))
     {
         app.reset();
     }
