@@ -28,7 +28,7 @@ void Application::run()
     this->updateBoxes();
     this->updateTextures();
 
-    sf::Mouse::setPosition((sf::Vector2i)this->size.value / 2, this->window);
+    sf::Mouse::setPosition((sf::Vector2i)this->size.get() / 2, this->window);
 
     if (!ImGui::SFML::Init(this->window))
     {
@@ -101,7 +101,7 @@ void Application::run()
 
 void Application::reset()
 {
-    this->frameCount.value = 1;
+    this->frameCount.set(1);
     this->subStage = 0;
     this->isProgressive = false;
 }
@@ -112,7 +112,7 @@ void Application::clear()
     this->buffer1.display();
     this->buffer2.clear();
     this->buffer2.display();
-    this->frameCount.value = 1;
+    this->frameCount.set(1);
 }
 
 }

@@ -65,7 +65,7 @@ void Renderer::renderFrame()
     this->camera.updateShader();
 
     // Calculate subframe coordinate
-    sf::Vector2i size = sf::Vector2i(this->size.value.x / this->subDivisor.x, this->size.value.y / this->subDivisor.y);
+    sf::Vector2i size = sf::Vector2i(this->size.get().x / this->subDivisor.x, this->size.get().y / this->subDivisor.y);
     int y = this->subStage / this->subDivisor.x;
     int x = this->subStage - y * this->subDivisor.x;
     x *= size.x;
@@ -73,8 +73,8 @@ void Renderer::renderFrame()
     this->subFrame = sf::IntRect(x, y, size.x, size.y);
 
     // Swap target textures
-    this->targetTexture = (this->frameCount.value & 1) == 1 ? &this->buffer1 : &this->buffer2;
-    this->bufferTargetTexture = (this->frameCount.value & 1) == 1 ? &this->buffer2 : &this->buffer1;
+    this->targetTexture = (this->frameCount.get() & 1) == 1 ? &this->buffer1 : &this->buffer2;
+    this->bufferTargetTexture = (this->frameCount.get() & 1) == 1 ? &this->buffer2 : &this->buffer1;
     
     // Ray trace into new buffer
     sf::Sprite newSprite(this->targetTexture->getTexture());
@@ -89,7 +89,7 @@ void Renderer::renderFrame()
     if (this->subStage >= this->subDivisor.x * this->subDivisor.y)
     {
         this->subStage = 0;
-        this->frameCount.value++;
+        this->frameCount.set(this->frameCount.get() + 1);
     }
 }
 
@@ -99,9 +99,9 @@ int Renderer::getPixelDifference() const
     sf::Image image2 = this->buffer2.getTexture().copyToImage();
 
     int result = 0;
-    for (int x = 0; x < this->size.value.x; x++)
+    for (int x = 0; x < this->size.get().x; x++)
     {
-        for (int y = 0; y < this->size.value.y; y++)
+        for (int y = 0; y < this->size.get().y; y++)
         {
             if (image1.getPixel(x, y) != image2.getPixel(x, y))
             {

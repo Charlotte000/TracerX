@@ -8,7 +8,6 @@ void UBO<T>::create(sf::Shader* shader, const std::string& name)
 {
     this->shader = shader;
     this->name = name;
-    this->pushShader();
 }
 
 template <class T>
@@ -17,29 +16,35 @@ void UBO<T>::create(sf::Shader* shader, const std::string& name, T value)
     this->shader = shader;
     this->name = name;
     this->value = value;
-    this->pushShader();
 }
 
 template <class T>
 void UBO<T>::updateShader()
 {
-    if (this->hasChanged())
+    if (this->hasChanged)
     {
         this->pushShader();
-        this->shaderValue = this->value;
     }
 }
 
 template <class T>
-bool UBO<T>::hasChanged()
+const T& UBO<T>::get() const
 {
-    return this->value != this->shaderValue;
+    return this->value;
+}
+
+template <class T>
+void UBO<T>::set(const T& value)
+{
+    this->value = value;
+    this->hasChanged = true;
 }
 
 template <class T>
 void UBO<T>::pushShader()
 {
     this->shader->setUniform(this->name, this->value);
+    this->hasChanged = false;
 }
 
 template class UBO<int>;

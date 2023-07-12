@@ -46,14 +46,14 @@ void UI(Application& app)
     ImGui::Separator();
 
     ImGui::Text("FPS: %-4i", (int)roundf(ImGui::GetIO().Framerate));
-    ImGui::Text("Frame: %-4i", app.frameCount.value);
+    ImGui::Text("Frame: %-4i", app.frameCount.get());
     ImGui::ProgressBar((float)app.subStage / app.subDivisor.x / app.subDivisor.y);
     ImGui::EndMainMenuBar();
 }
 
 void InfoUI(Application& app)
 {
-    ImGui::Text("Window size: %dx%d", (int)app.size.value.x, (int)app.size.value.y);
+    ImGui::Text("Window size: %dx%d", (int)app.size.get().x, (int)app.size.get().y);
     if (ImGui::BeginMenu("Camera"))
     {
         if (ImGui::SliderAngleUBO("FOV", app.camera.fov, 0, 180.0f) |
@@ -79,8 +79,8 @@ void InfoUI(Application& app)
     ImGui::Separator();
     ImGui::Spacing();
 
-    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.value.x, "%d", ImGuiSliderFlags_Logarithmic) |
-        ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.value.y, "%d", ImGuiSliderFlags_Logarithmic))
+    if (ImGui::SliderInt("Width subdivise", &app.subDivisor.x, 1, app.size.get().x, "%d", ImGuiSliderFlags_Logarithmic) |
+        ImGui::SliderInt("Height subdivise", &app.subDivisor.y, 1, app.size.get().y, "%d", ImGuiSliderFlags_Logarithmic))
     {
         app.reset();
     }
@@ -91,7 +91,7 @@ void InfoUI(Application& app)
     ImGui::Separator();
     ImGui::Spacing();
 
-    static int totalPixels = app.size.value.x * app.size.value.y;
+    static int totalPixels = app.size.get().x * app.size.get().y;
     static int pixelDifference = totalPixels;
     static float differencePercentage = 100;
     if (ImGui::Button("Update pixel difference"))
@@ -108,7 +108,7 @@ void InfoUI(Application& app)
 
     if (ImGui::Checkbox("Camera control", &app.isCameraControl))
     {
-        sf::Mouse::setPosition((sf::Vector2i)app.size.value / 2, app.window);
+        sf::Mouse::setPosition((sf::Vector2i)app.size.get() / 2, app.window);
         app.window.setMouseCursorVisible(false);
         app.reset();
     }
@@ -503,23 +503,22 @@ void EnvironmentUI(Application& app)
 {
     if (ImGui::BeginMenu("Sun"))
     {
-        if (ImGui::ColorEdit3("Color", (float*)&app.environment.sunColor.value, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3UBO("Color", app.environment.sunColor, ImGuiColorEditFlags_Float))
         {
             app.reset();
         }
 
-        if (ImGui::DragFloat3("Direction", (float*)&app.environment.sunDirection.value, 0.001f))
-        {
-            app.environment.sunDirection.value = TracerX::normalized(app.environment.sunDirection.value);
-            app.reset();
-        }
-
-        if (ImGui::DragFloat("Focus", &app.environment.sunFocus.value, 1, 0, 10000))
+        if (ImGui::DragVector3fUBONormalize("Direction", app.environment.sunDirection, 0.001f))
         {
             app.reset();
         }
 
-        if (ImGui::DragFloat("Intensity", &app.environment.sunIntensity.value, 0.001f, 0, 100000))
+        if (ImGui::DragFloatUBO("Focus", app.environment.sunFocus, 1, 0, 10000))
+        {
+            app.reset();
+        }
+
+        if (ImGui::DragFloatUBO("Intensity", app.environment.sunIntensity, 0.001f, 0, 100000))
         {
             app.reset();
         }
@@ -529,17 +528,17 @@ void EnvironmentUI(Application& app)
 
     if (ImGui::BeginMenu("Sky"))
     {
-        if (ImGui::ColorEdit3("Horizon", (float*)&app.environment.skyColorHorizon.value, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3UBO("Horizon", app.environment.skyColorHorizon, ImGuiColorEditFlags_Float))
         {
             app.reset();
         }
 
-        if (ImGui::ColorEdit3("Zenith", (float*)&app.environment.skyColorZenith.value, ImGuiColorEditFlags_Float))
+        if (ImGui::ColorEdit3UBO("Zenith", app.environment.skyColorZenith, ImGuiColorEditFlags_Float))
         {
             app.reset();
         }
 
-        if (ImGui::DragFloat("Intensity", &app.environment.skyIntensity.value, 0.0001f, 0, 2))
+        if (ImGui::DragFloatUBO("Intensity", app.environment.skyIntensity, 0.0001f, 0, 2))
         {
             app.reset();
         }
@@ -547,12 +546,12 @@ void EnvironmentUI(Application& app)
         ImGui::EndMenu();
     }
 
-    if (ImGui::ColorEdit3("Ground", (float*)&app.environment.groundColor.value, ImGuiColorEditFlags_Float))
+    if (ImGui::ColorEdit3UBO("Ground", app.environment.groundColor, ImGuiColorEditFlags_Float))
     {
         app.reset();
     }
 
-    if (ImGui::Checkbox("Enable", &app.environment.enabled.value))
+    if (ImGui::CheckboxUBO("Enable", app.environment.enabled))
     {
         app.reset();
     }

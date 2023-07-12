@@ -16,4 +16,8 @@ IMGUI_API bool DragFloatUBO(const char* label, TracerX::UBO<float>& v, float v_s
 
 IMGUI_API bool DragIntUBO(const char* label, TracerX::UBO<int>& v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0);
 
+IMGUI_API bool ColorEdit3UBO(const char* label, TracerX::UBO<sf::Vector3f>& col, ImGuiColorEditFlags flags = 0);
+
+IMGUI_API bool CheckboxUBO(const char* label, TracerX::UBO<bool>& v);
+
 }

@@ -10,7 +10,7 @@ template <class T>
 class UBO
 {
 public:
-    T value;
+    bool hasChanged = true;
 
     void create(sf::Shader* shader, const std::string& name);
 
@@ -18,12 +18,14 @@ public:
 
     void updateShader();
 
-    bool hasChanged();
+    const T& get() const;
+
+    void set(const T& value);
 
 private:
     sf::Shader* shader;
     std::string name;
-    T shaderValue;
+    T value;
 
     void pushShader();
 };
