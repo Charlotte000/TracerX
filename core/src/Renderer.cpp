@@ -25,12 +25,12 @@ void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, 
     this->camera.create(&this->shader);
 
     // SSBO
-    this->materials.create(&this->shader, 1);
-    this->vertices.create(&this->shader, 2);
-    this->spheres.create(&this->shader, 3, "SphereCount");
-    this->indices.create(&this->shader, 4);
-    this->meshes.create(&this->shader, 5, "MeshCount");
-    this->boxes.create(&this->shader, 6, "BoxCount");
+    this->materials.create(this, &this->shader, 1);
+    this->vertices.create(this, &this->shader, 2);
+    this->spheres.create(this, &this->shader, 3, "SphereCount");
+    this->indices.create(this, &this->shader, 4);
+    this->meshes.create(this, &this->shader, 5, "MeshCount");
+    this->boxes.create(this, &this->shader, 6, "BoxCount");
 
     this->updateTextures();
 }
@@ -116,37 +116,9 @@ int Renderer::getPixelDifference() const
     return result;
 }
 
-#pragma region Add
-void Renderer::add(const Sphere& sphere, const Material& material)
+int Renderer::getMaterialId(const Material& material)
 {
-    Sphere s = sphere;
-    s.materialId = this->add(material);
-    this->spheres.add(s);
-}
-
-void Renderer::add(const Sphere& sphere)
-{
-    this->spheres.add(sphere);
-}
-
-void Renderer::add(const Box& box, const Material& material)
-{
-    Box b = box;
-    b.materialId = this->add(material);
-    b.updateAABB();
-    this->boxes.add(b);
-}
-
-void Renderer::add(const Box& box)
-{
-    Box b = box;
-    b.updateAABB();
-    this->boxes.add(b);
-}
-
-int Renderer::add(const Material& material)
-{
-    std::vector<Material>::const_iterator it = std::find(this->materials.get().begin(), this->materials.get().end(), material);
+    std::vector<Material>::const_iterator it = std::find(this->materials.get().cbegin(), this->materials.get().cend(), material);
     if (it != this->materials.get().cend())
     {
         return (int)(it - this->materials.get().cbegin());
@@ -188,7 +160,7 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
         material.roughness = sqrtf(2.0f / (mesh.MeshMaterial.Ns + 2));
         material.metalnessColor = *(sf::Vector3f*)&mesh.MeshMaterial.Ka;
         material.metalness = mesh.MeshMaterial.Ka.X;
-        int materialId = this->add(material);
+        int materialId = this->getMaterialId(material);
 
         Mesh myMesh((int)this->indices.get().size(), (int)this->indices.get().size() + (int)mesh.Indices.size(), materialId);
 
@@ -209,7 +181,6 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
         myMesh.scale(scale, this->indices, this->vertices);
         myMesh.rotate(rotation, this->indices, this->vertices);
         myMesh.offset(offset, this->indices, this->vertices);
-        myMesh.updateAABB(this->indices, this->vertices);
         this->meshes.add(myMesh);
     }
 }
@@ -217,21 +188,20 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
 void Renderer::addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward, const Material& lightSource)
 {
     this->addCornellBox(up, down, left, right, forward, backward);
-    this->add(Box(sf::Vector3f(0, .998f, 0), sf::Vector3f(.5f, .001f, .5f)), lightSource);
+    this->boxes.add(Box(sf::Vector3f(0, .998f, 0), sf::Vector3f(.5f, .001f, .5f), this->getMaterialId(lightSource)));
 }
 
 void Renderer::addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward)
 {
-    this->add(Box(sf::Vector3f(0, 1.5f, -.5f), sf::Vector3f(2, 1, 3)), up);
-    this->add(Box(sf::Vector3f(0, -1.5f, -.5f), sf::Vector3f(2, 1, 3)), down);
+    this->boxes.add(Box(sf::Vector3f(0, 1.5f, -.5f), sf::Vector3f(2, 1, 3), this->getMaterialId(up)));
+    this->boxes.add(Box(sf::Vector3f(0, -1.5f, -.5f), sf::Vector3f(2, 1, 3), this->getMaterialId(down)));
 
-    this->add(Box(sf::Vector3f(1.5f, 0, -.5f), sf::Vector3f(1, 2, 3)), left);
-    this->add(Box(sf::Vector3f(-1.5f, 0, -.5f), sf::Vector3f(1, 2, 3)), right);
+    this->boxes.add(Box(sf::Vector3f(1.5f, 0, -.5f), sf::Vector3f(1, 2, 3), this->getMaterialId(left)));
+    this->boxes.add(Box(sf::Vector3f(-1.5f, 0, -.5f), sf::Vector3f(1, 2, 3), this->getMaterialId(right)));
 
-    this->add(Box(sf::Vector3f(0, 0, 1.5f), sf::Vector3f(2, 2, 1)), forward);
-    this->add(Box(sf::Vector3f(0, 0, -2.5f), sf::Vector3f(2, 2, 1)), backward);
+    this->boxes.add(Box(sf::Vector3f(0, 0, 1.5f), sf::Vector3f(2, 2, 1), this->getMaterialId(forward)));
+    this->boxes.add(Box(sf::Vector3f(0, 0, -2.5f), sf::Vector3f(2, 2, 1), this->getMaterialId(backward)));
 }
-#pragma endregion
 
 void Renderer::updateTextures()
 {

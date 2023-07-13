@@ -8,13 +8,15 @@
 namespace TracerX
 {
 
+class Renderer;
+
 template <class T>
 class SSBO
 {
 public:
-    void create(sf::Shader* shader, GLuint binding);
+    void create(Renderer* renderer, sf::Shader* shader, GLuint binding);
 
-    void create(sf::Shader* shader, GLuint binding, const std::string& count);
+    void create(Renderer* renderer, sf::Shader* shader, GLuint binding, const std::string& count);
 
     void updateShader();
 
@@ -27,6 +29,7 @@ public:
     void remove(size_t index);
 
 private:
+    Renderer* renderer;
     sf::Shader* shader;
     std::string count;
     std::vector<T> values;

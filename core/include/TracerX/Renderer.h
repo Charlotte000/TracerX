@@ -46,15 +46,7 @@ public:
 
     int getPixelDifference() const;
 
-    void add(const Sphere& sphere, const Material& material);
-
-    void add(const Sphere& sphere);
-
-    void add(const Box& box, const Material& material);
-
-    void add(const Box& box);
-
-    int add(const Material& material);
+    int getMaterialId(const Material& material);
 
     int addTexture(const std::string& filePath);
 

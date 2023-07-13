@@ -19,7 +19,7 @@ int main()
     Material glass = Material::Transparent(Vector3f(1, 1, 1), .5f, Vector3f(1, 1, 1), .4f);
     
     app.addCornellBox(white, white, red, green, white, white, lightSource);
-    app.add(Sphere(Vector3f(0, -.5f, 0), .5f), glass);
+    app.spheres.add(Sphere(Vector3f(0, -.5f, 0), .5f, app.getMaterialId(glass)));
 
     app.run();
     return 0;

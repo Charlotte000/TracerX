@@ -1,3 +1,4 @@
+#include <TracerX/Renderer.h>
 #include <TracerX/Material.h>
 #include <TracerX/Primitives/Box.h>
 #include <TracerX/Primitives/Mesh.h>
@@ -9,16 +10,18 @@ namespace TracerX
 {
 
 template <class T>
-void SSBO<T>::create(sf::Shader* shader, GLuint binding)
+void SSBO<T>::create(Renderer* renderer, sf::Shader* shader, GLuint binding)
 {
+    this->renderer = renderer;
     this->shader = shader;
     this->binding = binding;
     glGenBuffers(1, &this->handle);
 }
 
 template <class T>
-void SSBO<T>::create(sf::Shader* shader, GLuint binding, const std::string& count)
+void SSBO<T>::create(Renderer* renderer, sf::Shader* shader, GLuint binding, const std::string& count)
 {
+    this->renderer = renderer;
     this->shader = shader;
     this->binding = binding;
     this->count = count;
@@ -58,10 +61,42 @@ void SSBO<T>::set(size_t index, const T& value)
     this->hasChanged = true;
 }
 
+template <>
+void SSBO<Box>::set(size_t index, const Box& value)
+{
+    this->values[index] = value;
+    this->values[index].updateAABB();
+    this->hasChanged = true;
+}
+
+template <>
+void SSBO<Mesh>::set(size_t index, const Mesh& value)
+{
+    this->values[index] = value;
+    this->values[index].updateAABB(this->renderer->indices, this->renderer->vertices);
+    this->hasChanged = true;
+}
+
 template <class T>
 void SSBO<T>::add(const T& value)
 {
     this->values.push_back(value);
+    this->hasChanged = true;
+}
+
+template <>
+void SSBO<Box>::add(const Box& value)
+{
+    this->values.push_back(value);
+    this->values.back().updateAABB();
+    this->hasChanged = true;
+}
+
+template <>
+void SSBO<Mesh>::add(const Mesh& value)
+{
+    this->values.push_back(value);
+    this->values.back().updateAABB(this->renderer->indices, this->renderer->vertices);
     this->hasChanged = true;
 }
 

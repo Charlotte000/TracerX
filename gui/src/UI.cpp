@@ -162,7 +162,6 @@ void _Box(Application& app, size_t index)
         ImGui::DragFloat3("Size", (float*)&box.size, .001f) |
         ImGui::DragFloat3("Rotate", (float*)&box.rotation, .01f))
     {
-        box.updateAABB();
         app.boxes.set(index, box);
         app.reset();
     }
@@ -216,7 +215,6 @@ void _Mesh(Application& app, size_t index)
     if (ImGui::DragFloat3("Offset", (float*)&offset, .01f))
     {
         mesh.offset(offset - mesh.position, app.indices, app.vertices);
-        mesh.updateAABB(app.indices, app.vertices);
         app.meshes.set(index, mesh);
         app.reset();
     }
@@ -225,7 +223,6 @@ void _Mesh(Application& app, size_t index)
     if (ImGui::DragFloat3("Scale", (float*)&scale, .01f) && scale.x != 0 && scale.y != 0 && scale.z != 0)
     {
         mesh.scale(TracerX::div(scale, mesh.size), app.indices, app.vertices);
-        mesh.updateAABB(app.indices, app.vertices);
         app.meshes.set(index, mesh);
         app.reset();
     }
@@ -234,7 +231,6 @@ void _Mesh(Application& app, size_t index)
     if (ImGui::DragFloat3("Rotate", (float*)&rotation, .01f))
     {
         mesh.rotate(rotation - mesh.rotation, app.indices, app.vertices);
-        mesh.updateAABB(app.indices, app.vertices);
         app.meshes.set(index, mesh);
         app.reset();
     }
