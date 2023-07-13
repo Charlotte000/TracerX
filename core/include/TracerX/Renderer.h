@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GL/glew.h>
 #include <SFML/Graphics.hpp>
 #include <TracerX/Primitives/Box.h>
 #include <TracerX/Primitives/Sphere.h>
@@ -9,6 +8,7 @@
 #include <TracerX/Vertex3.h>
 #include <TracerX/Primitives/Mesh.h>
 #include <TracerX/Material.h>
+#include <TracerX/SSBO.h>
 #include <TracerX/UBO.h>
 
 namespace TracerX
@@ -18,12 +18,13 @@ class Renderer
 {
 public:
     // SSBO
-    std::vector<Material> materials;
-    std::vector<Sphere> spheres;
-    std::vector<Box> boxes;
-    std::vector<int> indices;
-    std::vector<Vertex3> vertices;
-    std::vector<Mesh> meshes;
+    SSBO<Material> materials;
+    SSBO<Sphere> spheres;
+    SSBO<Box> boxes;
+    SSBO<int> indices;
+    SSBO<Vertex3> vertices;
+    SSBO<Mesh> meshes;
+
     std::vector<sf::Texture> textures;
 
     // UBO
@@ -63,30 +64,12 @@ public:
 
     void addCornellBox(const Material& up, const Material& down, const Material& left, const Material& right, const Material& forward, const Material& backward);
 
-    void updateMaterials() const;
-
-    void updateVertices() const;
-
-    void updateSpheres();
-
-    void updateIndices() const;
-
-    void updateMeshes();
-
-    void updateBoxes();
-
     void updateTextures();
 
 protected:
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;
     sf::RenderTexture* bufferTargetTexture;
-    GLuint materialBuffer;
-    GLuint vertexBuffer;
-    GLuint sphereBuffer;
-    GLuint indexBuffer;
-    GLuint meshBuffer;
-    GLuint boxBuffer;
     sf::IntRect subFrame;
 
     void loadShader();

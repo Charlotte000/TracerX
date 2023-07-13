@@ -9,6 +9,262 @@
 namespace GUI
 {
 
+void _Material(Application& app, size_t index)
+{
+    if (!ImGui::BeginMenu(std::string("Material " + std::to_string(index)).c_str()))
+    {
+        return;
+    }
+
+    TracerX::Material material = app.materials.get()[index];
+    
+    if (ImGui::ColorEdit3("Albedo", (float*)&material.albedoColor, ImGuiColorEditFlags_Float))
+    {
+        app.materials.set(index, material);
+        app.reset();
+    }
+
+    if (ImGui::BeginMenu("Albedo map"))
+    {
+        if (ImGui::SliderInt("Albedo map id", &material.albedoMapId, -1, (int)app.textures.size() - 1))
+        {
+            app.materials.set(index, material);
+            app.reset();
+        }
+
+        if (material.albedoMapId >= 0)
+        {
+            ImGui::Image(app.textures[material.albedoMapId], sf::Vector2f(100, 100));
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
+    {
+        app.materials.set(index, material);
+        app.reset();
+    }
+
+    if (ImGui::BeginMenu("Metalness"))
+    {
+        if (ImGui::ColorEdit3("Metalness color", (float*)&material.metalnessColor, ImGuiColorEditFlags_Float) |
+            ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
+        {
+            app.materials.set(index, material);
+            app.reset();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Emission"))
+    {
+        if (ImGui::ColorEdit3("Emission color", (float*)&material.emissionColor, ImGuiColorEditFlags_Float) |
+            ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
+        {
+            app.materials.set(index, material);
+            app.reset();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Fresnel"))
+    {
+        if (ImGui::ColorEdit3("Fresnel color", (float*)&material.fresnelColor, ImGuiColorEditFlags_Float) |
+            ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
+        {
+            app.materials.set(index, material);
+            app.reset();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100) |
+        ImGui::DragFloat("Density", &material.density, .001f, 0, 100))
+    {
+        app.materials.set(index, material);
+        app.reset();
+    }
+
+    if (ImGui::Button("Delete"))
+    {
+        app.materials.remove(index);
+        app.reset();
+    }
+
+    ImGui::EndMenu();
+}
+
+void _Sphere(Application& app, size_t index)
+{
+    if (!ImGui::BeginMenu(std::string("Sphere " + std::to_string(index)).c_str()))
+    {
+        return;
+    }
+
+    TracerX::Sphere sphere = app.spheres.get()[index];
+
+    if (ImGui::DragFloat3("Origin", (float*)&sphere.origin, .001f) |
+        ImGui::DragFloat("Radius", &sphere.radius, .001f) |
+        ImGui::DragFloat3("Rotate", (float*)&sphere.rotation, .01f))
+    {
+        app.spheres.set(index, sphere);
+        app.reset();
+    }
+
+    if (ImGui::BeginListBox("Material id"))
+    {
+        for (int materialId = 0; materialId < app.materials.get().size(); materialId++)
+        {
+            if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == sphere.materialId) &&
+                materialId != sphere.materialId)
+            {
+                sphere.materialId = materialId;
+                app.spheres.set(index, sphere);
+                app.reset();
+            }
+        }
+
+        ImGui::EndListBox();
+    }
+
+    if (ImGui::Button("Focus camera"))
+    {
+        app.camera.lookAt(sphere.origin);
+        app.reset();
+    }
+
+    if (ImGui::Button("Delete"))
+    {
+        app.spheres.remove(index);
+        app.reset();
+    }
+
+    ImGui::EndMenu();
+}
+
+void _Box(Application& app, size_t index)
+{
+    if (!ImGui::BeginMenu(std::string("Box " + std::to_string(index)).c_str()))
+    {
+        return;
+    }
+
+    TracerX::Box box = app.boxes.get()[index];
+
+    ImGui::Text("Bounding box min: (%f, %f, %f)", box.boxMin.x, box.boxMin.y, box.boxMin.z);
+    ImGui::Text("Bounding box max: (%f, %f, %f)", box.boxMax.x, box.boxMax.y, box.boxMax.z);
+
+    if (ImGui::DragFloat3("Origin", (float*)&box.origin, .001f) |
+        ImGui::DragFloat3("Size", (float*)&box.size, .001f) |
+        ImGui::DragFloat3("Rotate", (float*)&box.rotation, .01f))
+    {
+        box.updateAABB();
+        app.boxes.set(index, box);
+        app.reset();
+    }
+
+    if (ImGui::BeginListBox("Material id"))
+    {
+        for (int materialId = 0; materialId < app.materials.get().size(); materialId++)
+        {
+            if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == box.materialId) &&
+                materialId != box.materialId)
+            {
+                box.materialId = materialId;
+                app.boxes.set(index, box);
+                app.reset();
+            }
+        }
+    
+        ImGui::EndListBox();
+    }
+
+    if (ImGui::Button("Focus camera"))
+    {
+        app.camera.lookAt(box.origin);
+        app.reset();
+    }
+
+    if (ImGui::Button("Delete"))
+    {
+        app.boxes.remove(index);
+        app.reset();
+    }
+
+    ImGui::EndMenu();
+}
+
+void _Mesh(Application& app, size_t index)
+{
+    if (!ImGui::BeginMenu(std::string("Mesh " + std::to_string(index)).c_str()))
+    {
+        return;
+    }
+
+    TracerX::Mesh mesh = app.meshes.get()[index];
+
+    ImGui::Text("Indices start: %i", mesh.indicesStart);
+    ImGui::Text("Indices end: %i", mesh.indicesEnd);
+    ImGui::Text("Bounding box min: (%f, %f, %f)", mesh.boxMin.x, mesh.boxMin.y, mesh.boxMin.z);
+    ImGui::Text("Bounding box max: (%f, %f, %f)", mesh.boxMax.x, mesh.boxMax.y, mesh.boxMax.z);
+
+    sf::Vector3f offset = mesh.position;
+    if (ImGui::DragFloat3("Offset", (float*)&offset, .01f))
+    {
+        mesh.offset(offset - mesh.position, app.indices, app.vertices);
+        mesh.updateAABB(app.indices, app.vertices);
+        app.meshes.set(index, mesh);
+        app.reset();
+    }
+
+    sf::Vector3f scale = mesh.size;
+    if (ImGui::DragFloat3("Scale", (float*)&scale, .01f) && scale.x != 0 && scale.y != 0 && scale.z != 0)
+    {
+        mesh.scale(TracerX::div(scale, mesh.size), app.indices, app.vertices);
+        mesh.updateAABB(app.indices, app.vertices);
+        app.meshes.set(index, mesh);
+        app.reset();
+    }
+
+    sf::Vector3f rotation = mesh.rotation;
+    if (ImGui::DragFloat3("Rotate", (float*)&rotation, .01f))
+    {
+        mesh.rotate(rotation - mesh.rotation, app.indices, app.vertices);
+        mesh.updateAABB(app.indices, app.vertices);
+        app.meshes.set(index, mesh);
+        app.reset();
+    }
+
+    if (ImGui::BeginListBox("Material id"))
+    {
+        for (int materialId = 0; materialId < app.materials.get().size(); materialId++)
+        {
+            if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == mesh.materialId) &&
+                materialId != mesh.materialId)
+            {
+                mesh.materialId = materialId;
+                app.meshes.set(index, mesh);
+                app.reset();
+            }
+        }
+
+        ImGui::EndListBox();
+    }
+
+    if (ImGui::Button("Focus camera"))
+    {
+        app.camera.lookAt(mesh.position);
+        app.reset();
+    }
+
+    ImGui::EndMenu();
+}
+
+
 void UI(Application& app)
 {
     // Draw UI
@@ -136,335 +392,57 @@ void InfoUI(Application& app)
 
 void MaterialUI(Application& app)
 {
-    for (int i = 0; i < app.materials.size(); i++)
+    for (int i = 0; i < app.materials.get().size(); i++)
     {
-        if (ImGui::BeginMenu(std::string("Material " + std::to_string(i)).c_str()))
-        {
-            TracerX::Material& material = app.materials[i];
-            
-            if (ImGui::ColorEdit3("Albedo", (float*)&material.albedoColor, ImGuiColorEditFlags_Float))
-            {
-                app.updateMaterials();
-                app.reset();
-            }
-
-            if (ImGui::BeginMenu("Albedo map"))
-            {
-                if (ImGui::SliderInt("Albedo map id", &material.albedoMapId, -1, (int)app.textures.size() - 1))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                if (material.albedoMapId >= 0)
-                {
-                    ImGui::Image(app.textures[material.albedoMapId], sf::Vector2f(100, 100));
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::SliderFloat("Roughness", &material.roughness, 0, 1))
-            {
-                app.updateMaterials();
-                app.reset();
-            }
-
-            if (ImGui::BeginMenu("Metalness"))
-            {
-                if (ImGui::ColorEdit3("Metalness color", (float*)&material.metalnessColor, ImGuiColorEditFlags_Float))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                if (ImGui::SliderFloat("Metalness", &material.metalness, 0, 1))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Emission"))
-            {
-                if (ImGui::ColorEdit3("Emission color", (float*)&material.emissionColor, ImGuiColorEditFlags_Float))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat("Emission", &material.emissionStrength, .001f, 0, 100))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::BeginMenu("Fresnel"))
-            {
-                if (ImGui::ColorEdit3("Fresnel color", (float*)&material.fresnelColor, ImGuiColorEditFlags_Float))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat("Fresnel", &material.fresnelStrength, .0001f, 0, 100))
-                {
-                    app.updateMaterials();
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
-
-            if (ImGui::DragFloat("Refraction", &material.refractionFactor, .001f, 0, 100))
-            {
-                app.updateMaterials();
-                app.reset();
-            }
-
-            if (ImGui::DragFloat("Density", &material.density, .001f, 0, 100))
-            {
-                app.updateMaterials();
-                app.reset();
-            }
-
-            if (ImGui::Button("Delete"))
-            {
-                app.materials.erase(app.materials.begin() + i);
-                app.updateMaterials();
-                app.reset();
-            }
-
-            ImGui::EndMenu();
-        }
+        _Material(app, i);
     }
 
     if (ImGui::Button("Create"))
     {
-        app.materials.push_back(TracerX::Material());
-        app.updateMaterials();
+        app.materials.add(TracerX::Material());
         app.reset();
     }
 }
 
 void GeometryUI(Application& app)
 {
-    if (ImGui::BeginMenu(std::string("Spheres (" + std::to_string(app.spheres.size()) + ')').c_str()))
+    if (ImGui::BeginMenu(std::string("Spheres (" + std::to_string(app.spheres.get().size()) + ')').c_str()))
     {
-        for (int i = 0; i < app.spheres.size(); i++)
+        for (int i = 0; i < app.spheres.get().size(); i++)
         {
-            if (ImGui::BeginMenu(std::string("Sphere " + std::to_string(i)).c_str()))
-            {
-                TracerX::Sphere& sphere = app.spheres[i];
-
-                if (ImGui::DragFloat3("Origin", (float*)&sphere.origin, .001f))
-                {
-                    app.updateSpheres();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat("Radius", &sphere.radius, .001f))
-                {
-                    app.updateSpheres();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat3("Rotate", (float*)&sphere.rotation, .01f))
-                {
-                    app.updateSpheres();
-                    app.reset();
-                }
-
-                if (ImGui::BeginListBox("Material id"))
-                {
-                    for (int materialId = 0; materialId < app.materials.size(); materialId++)
-                    {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == sphere.materialId) &&
-                            materialId != sphere.materialId)
-                        {
-                            sphere.materialId = materialId;
-                            app.updateSpheres();
-                            app.reset();
-                        }
-                    }
-
-                    ImGui::EndListBox();
-                }
-
-                if (ImGui::Button("Focus camera"))
-                {
-                    app.camera.lookAt(sphere.origin);
-                    app.reset();
-                }
-
-                if (ImGui::Button("Delete"))
-                {
-                    app.spheres.erase(app.spheres.begin() + i);
-                    app.updateSpheres();
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
+            _Sphere(app, i);
         }
         
         if (ImGui::Button("Create"))
         {
-            app.spheres.push_back(TracerX::Sphere(sf::Vector3f(0, 0, 0), 0, 0));
-            app.updateSpheres();
+            app.spheres.add(TracerX::Sphere(sf::Vector3f(0, 0, 0), 0, 0));
             app.reset();
         }
 
         ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu(std::string("Boxes (" + std::to_string(app.boxes.size()) + ')').c_str()))
+    if (ImGui::BeginMenu(std::string("Boxes (" + std::to_string(app.boxes.get().size()) + ')').c_str()))
     {
-        for (int i = 0; i < app.boxes.size(); i++)
+        for (int i = 0; i < app.boxes.get().size(); i++)
         {
-            if (ImGui::BeginMenu(std::string("Box " + std::to_string(i)).c_str()))
-            {
-                TracerX::Box& box = app.boxes[i];
-
-                ImGui::Text("Bounding box min: (%f, %f, %f)", box.boxMin.x, box.boxMin.y, box.boxMin.z);
-                ImGui::Text("Bounding box max: (%f, %f, %f)", box.boxMax.x, box.boxMax.y, box.boxMax.z);
-
-                if (ImGui::DragFloat3("Origin", (float*)&box.origin, .001f))
-                {
-                    box.updateAABB();
-                    app.updateBoxes();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat3("Size", (float*)&box.size, .001f))
-                {
-                    box.updateAABB();
-                    app.updateBoxes();
-                    app.reset();
-                }
-
-                if (ImGui::DragFloat3("Rotate", (float*)&box.rotation, .01f))
-                {
-                    box.updateAABB();
-                    app.updateBoxes();
-                    app.reset();
-                }
-
-                if (ImGui::BeginListBox("Material id"))
-                {
-                    for (int materialId = 0; materialId < app.materials.size(); materialId++)
-                    {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == box.materialId) &&
-                            materialId != box.materialId)
-                        {
-                            box.materialId = materialId;
-                            app.updateBoxes();
-                            app.reset();
-                        }
-                    }
-                
-                    ImGui::EndListBox();
-                }
-
-                if (ImGui::Button("Focus camera"))
-                {
-                    app.camera.lookAt(box.origin);
-                    app.reset();
-                }
-
-                if (ImGui::Button("Delete"))
-                {
-                    app.boxes.erase(app.boxes.begin() + i);
-                    app.updateBoxes();
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
+            _Box(app, i);
         }
 
         if (ImGui::Button("Create"))
         {
-            app.boxes.push_back(TracerX::Box(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), 0));
-            app.updateBoxes();
+            app.boxes.add(TracerX::Box(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0), 0));
             app.reset();
         }
 
         ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu(std::string("Meshes (" + std::to_string(app.meshes.size()) + ')').c_str()))
+    if (ImGui::BeginMenu(std::string("Meshes (" + std::to_string(app.meshes.get().size()) + ')').c_str()))
     {
-        for (int i = 0; i < app.meshes.size(); i++)
+        for (int i = 0; i < app.meshes.get().size(); i++)
         {
-            if (ImGui::BeginMenu(std::string("Mesh " + std::to_string(i)).c_str()))
-            {
-                TracerX::Mesh& mesh = app.meshes[i];
-
-                ImGui::Text("Indices start: %i", mesh.indicesStart);
-                ImGui::Text("Indices end: %i", mesh.indicesEnd);
-                ImGui::Text("Bounding box min: (%f, %f, %f)", mesh.boxMin.x, mesh.boxMin.y, mesh.boxMin.z);
-                ImGui::Text("Bounding box max: (%f, %f, %f)", mesh.boxMax.x, mesh.boxMax.y, mesh.boxMax.z);
-
-                sf::Vector3f offset = mesh.position;
-                if (ImGui::DragFloat3("Offset", (float*)&offset, .01f))
-                {
-                    mesh.offset(offset - mesh.position, app.indices, app.vertices);
-                    mesh.updateAABB(app.indices, app.vertices);
-                    app.updateMeshes();
-                    app.updateVertices();
-                    app.reset();
-                }
-
-                sf::Vector3f scale = mesh.size;
-                if (ImGui::DragFloat3("Scale", (float*)&scale, .01f) && scale.x != 0 && scale.y != 0 && scale.z != 0)
-                {
-                    mesh.scale(TracerX::div(scale, mesh.size), app.indices, app.vertices);
-                    mesh.updateAABB(app.indices, app.vertices);
-                    app.updateMeshes();
-                    app.updateVertices();
-                    app.reset();
-                }
-
-                sf::Vector3f rotation = mesh.rotation;
-                if (ImGui::DragFloat3("Rotate", (float*)&rotation, .01f))
-                {
-                    mesh.rotate(rotation - mesh.rotation, app.indices, app.vertices);
-                    mesh.updateAABB(app.indices, app.vertices);
-                    app.updateMeshes();
-                    app.updateVertices();
-                    app.reset();
-                }
-
-                if (ImGui::BeginListBox("Material id"))
-                {
-                    for (int materialId = 0; materialId < app.materials.size(); materialId++)
-                    {
-                        if (ImGui::Selectable(("Material " + std::to_string(materialId)).c_str(), materialId == mesh.materialId) &&
-                            materialId != mesh.materialId)
-                        {
-                            mesh.materialId = materialId;
-                            app.updateMeshes();
-                            app.reset();
-                        }
-                    }
-
-                    ImGui::EndListBox();
-                }
-
-                if (ImGui::Button("Focus camera"))
-                {
-                    app.camera.lookAt(mesh.position);
-                    app.reset();
-                }
-
-                ImGui::EndMenu();
-            }
+            _Mesh(app, i);
         }
 
         if (ImGui::Button("Create"))
@@ -481,10 +459,6 @@ void GeometryUI(Application& app)
                 try
                 {
                     app.addFile(filePath);
-                    app.updateIndices();
-                    app.updateMaterials();
-                    app.updateMeshes();
-                    app.updateVertices();
                     app.reset();
                 }
                 catch (std::runtime_error&) { }

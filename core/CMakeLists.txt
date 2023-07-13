@@ -9,6 +9,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/VectorMath.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Vertex3.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/SSBO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/UBO.cpp
 )
 

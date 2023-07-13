@@ -13,12 +13,6 @@ void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int s
 
 void Application::run(int iterationCount, const std::string& imagePath)
 {
-    this->updateMaterials();
-    this->updateVertices();
-    this->updateSpheres();
-    this->updateIndices();
-    this->updateMeshes();
-    this->updateBoxes();
     this->updateTextures();
 
     int subWidth = this->size.get().x / this->subDivisor.x;

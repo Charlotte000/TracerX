@@ -20,12 +20,6 @@ void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int s
 
 void Application::run()
 {
-    this->updateMaterials();
-    this->updateVertices();
-    this->updateSpheres();
-    this->updateIndices();
-    this->updateMeshes();
-    this->updateBoxes();
     this->updateTextures();
 
     sf::Mouse::setPosition((sf::Vector2i)this->size.get() / 2, this->window);

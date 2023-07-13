@@ -1,4 +1,5 @@
 #include <limits>
+#include <set>
 #include <TracerX/VectorMath.h>
 #include <TracerX/Primitives/Mesh.h>
 
@@ -10,69 +11,75 @@ Mesh::Mesh(int indicesStart, int indicesEnd, int materialId)
 {
 }
 
-void Mesh::offset(sf::Vector3f offset, const std::vector<int>& indices, std::vector<Vertex3>& verticies)
+void Mesh::offset(sf::Vector3f offset, const SSBO<int>& indices, SSBO<Vertex3>& verticies)
 {
     this->position += offset;
 
     std::set<int> meshIndices;
     for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
-        int index = indices[i];
+        int index = indices.get()[i];
         if (!meshIndices.insert(index).second)
         {
             continue;
         }
 
-        verticies[index].position += offset;
+        Vertex3 vertex = verticies.get()[index];
+        vertex.position += offset;
+        verticies.set(index, vertex);
     }
 }
 
-void Mesh::scale(sf::Vector3f scale, const std::vector<int>& indices, std::vector<Vertex3>& verticies)
+void Mesh::scale(sf::Vector3f scale, const SSBO<int>& indices, SSBO<Vertex3>& verticies)
 {
     this->size = mult(this->size, scale);
 
     std::set<int> meshIndices;
     for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
-        int index = indices[i];
+        int index = indices.get()[i];
         if (!meshIndices.insert(index).second)
         {
             continue;
         }
 
-        verticies[index].position = mult(verticies[index].position - this->position, scale) + this->position;
-        verticies[index].normal = normalized(mult(verticies[index].normal, scale));
+        Vertex3 vertex = verticies.get()[index];
+        vertex.position = mult(vertex.position - this->position, scale) + this->position;
+        vertex.normal = normalized(mult(vertex.normal, scale));
+        verticies.set(index, vertex);
     }
 }
 
-void Mesh::rotate(sf::Vector3f rotation, const std::vector<int>& indices, std::vector<Vertex3>& verticies)
+void Mesh::rotate(sf::Vector3f rotation, const SSBO<int>& indices, SSBO<Vertex3>& verticies)
 {
     this->rotation += rotation;
 
     std::set<int> meshIndices;
     for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
-        int index = indices[i];
+        int index = indices.get()[i];
         if (!meshIndices.insert(index).second)
         {
             continue;
         }
 
-        verticies[index].position = rotateZ(rotateY(rotateX(verticies[index].position - this->position, rotation.x), rotation.y), rotation.z) + this->position;
-        verticies[index].normal = rotateZ(rotateY(rotateX(verticies[index].normal, rotation.x), rotation.y), rotation.z);
+        Vertex3 vertex = verticies.get()[index];
+        vertex.position = rotateZ(rotateY(rotateX(vertex.position - this->position, rotation.x), rotation.y), rotation.z) + this->position;
+        vertex.normal = rotateZ(rotateY(rotateX(vertex.normal, rotation.x), rotation.y), rotation.z);
+        verticies.set(index, vertex);
     }
 }
 
-void Mesh::updateAABB(const std::vector<int>& indices, const std::vector<Vertex3>& verticies)
+void Mesh::updateAABB(const SSBO<int>& indices, const SSBO<Vertex3>& verticies)
 {
     this->boxMin = sf::Vector3f(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
     this->boxMax = sf::Vector3f(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
 
     for (int i = this->indicesStart; i < this->indicesEnd; i++)
     {
-        int index = indices[i];
-        this->boxMin = min(this->boxMin, verticies[index].position);
-        this->boxMax = max(this->boxMax, verticies[index].position);
+        int index = indices.get()[i];
+        this->boxMin = min(this->boxMin, verticies.get()[index].position);
+        this->boxMax = max(this->boxMax, verticies.get()[index].position);
     }
 }
 

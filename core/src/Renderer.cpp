@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <algorithm>
 #include <GL/glew.h>
 #include <OBJ-Loader/OBJLoader.h>
 #include <SFML/Graphics.hpp>
@@ -15,6 +16,7 @@ void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, 
 
     this->loadShader();
 
+    // UBO
     this->size.create(&this->shader, "WindowSize", (sf::Vector2f)size);
     this->frameCount.create(&this->shader, "FrameCount", 1);
     this->maxBounceCount.create(&this->shader, "MaxBouceCount", maxBounceCount);
@@ -22,6 +24,15 @@ void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, 
     this->environment.create(&this->shader);
     this->camera.create(&this->shader);
 
+    // SSBO
+    this->materials.create(&this->shader, 1);
+    this->vertices.create(&this->shader, 2);
+    this->spheres.create(&this->shader, 3, "SphereCount");
+    this->indices.create(&this->shader, 4);
+    this->meshes.create(&this->shader, 5, "MeshCount");
+    this->boxes.create(&this->shader, 6, "BoxCount");
+
+    this->updateTextures();
 }
 
 void Renderer::loadShader()
@@ -37,21 +48,6 @@ void Renderer::loadShader()
     {
         throw std::runtime_error("Failed to load shader");
     }
-
-    glGenBuffers(1, &this->materialBuffer);
-    glGenBuffers(1, &this->vertexBuffer);
-    glGenBuffers(1, &this->sphereBuffer);
-    glGenBuffers(1, &this->indexBuffer);
-    glGenBuffers(1, &this->meshBuffer);
-    glGenBuffers(1, &this->boxBuffer);
-    
-    this->updateMaterials();
-    this->updateVertices();
-    this->updateSpheres();
-    this->updateIndices();
-    this->updateMeshes();
-    this->updateBoxes();
-    this->updateTextures();
 }
 
 void Renderer::renderFrame()
@@ -63,6 +59,13 @@ void Renderer::renderFrame()
     this->size.updateShader();
     this->environment.updateShader();
     this->camera.updateShader();
+
+    this->materials.updateShader();
+    this->vertices.updateShader();
+    this->spheres.updateShader();
+    this->indices.updateShader();
+    this->meshes.updateShader();
+    this->boxes.updateShader();
 
     // Calculate subframe coordinate
     sf::Vector2i size = sf::Vector2i(this->size.get().x / this->subDivisor.x, this->size.get().y / this->subDivisor.y);
@@ -116,38 +119,41 @@ int Renderer::getPixelDifference() const
 #pragma region Add
 void Renderer::add(const Sphere& sphere, const Material& material)
 {
-    this->spheres.push_back(sphere);
-    this->spheres.back().materialId = this->add(material);
+    Sphere s = sphere;
+    s.materialId = this->add(material);
+    this->spheres.add(s);
 }
 
 void Renderer::add(const Sphere& sphere)
 {
-    this->spheres.push_back(sphere);
+    this->spheres.add(sphere);
 }
 
 void Renderer::add(const Box& box, const Material& material)
 {
-    this->boxes.push_back(box);
-    this->boxes.back().materialId = this->add(material);
-    this->boxes.back().updateAABB();
+    Box b = box;
+    b.materialId = this->add(material);
+    b.updateAABB();
+    this->boxes.add(b);
 }
 
 void Renderer::add(const Box& box)
 {
-    this->boxes.push_back(box);
-    this->boxes.back().updateAABB();
+    Box b = box;
+    b.updateAABB();
+    this->boxes.add(b);
 }
 
 int Renderer::add(const Material& material)
 {
-    std::vector<Material>::iterator it = find(this->materials.begin(), this->materials.end(), material);
-    if (it != this->materials.end())
+    std::vector<Material>::const_iterator it = std::find(this->materials.get().begin(), this->materials.get().end(), material);
+    if (it != this->materials.get().cend())
     {
-        return (int)(it - this->materials.begin());
+        return (int)(it - this->materials.get().cbegin());
     }
 
-    this->materials.push_back(material);
-    return (int)(this->materials.size() - 1);
+    this->materials.add(material);
+    return (int)(this->materials.get().size() - 1);
 }
 
 int Renderer::addTexture(const std::string& filePath)
@@ -184,17 +190,17 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
         material.metalness = mesh.MeshMaterial.Ka.X;
         int materialId = this->add(material);
 
-        Mesh myMesh((int)this->indices.size(), (int)this->indices.size() + (int)mesh.Indices.size(), materialId);
+        Mesh myMesh((int)this->indices.get().size(), (int)this->indices.get().size() + (int)mesh.Indices.size(), materialId);
 
-        int verticesOffset = (int)this->vertices.size();
+        int verticesOffset = (int)this->vertices.get().size();
         for (auto index : mesh.Indices)
         {
-            this->indices.push_back(index + verticesOffset);
+            this->indices.add(index + verticesOffset);
         }
 
         for (const objl::Vertex& vertex : mesh.Vertices)
         {
-            this->vertices.push_back(Vertex3(
+            this->vertices.add(Vertex3(
                 *(sf::Vector3f*)&vertex.Position,
                 *(sf::Vector3f*)&vertex.Normal,
                 *(sf::Vector2f*)&vertex.TextureCoordinate));
@@ -204,7 +210,7 @@ void Renderer::addFile(const std::string& filePath, sf::Vector3f offset, sf::Vec
         myMesh.rotate(rotation, this->indices, this->vertices);
         myMesh.offset(offset, this->indices, this->vertices);
         myMesh.updateAABB(this->indices, this->vertices);
-        this->meshes.push_back(myMesh);
+        this->meshes.add(myMesh);
     }
 }
 
@@ -227,58 +233,6 @@ void Renderer::addCornellBox(const Material& up, const Material& down, const Mat
 }
 #pragma endregion
 
-#pragma region Updates
-void Renderer::updateMaterials() const
-{
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->materialBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->materials.size() * sizeof(Material), this->materials.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, this->materialBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-void Renderer::updateVertices() const
-{
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->vertexBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->vertices.size() * sizeof(Vertex3), this->vertices.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, this->vertexBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-void Renderer::updateSpheres()
-{
-    this->shader.setUniform("SphereCount", (int)this->spheres.size());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->sphereBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->spheres.size() * sizeof(Sphere), this->spheres.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, this->sphereBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-void Renderer::updateIndices() const
-{
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->indexBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->indices.size() * sizeof(int), this->indices.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, this->indexBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-void Renderer::updateMeshes()
-{
-    this->shader.setUniform("MeshCount", (int)this->meshes.size());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->meshBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->meshes.size() * sizeof(Mesh), this->meshes.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, this->meshBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-void Renderer::updateBoxes()
-{
-    this->shader.setUniform("BoxCount", (int)this->boxes.size());
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->boxBuffer);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, this->boxes.size() * sizeof(Box), this->boxes.data(), GL_DYNAMIC_COPY);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, this->boxBuffer);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
 void Renderer::updateTextures()
 {
     for (int i = 0; i < this->textures.size(); i++)
@@ -286,8 +240,6 @@ void Renderer::updateTextures()
         this->shader.setUniform("Textures[" + std::to_string(i) + ']', this->textures[i]);
     }
 }
-
-#pragma endregion
 
 const std::string Renderer::ShaderCode = R"(
 #version 430 core
