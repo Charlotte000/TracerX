@@ -10,6 +10,7 @@
 #include <TracerX/Material.h>
 #include <TracerX/SSBO.h>
 #include <TracerX/UBO.h>
+#include <TracerX/Animation.h>
 
 namespace TracerX
 {
@@ -39,10 +40,13 @@ public:
     int subStage = 0;
     sf::Vector2i subDivisor = sf::Vector2i(1, 1);
     sf::RenderTexture* targetTexture;
+    Animation animation;
 
     void create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount);
 
     void renderFrame();
+
+    void saveToFile(const std::string& name);
 
     int getPixelDifference() const;
 
@@ -67,7 +71,7 @@ protected:
     void loadShader();
 
 private:
-    static const std::string ShaderCode;
+    static const char ShaderCode[];
     sf::Shader shader;
 };
 

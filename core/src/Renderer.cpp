@@ -93,7 +93,29 @@ void Renderer::renderFrame()
     {
         this->subStage = 0;
         this->frameCount.set(this->frameCount.get() + 1);
+
+        // Update animation
+        if (this->animation.hasLoaded() && this->frameCount.get() - 1 > this->animation.frameIteration)
+        {
+            if (!this->animation.getNextFrame(this->camera))
+            {
+                this->animation = Animation();
+                return;
+            }
+
+            this->saveToFile(this->animation.name + std::to_string(this->animation.currentFrame - 1) + ".png");
+            this->frameCount.set(1);
+            this->buffer1.clear();
+            this->buffer2.clear();
+            this->buffer1.display();
+            this->buffer2.display();
+        }
     }
+}
+
+void Renderer::saveToFile(const std::string& name)
+{
+    this->targetTexture->getTexture().copyToImage().saveToFile(name);
 }
 
 int Renderer::getPixelDifference() const
@@ -211,7 +233,7 @@ void Renderer::updateTextures()
     }
 }
 
-const std::string Renderer::ShaderCode = R"(
+const char Renderer::ShaderCode[] = R"(
 #version 430 core
 #define PI 3.14159265358979323846
 #define MAX_TEXTURE_COUNT 10

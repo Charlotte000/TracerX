@@ -17,4 +17,6 @@ void EnvironmentUI(Application& app);
 
 void TextureUI(Application& app);
 
+void AnimationUI(Application& app);
+
 }

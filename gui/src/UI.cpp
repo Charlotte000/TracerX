@@ -295,6 +295,12 @@ void UI(Application& app)
         ImGui::EndMenu();
     }
 
+    if (ImGui::BeginMenu("Animation"))
+    {
+        AnimationUI(app);
+        ImGui::EndMenu();
+    }
+
     ImGui::Separator();
 
     ImGui::Text("FPS: %-4i", (int)roundf(ImGui::GetIO().Framerate));
@@ -382,7 +388,7 @@ void InfoUI(Application& app)
     ImGui::InputText("Filename", &fileName);
     if (ImGui::Button("Save"))
     {
-        app.targetTexture->getTexture().copyToImage().saveToFile(fileName);
+        app.saveToFile(fileName);
     }
 }
 
@@ -568,6 +574,42 @@ void TextureUI(Application& app)
         }
         
         ImGui::EndPopup();
+    }
+}
+
+void AnimationUI(Application& app)
+{
+    if (!app.animation.hasLoaded())
+    {
+        static std::string filePath;
+        static std::string name;
+        ImGui::DragFloat("FPS", &app.animation.fps, 1.f, 0.f, 10000.f, "%g");
+        ImGui::DragFloat("Duration", &app.animation.duration, 1.f, 0.f, 10000.f, "%gs");
+        ImGui::DragInt("Frame iteration", &app.animation.frameIteration, 1.f, 0, 10000);
+        ImGui::InputText("File path", &filePath);
+        ImGui::InputText("Name", &name);
+
+        if (ImGui::Button("Load animation"))
+        {
+            try
+            {
+                app.animation.load(filePath, name, app.camera);
+            }
+            catch (std::runtime_error&) { }
+        }
+
+        return;
+    }
+
+    ImGui::Text("FPS: %g", app.animation.fps);
+    ImGui::Text("Duration: %g", app.animation.duration);
+    ImGui::Text("Frame iteration: %d", app.animation.frameIteration);
+
+    int currentFrame = app.animation.currentFrame + 1;
+    if (ImGui::SliderInt("Current frame", &currentFrame, 1, app.animation.totalFrames))
+    {
+        app.animation.currentFrame = currentFrame - 2;
+        app.animation.getNextFrame(app.camera);
     }
 }
 

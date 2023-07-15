@@ -29,19 +29,31 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
     - Refraction
 - Provides a visual mode for easy manipulation of the environment and materials
 - Offers a command-line interface (CLI) for advanced users
+- Tools for creating animations
 
 # Visual Mode Control
 - WASD - camera left, right, forward, backward movement
-- LShif, LCtrl - camera up, down movement
+- LShift, LCtrl - camera up, down movement
 - Mouse - camera rotation
 - Q, E - camera tilt
-- R - save current image
 
 # Getting Started
+## Building
 ```bash
 cd ./build
 cmake ..
 make
+```
+
+## Creating an Animation
+To create an animation, follow these steps:
+- The __animCreator/main.py__ script will generate a configuration file that contains the animation-specific settings and instructions for the main ray tracing application.
+- Open the main ray tracing application and load the generated configuration file. This file will provide the necessary information for rendering the animation frames.
+- Once you have rendered the individual frames of the animation, you can use external tools like __ffmpeg__ to convert the frames into a final animation file.  
+Ensure that you have ffmpeg installed on your system.
+Below is an example command to create an animation from the rendered frames
+```bash
+ffmpeg -framerate 30 -i img%00d.png -c:v libx264 -profile:v high -crf 20 -pix_fmt yuv420p output.mp4
 ```
 
 # External libraries
