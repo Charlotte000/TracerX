@@ -40,6 +40,10 @@ bool Animation::getNextFrame(Camera& camera)
     
     this->currentFrame++;
 
+    camera.prevPosition.set(camera.position.get());
+    camera.prevForward.set(camera.forward.get());
+    camera.prevUp.set(camera.up.get());
+
     CameraState cameraState = this->frames[this->currentFrame];
     camera.position.set(cameraState.position);
     camera.forward.set(cameraState.forward);

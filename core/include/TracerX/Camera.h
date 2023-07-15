@@ -11,7 +11,9 @@ struct Camera
     UBO<sf::Vector3f> position;
     UBO<sf::Vector3f> forward;
     UBO<sf::Vector3f> up;
-    UBO<sf::Vector3f> right;
+    UBO<sf::Vector3f> prevPosition;
+    UBO<sf::Vector3f> prevForward;
+    UBO<sf::Vector3f> prevUp;
     UBO<float> focalLength;
     UBO<float> focusStrength;
     UBO<float> fov;
@@ -27,6 +29,8 @@ struct Camera
     void move(const sf::RenderWindow& window);
 
     void lookAt(sf::Vector3f position);
+
+    sf::Vector3f getRight();
 };
 
 }

@@ -321,7 +321,22 @@ void InfoUI(Application& app)
             ImGui::DragFloatUBO("Focal length", app.camera.focalLength, 0.001f, 0, 1000) |
             ImGui::DragFloatUBO("Focal strength", app.camera.focusStrength, 0.0001f, 0, 1000))
         {
+            app.camera.prevPosition.set(app.camera.position.get());
+            app.camera.prevForward.set(app.camera.forward.get());
+            app.camera.prevUp.set(app.camera.up.get());
             app.reset();
+        }
+
+        if (ImGui::BeginMenu("Motion blur"))
+        {
+            if (ImGui::DragVector3fUBO("Prev position", app.camera.prevPosition, .01f) |
+                ImGui::DragVector3fUBONormalize("Prev Forward", app.camera.prevForward, .01f) |
+                ImGui::DragVector3fUBONormalize("Prev Up", app.camera.prevUp, .01f))
+            {
+                app.reset();            
+            }
+
+            ImGui::EndMenu();
         }
 
         ImGui::EndMenu();

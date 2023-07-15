@@ -30,12 +30,14 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
 - Provides a visual mode for easy manipulation of the environment and materials
 - Offers a command-line interface (CLI) for advanced users
 - Tools for creating animations
+- Camera motion blur
 
 # Visual Mode Control
 - WASD - camera left, right, forward, backward movement
 - LShift, LCtrl - camera up, down movement
 - Mouse - camera rotation
 - Q, E - camera tilt
+- Enter - exit camera control mode
 
 # Getting Started
 ## Building

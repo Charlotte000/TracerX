@@ -57,9 +57,9 @@ def create_animation(file_name: str, fps: float, duration: float, animation: Cal
             file.write(f'{camera_state.Position} {camera_state.Forward} {camera_state.Up}\n')
 
 
-def orbit_animation(origin: Vector3, radius: float) -> Callable[[float], CameraState]:
+def orbit_animation(origin: Vector3, radius: float, angle_offset: float = 0) -> Callable[[float], CameraState]:
     def animation(time: float) -> CameraState:
-        angle = time * 2 * pi
+        angle = time * 2 * pi + angle_offset
         dir = Vector3(cos(angle), 0, sin(angle))
         return CameraState(origin + dir * radius, -dir, Vector3(0, 1, 0))
 
@@ -71,5 +71,11 @@ def linear_move(origin: CameraState, destination: CameraState) -> Callable[[floa
             Vector3.lerp(origin.Position, destination.Position, time),
             Vector3.slerp(origin.Forward, destination.Forward, time),
             Vector3.slerp(origin.Up, destination.Up, time))
+    
+    return animation
+
+def linear_move(origin: CameraState, destination: Vector3) -> Callable[[float], CameraState]:
+    def animation(time: float) -> CameraState:
+        return CameraState(Vector3.lerp(origin.Position, destination, time), origin.Forward, origin.Up)
     
     return animation

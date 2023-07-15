@@ -242,10 +242,12 @@ out vec4 FragColor;
 
 struct Cam
 {
-    vec3 Position;
-    vec3 Forward;
-    vec3 Up;
-    vec3 Right;
+    vec3 PrevPosition;
+    vec3 PrevForward;
+    vec3 PrevUp;
+    vec3 NextPosition;
+    vec3 NextForward;
+    vec3 NextUp;
     float FOV;
     float FocalLength;
     float FocusStrength;
@@ -390,6 +392,12 @@ vec3 GetEnvironmentLight(in Ray ray)
     float groundToSkyT = smoothstep(-0.01, 0.0, ray.Direction.y);
     float sunMask = groundToSkyT >= 1.0 ? 1.0 : 0.0;
     return mix(Environment.GroundColor, skyGradient, groundToSkyT) * Environment.SkyIntensity + Environment.SunColor * sun * sunMask;
+}
+
+vec3 Slerp(in vec3 a, in vec3 b, float t)
+{
+    float angle = acos(dot(a, b));
+    return angle == 0 ? a : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
 }
 
 float RandomValue()
@@ -733,6 +741,12 @@ vec3 SendRay(in Ray ray)
     return ray.IncomingLight;
 }
 
+float time = RandomValue();
+vec3 CameraPosition = mix(Camera.PrevPosition, Camera.NextPosition, time);
+vec3 CameraForward = Slerp(Camera.PrevForward, Camera.NextForward, time);
+vec3 CameraUp = Slerp(Camera.PrevUp, Camera.NextUp, time);
+vec3 CameraRight = Slerp(cross(Camera.PrevForward, Camera.PrevUp), cross(Camera.NextForward, Camera.NextUp), time);
+
 vec3 SendRayFlow(in Ray ray)
 {
     vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalLength;
@@ -741,7 +755,7 @@ vec3 SendRayFlow(in Ray ray)
     for (int i = 0; i < SampleCount; i++)
     {
         vec2 jitter = RandomVector2() * Camera.FocusStrength;
-        vec3 jitterOrigin = ray.Origin + jitter.x * Camera.Right + jitter.y * Camera.Up;
+        vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * CameraUp;
         vec3 jitterDirection = normalize(focalPoint - jitterOrigin);
         resultLight += SendRay(Ray(jitterOrigin, jitterDirection, ray.Color, ray.IncomingLight));
     }
@@ -753,7 +767,7 @@ void main()
 {
     float aspectRatio = WindowSize.y / WindowSize.x;
     vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(Camera.FOV / 2);
-    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + Camera.Right * coord.x + Camera.Up * coord.y), vec3(1), vec3(0));
+    Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
 
     vec3 newColor = SendRayFlow(ray);
 
