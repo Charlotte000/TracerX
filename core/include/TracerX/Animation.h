@@ -12,6 +12,9 @@ struct CameraState
     sf::Vector3f position;
     sf::Vector3f forward;
     sf::Vector3f up;
+    float focalLength;
+    float focusStrength;
+    float fov;
 };
 
 struct Animation
@@ -24,9 +27,9 @@ public:
     int currentFrame = 0;
     std::string name;
 
-    void load(const std::string& filePath, const std::string& name, Camera& camera);
+    void load(const std::string& filePath, const std::string& name, Camera& prevCamera, Camera& camera);
     
-    bool getNextFrame(Camera& camera);
+    bool getNextFrame(Camera& prevCamera, Camera& camera);
 
     bool hasLoaded();
 private:

@@ -44,38 +44,53 @@ class Vector3:
         return f'{self.x} {self.y} {self.z}'
 
 @dataclass
-class CameraState:
+class Camera:
     Position: Vector3
     Forward: Vector3
     Up: Vector3
+    FocalLength: float = 3
+    FocusStrength: float = .005
+    FOV: float = pi / 2
 
-def create_animation(file_name: str, fps: float, duration: float, animation: Callable[[float], CameraState]):
+    def __str__(self) -> str:
+        return f'{self.Position} {self.Forward} {self.Up} {self.FocalLength} {self.FocusStrength} {self.FOV}'
+
+def create_animation(file_name: str, fps: float, duration: float, animation: Callable[[float], Camera]):
     with open(file_name, 'w') as file:
         total_frames = int(fps * duration)
         for frame in range(total_frames):
             camera_state = animation(frame / (total_frames - 1))
-            file.write(f'{camera_state.Position} {camera_state.Forward} {camera_state.Up}\n')
+            file.write(f'{camera_state}\n')
 
 
-def orbit_animation(origin: Vector3, radius: float, angle_offset: float = 0) -> Callable[[float], CameraState]:
-    def animation(time: float) -> CameraState:
+def orbit_animation(center: Vector3, radius: float, focalLength: float = 3, focusStrength: float = .005, fov: float = pi / 2, angle_offset: float = 0) -> Callable[[float], Camera]:
+    def animation(time: float) -> Camera:
         angle = time * 2 * pi + angle_offset
         dir = Vector3(cos(angle), 0, sin(angle))
-        return CameraState(origin + dir * radius, -dir, Vector3(0, 1, 0))
+        return Camera(center + dir * radius, -dir, Vector3(0, 1, 0), focalLength, focusStrength, fov)
 
     return animation
 
-def linear_move(origin: CameraState, destination: CameraState) -> Callable[[float], CameraState]:
-    def animation(time: float) -> CameraState:
-        return CameraState(
+def linear_transform(origin: Camera, destination: Camera) -> Callable[[float], Camera]:
+    def animation(time: float) -> Camera:
+        return Camera(
             Vector3.lerp(origin.Position, destination.Position, time),
             Vector3.slerp(origin.Forward, destination.Forward, time),
-            Vector3.slerp(origin.Up, destination.Up, time))
+            Vector3.slerp(origin.Up, destination.Up, time),
+            origin.FocalLength + (destination.FocalLength - origin.FocalLength) * time,
+            origin.FocusStrength + (destination.FocusStrength - origin.FocusStrength) * time,
+            origin.FOV + (destination.FOV - origin.FOV) * time)
     
     return animation
 
-def linear_move(origin: CameraState, destination: Vector3) -> Callable[[float], CameraState]:
-    def animation(time: float) -> CameraState:
-        return CameraState(Vector3.lerp(origin.Position, destination, time), origin.Forward, origin.Up)
+def linear_move(origin: Camera, destination: Vector3) -> Callable[[float], Camera]:
+    def animation(time: float) -> Camera:
+        return Camera(
+            Vector3.lerp(origin.Position, destination, time),
+            origin.Forward,
+            origin.Up,
+            origin.FocalLength,
+            origin.FocusStrength,
+            origin.FOV)
     
     return animation

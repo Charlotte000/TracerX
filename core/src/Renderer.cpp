@@ -10,6 +10,7 @@ namespace TracerX
 
 void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount)
 {
+    this->prevCamera = camera;
     this->camera = camera;
     this->buffer1.create(size.x, size.y);
     this->buffer2.create(size.x, size.y);
@@ -22,7 +23,8 @@ void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, 
     this->maxBounceCount.create(&this->shader, "MaxBouceCount", maxBounceCount);
     this->sampleCount.create(&this->shader, "SampleCount", sampleCount);
     this->environment.create(&this->shader);
-    this->camera.create(&this->shader);
+    this->prevCamera.create(&this->shader, "PrevCamera");
+    this->camera.create(&this->shader, "NextCamera");
 
     // SSBO
     this->materials.create(this, &this->shader, 1);
@@ -58,6 +60,7 @@ void Renderer::renderFrame()
     this->frameCount.updateShader();
     this->size.updateShader();
     this->environment.updateShader();
+    this->prevCamera.updateShader();
     this->camera.updateShader();
 
     this->materials.updateShader();
@@ -104,7 +107,7 @@ void Renderer::renderFrame()
             this->buffer1.display();
             this->buffer2.display();
 
-            if (!this->animation.getNextFrame(this->camera))
+            if (!this->animation.getNextFrame(this->prevCamera, this->camera))
             {
                 this->animation = Animation();
                 return;
@@ -235,19 +238,18 @@ void Renderer::updateTextures()
 
 const char Renderer::ShaderCode[] = R"(
 #version 430 core
-#define PI 3.14159265358979323846
 #define MAX_TEXTURE_COUNT 10
+
+const float SmallNumber = 0.001;
+const float PI = 3.14159265358979323846;
 
 out vec4 FragColor;
 
 struct Cam
 {
-    vec3 PrevPosition;
-    vec3 PrevForward;
-    vec3 PrevUp;
-    vec3 NextPosition;
-    vec3 NextForward;
-    vec3 NextUp;
+    vec3 Position;
+    vec3 Forward;
+    vec3 Up;
     float FOV;
     float FocalLength;
     float FocusStrength;
@@ -342,7 +344,8 @@ uniform vec2 WindowSize;
 uniform int SampleCount;
 uniform int MaxBouceCount;
 uniform int FrameCount;
-uniform Cam Camera;
+uniform Cam PrevCamera;
+uniform Cam NextCamera;
 uniform Env Environment;
 
 layout (std430, binding = 1) buffer MaterialBuffer
@@ -380,7 +383,6 @@ layout (std430, binding = 6) buffer BoxBuffer
 
 uniform sampler2D Textures[MAX_TEXTURE_COUNT];
 
-const float SmallNumber = 0.001;
 uint Seed = uint((gl_FragCoord.x + gl_FragCoord.y * gl_FragCoord.x / WindowSize.x) * 549856.0) + uint(FrameCount) * 5458u;
 
 vec3 GetEnvironmentLight(in Ray ray)
@@ -742,10 +744,14 @@ vec3 SendRay(in Ray ray)
 }
 
 float time = RandomValue();
-vec3 CameraPosition = mix(Camera.PrevPosition, Camera.NextPosition, time);
-vec3 CameraForward = Slerp(Camera.PrevForward, Camera.NextForward, time);
-vec3 CameraUp = Slerp(Camera.PrevUp, Camera.NextUp, time);
-vec3 CameraRight = cross(CameraForward, CameraUp);
+Cam Camera = Cam(
+    mix(PrevCamera.Position, NextCamera.Position, time),
+    Slerp(PrevCamera.Forward, NextCamera.Forward, time),
+    Slerp(PrevCamera.Up, NextCamera.Up, time),
+    mix(PrevCamera.FOV, NextCamera.FOV, time),
+    mix(PrevCamera.FocalLength, NextCamera.FocalLength, time),
+    mix(PrevCamera.FocusStrength, NextCamera.FocusStrength, time));
+vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
 vec3 SendRayFlow(in Ray ray)
 {
@@ -755,7 +761,7 @@ vec3 SendRayFlow(in Ray ray)
     for (int i = 0; i < SampleCount; i++)
     {
         vec2 jitter = RandomVector2() * Camera.FocusStrength;
-        vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * CameraUp;
+        vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * Camera.Up;
         vec3 jitterDirection = normalize(focalPoint - jitterOrigin);
         resultLight += SendRay(Ray(jitterOrigin, jitterDirection, ray.Color, ray.IncomingLight));
     }
@@ -767,7 +773,7 @@ void main()
 {
     float aspectRatio = WindowSize.y / WindowSize.x;
     vec2 coord = (gl_FragCoord.xy - WindowSize / 2) / WindowSize * vec2(1, aspectRatio) * 2 * tan(Camera.FOV / 2);
-    Ray ray = Ray(CameraPosition, normalize(CameraForward + CameraRight * coord.x + CameraUp * coord.y), vec3(1), vec3(0));
+    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(1), vec3(0));
 
     vec3 newColor = SendRayFlow(ray);
 

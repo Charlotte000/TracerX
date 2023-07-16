@@ -314,24 +314,30 @@ void InfoUI(Application& app)
     ImGui::Text("Window size: %dx%d", (int)app.size.get().x, (int)app.size.get().y);
     if (ImGui::BeginMenu("Camera"))
     {
-        if (ImGui::SliderAngleUBO("FOV", app.camera.fov, 0, 180.0f) |
-            ImGui::DragVector3fUBO("Position", app.camera.position, .01f) |
+        if (ImGui::DragVector3fUBO("Position", app.camera.position, .01f) |
             ImGui::DragVector3fUBONormalize("Forward", app.camera.forward, .01f) |
             ImGui::DragVector3fUBONormalize("Up", app.camera.up, .01f) |
-            ImGui::DragFloatUBO("Focal length", app.camera.focalLength, 0.001f, 0, 1000) |
-            ImGui::DragFloatUBO("Focal strength", app.camera.focusStrength, 0.0001f, 0, 1000))
+            ImGui::DragFloatUBO("Focal length", app.camera.focalLength, .001f, 0, 1000) |
+            ImGui::DragFloatUBO("Focus strength", app.camera.focusStrength, .0001f, 0, 1000) |
+            ImGui::SliderAngleUBO("FOV", app.camera.fov, 0, 180))
         {
-            app.camera.prevPosition.set(app.camera.position.get());
-            app.camera.prevForward.set(app.camera.forward.get());
-            app.camera.prevUp.set(app.camera.up.get());
+            app.prevCamera.position.set(app.camera.position.get());
+            app.prevCamera.forward.set(app.camera.forward.get());
+            app.prevCamera.up.set(app.camera.up.get());
+            app.prevCamera.focalLength.set(app.camera.focalLength.get());
+            app.prevCamera.focusStrength.set(app.camera.focusStrength.get());
+            app.prevCamera.fov.set(app.camera.fov.get());
             app.reset();
         }
 
         if (ImGui::BeginMenu("Motion blur"))
         {
-            if (ImGui::DragVector3fUBO("Prev position", app.camera.prevPosition, .01f) |
-                ImGui::DragVector3fUBONormalize("Prev Forward", app.camera.prevForward, .01f) |
-                ImGui::DragVector3fUBONormalize("Prev Up", app.camera.prevUp, .01f))
+            if (ImGui::DragVector3fUBO("Prev position", app.prevCamera.position, .01f) |
+                ImGui::DragVector3fUBONormalize("Prev Forward", app.prevCamera.forward, .01f) |
+                ImGui::DragVector3fUBONormalize("Prev Up", app.prevCamera.up, .01f) |
+                ImGui::DragFloatUBO("Prev Focal length", app.prevCamera.focalLength, .001f, 0, 1000) |
+                ImGui::DragFloatUBO("Prev Focus strength", app.prevCamera.focusStrength, .0001f, 0, 1000) |
+                ImGui::SliderAngleUBO("Prev FOV", app.prevCamera.fov, 0, 180))
             {
                 app.reset();            
             }
@@ -608,7 +614,7 @@ void AnimationUI(Application& app)
         {
             try
             {
-                app.animation.load(filePath, name, app.camera);
+                app.animation.load(filePath, name, app.prevCamera, app.camera);
             }
             catch (std::runtime_error&) { }
         }
@@ -624,7 +630,7 @@ void AnimationUI(Application& app)
     if (ImGui::SliderInt("Current frame", &currentFrame, 1, app.animation.totalFrames))
     {
         app.animation.currentFrame = currentFrame - 2;
-        app.animation.getNextFrame(app.camera);
+        app.animation.getNextFrame(app.prevCamera, app.camera);
     }
 }
 

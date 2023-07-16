@@ -4,7 +4,7 @@
 namespace TracerX
 {
 
-void Animation::load(const std::string& filePath, const std::string& name, Camera& camera)
+void Animation::load(const std::string& filePath, const std::string& name, Camera& prevCamera, Camera& camera)
 {
     std::ifstream file;
     file.open(filePath);
@@ -20,6 +20,9 @@ void Animation::load(const std::string& filePath, const std::string& name, Camer
         file >> cameraState.position.x >> cameraState.position.y >> cameraState.position.z;
         file >> cameraState.forward.x >> cameraState.forward.y >> cameraState.forward.z;
         file >> cameraState.up.x >> cameraState.up.y >> cameraState.up.z;
+        file >> cameraState.focalLength;
+        file >> cameraState.focusStrength;
+        file >> cameraState.fov;
         this->frames.push_back(cameraState);
     }
 
@@ -28,10 +31,10 @@ void Animation::load(const std::string& filePath, const std::string& name, Camer
     this->name = name;
     this->currentFrame = -1;
     this->totalFrames = std::min((int)(this->fps * this->duration), (int)this->frames.size());
-    this->getNextFrame(camera);
+    this->getNextFrame(prevCamera, camera);
 }
 
-bool Animation::getNextFrame(Camera& camera)
+bool Animation::getNextFrame(Camera& prevCamera, Camera& camera)
 {
     if (this->currentFrame + 1 >= this->totalFrames)
     {
@@ -43,13 +46,19 @@ bool Animation::getNextFrame(Camera& camera)
     CameraState prevCameraState = this->frames[std::max(0, this->currentFrame - 1)];
     CameraState cameraState = this->frames[this->currentFrame];
 
-    camera.prevPosition.set(prevCameraState.position);
-    camera.prevForward.set(prevCameraState.forward);
-    camera.prevUp.set(prevCameraState.up);
+    prevCamera.position.set(prevCameraState.position);
+    prevCamera.forward.set(prevCameraState.forward);
+    prevCamera.up.set(prevCameraState.up);
+    prevCamera.focalLength.set(prevCameraState.focalLength);
+    prevCamera.focusStrength.set(prevCameraState.focusStrength);
+    prevCamera.fov.set(prevCameraState.fov);
 
     camera.position.set(cameraState.position);
     camera.forward.set(cameraState.forward);
     camera.up.set(cameraState.up);
+    camera.focalLength.set(cameraState.focalLength);
+    camera.focusStrength.set(cameraState.focusStrength);
+    camera.fov.set(cameraState.fov);
     return true;
 }
 

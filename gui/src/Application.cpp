@@ -1,3 +1,4 @@
+#include <TracerX/VectorMath.h>
 #include "GUI/Application.h"
 #include "GUI/UI.h"
 #include <SFML/System.hpp>
@@ -51,7 +52,7 @@ void Application::run()
 
         if (this->isCameraControl)
         {
-            this->camera.move(this->window);
+            this->cameraControl();
         }
 
         if (!this->isProgressive)
@@ -107,6 +108,73 @@ void Application::clear()
     this->buffer2.clear();
     this->buffer2.display();
     this->frameCount.set(1);
+}
+
+void Application::cameraControl()
+{
+    const float moveSensitivity = 10;
+
+    sf::Vector3f right = this->camera.getRight();
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    {
+        this->camera.position.set(this->camera.position.get() + this->camera.forward.get() / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    {
+        this->camera.position.set(this->camera.position.get() - this->camera.forward.get() / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    {
+        this->camera.position.set(this->camera.position.get() + right / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    {
+        this->camera.position.set(this->camera.position.get() - right / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
+    {
+        this->camera.position.set(this->camera.position.get() + this->camera.up.get() / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::LControl))
+    {
+        this->camera.position.set(this->camera.position.get() - this->camera.up.get() / moveSensitivity);
+        this->prevCamera.position.set(this->camera.position.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+    {
+        this->camera.up.set(TracerX::rotateAroundAxis(this->camera.up.get(), this->camera.forward.get(), 1 / 100.f));
+        this->prevCamera.up.set(this->camera.up.get());
+    }
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q))
+    {
+        this->camera.up.set(TracerX::rotateAroundAxis(this->camera.up.get(), this->camera.forward.get(), -1 / 100.f));
+        this->prevCamera.up.set(this->camera.up.get());
+    }
+
+
+    sf::Vector2i center = (sf::Vector2i)window.getSize() / 2;
+    sf::Vector2f mouseDelta = ((sf::Vector2f)sf::Mouse::getPosition(window) - (sf::Vector2f)center) / 100.f;
+    sf::Mouse::setPosition(center, window);
+
+    this->camera.forward.set(TracerX::rotateAroundAxis(this->camera.forward.get(), right, -mouseDelta.y));
+    this->camera.up.set(TracerX::rotateAroundAxis(this->camera.up.get(), right, -mouseDelta.y));
+
+    this->camera.forward.set(TracerX::rotateAroundAxis(this->camera.forward.get(), this->camera.up.get(), -mouseDelta.x));
+
+    this->prevCamera.forward.set(this->camera.forward.get());
+    this->prevCamera.up.set(this->camera.up.get());
 }
 
 }

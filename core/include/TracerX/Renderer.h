@@ -34,6 +34,7 @@ public:
     UBO<int> sampleCount;
     UBO<int> maxBounceCount;
     Camera camera;
+    Camera prevCamera;
     Environment environment;
 
     // Non shader 

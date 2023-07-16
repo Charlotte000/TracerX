@@ -21,6 +21,8 @@ public:
     void reset();
 
     void clear();
+
+    void cameraControl();
     
 private:
     sf::RenderTexture windowBuffer;
