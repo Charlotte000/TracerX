@@ -33,18 +33,20 @@ void Animation::load(const std::string& filePath, const std::string& name, Camer
 
 bool Animation::getNextFrame(Camera& camera)
 {
-    if (this->currentFrame + 1 > this->totalFrames)
+    if (this->currentFrame + 1 >= this->totalFrames)
     {
         return false;
     }
     
     this->currentFrame++;
 
-    camera.prevPosition.set(camera.position.get());
-    camera.prevForward.set(camera.forward.get());
-    camera.prevUp.set(camera.up.get());
-
+    CameraState prevCameraState = this->frames[std::max(0, this->currentFrame - 1)];
     CameraState cameraState = this->frames[this->currentFrame];
+
+    camera.prevPosition.set(prevCameraState.position);
+    camera.prevForward.set(prevCameraState.forward);
+    camera.prevUp.set(prevCameraState.up);
+
     camera.position.set(cameraState.position);
     camera.forward.set(cameraState.forward);
     camera.up.set(cameraState.up);

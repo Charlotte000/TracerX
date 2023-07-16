@@ -95,20 +95,20 @@ void Renderer::renderFrame()
         this->frameCount.set(this->frameCount.get() + 1);
 
         // Update animation
-        if (this->animation.hasLoaded() && this->frameCount.get() - 1 > this->animation.frameIteration)
+        if (this->animation.hasLoaded() && this->frameCount.get() > this->animation.frameIteration)
         {
-            if (!this->animation.getNextFrame(this->camera))
-            {
-                this->animation = Animation();
-                return;
-            }
-
-            this->saveToFile(this->animation.name + std::to_string(this->animation.currentFrame - 1) + ".png");
+            this->saveToFile(this->animation.name + std::to_string(this->animation.currentFrame) + ".png");
             this->frameCount.set(1);
             this->buffer1.clear();
             this->buffer2.clear();
             this->buffer1.display();
             this->buffer2.display();
+
+            if (!this->animation.getNextFrame(this->camera))
+            {
+                this->animation = Animation();
+                return;
+            }
         }
     }
 }
