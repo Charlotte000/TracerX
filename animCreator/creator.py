@@ -11,7 +11,7 @@ class Vector3:
     @staticmethod
     def slerp(a: 'Vector3', b: 'Vector3', t: float) -> 'Vector3':
         angle = acos(Vector3.dot(a, b))
-        return (a * sin((1 - t) * angle) + b * sin(t * angle)) / sin(angle) if angle != 0 else b
+        return (a * sin((1 - t) * angle) + b * sin(t * angle)) / sin(angle) if angle != 0 and angle is not None else b
     
     @staticmethod
     def lerp(a: 'Vector3', b: 'Vector3', t: float) -> 'Vector3':

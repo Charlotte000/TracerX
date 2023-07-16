@@ -397,7 +397,7 @@ vec3 GetEnvironmentLight(in Ray ray)
 vec3 Slerp(in vec3 a, in vec3 b, float t)
 {
     float angle = acos(dot(a, b));
-    return angle == 0 ? a : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
+    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
 }
 
 float RandomValue()
@@ -745,7 +745,7 @@ float time = RandomValue();
 vec3 CameraPosition = mix(Camera.PrevPosition, Camera.NextPosition, time);
 vec3 CameraForward = Slerp(Camera.PrevForward, Camera.NextForward, time);
 vec3 CameraUp = Slerp(Camera.PrevUp, Camera.NextUp, time);
-vec3 CameraRight = Slerp(cross(Camera.PrevForward, Camera.PrevUp), cross(Camera.NextForward, Camera.NextUp), time);
+vec3 CameraRight = cross(CameraForward, CameraUp);
 
 vec3 SendRayFlow(in Ray ray)
 {
