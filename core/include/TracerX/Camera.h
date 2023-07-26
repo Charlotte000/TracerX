@@ -26,6 +26,8 @@ struct Camera
     void lookAt(sf::Vector3f position);
 
     sf::Vector3f getRight();
+
+    void set(const Camera& newCamera);
 private:
     std::string name;
 };

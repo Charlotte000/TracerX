@@ -12,6 +12,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Vertex3.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SSBO.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/UBO.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Serialization.cpp
 )
 
 add_library(${PROJECT_NAME} ${SRC})

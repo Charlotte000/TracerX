@@ -7,16 +7,6 @@
 namespace TracerX
 {
 
-struct CameraState
-{
-    sf::Vector3f position;
-    sf::Vector3f forward;
-    sf::Vector3f up;
-    float focalLength;
-    float focusStrength;
-    float fov;
-};
-
 struct Animation
 {
 public:
@@ -33,7 +23,7 @@ public:
 
     bool hasLoaded();
 private:
-    std::vector<CameraState> frames;
+    std::vector<Camera> frames;
 };
 
 }

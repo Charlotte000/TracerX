@@ -1,5 +1,6 @@
 #include <fstream>
 #include <TracerX/Animation.h>
+#include <TracerX/Serialization.h>
 
 namespace TracerX
 {
@@ -16,13 +17,8 @@ void Animation::load(const std::string& filePath, const std::string& name, Camer
     this->frames.clear();
     while (!file.eof())
     {
-        CameraState cameraState;
-        file >> cameraState.position.x >> cameraState.position.y >> cameraState.position.z;
-        file >> cameraState.forward.x >> cameraState.forward.y >> cameraState.forward.z;
-        file >> cameraState.up.x >> cameraState.up.y >> cameraState.up.z;
-        file >> cameraState.focalLength;
-        file >> cameraState.focusStrength;
-        file >> cameraState.fov;
+        Camera cameraState;
+        file >> cameraState;
         this->frames.push_back(cameraState);
     }
 
@@ -43,22 +39,11 @@ bool Animation::getNextFrame(Camera& prevCamera, Camera& camera)
     
     this->currentFrame++;
 
-    CameraState prevCameraState = this->frames[std::max(0, this->currentFrame - 1)];
-    CameraState cameraState = this->frames[this->currentFrame];
+    Camera prevCameraState = this->frames[std::max(0, this->currentFrame - 1)];
+    Camera cameraState = this->frames[this->currentFrame];
 
-    prevCamera.position.set(prevCameraState.position);
-    prevCamera.forward.set(prevCameraState.forward);
-    prevCamera.up.set(prevCameraState.up);
-    prevCamera.focalLength.set(prevCameraState.focalLength);
-    prevCamera.focusStrength.set(prevCameraState.focusStrength);
-    prevCamera.fov.set(prevCameraState.fov);
-
-    camera.position.set(cameraState.position);
-    camera.forward.set(cameraState.forward);
-    camera.up.set(cameraState.up);
-    camera.focalLength.set(cameraState.focalLength);
-    camera.focusStrength.set(cameraState.focusStrength);
-    camera.fov.set(cameraState.fov);
+    prevCamera.set(prevCameraState);
+    camera.set(cameraState);
     return true;
 }
 

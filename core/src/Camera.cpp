@@ -51,4 +51,14 @@ sf::Vector3f Camera::getRight()
     return cross(this->forward.get(), this->up.get());
 }
 
+void Camera::set(const Camera& newCamera)
+{
+    this->position.set(newCamera.position.get());
+    this->forward.set(newCamera.forward.get());
+    this->up.set(newCamera.up.get());
+    this->focalLength.set(newCamera.focalLength.get());
+    this->focusStrength.set(newCamera.focusStrength.get());
+    this->fov.set(newCamera.fov.get());
+}
+
 }

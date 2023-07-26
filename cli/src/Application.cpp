@@ -15,8 +15,6 @@ void Application::run(int iterationCount, const std::string& imagePath)
 {
     this->updateTextures();
 
-    int subWidth = this->size.get().x / this->subDivisor.x;
-    int subHeight = this->size.get().y / this->subDivisor.y;
     int subCount = this->subDivisor.x * this->subDivisor.y;
     while (this->frameCount.get() <= iterationCount)
     {

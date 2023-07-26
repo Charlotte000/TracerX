@@ -1,9 +1,11 @@
 #include <stdexcept>
 #include <algorithm>
+#include <fstream>
 #include <GL/glew.h>
 #include <OBJ-Loader/OBJLoader.h>
 #include <SFML/Graphics.hpp>
 #include <TracerX/Renderer.h>
+#include <TracerX/Serialization.h>
 
 namespace TracerX
 {
@@ -234,6 +236,126 @@ void Renderer::updateTextures()
     {
         this->shader.setUniform("Textures[" + std::to_string(i) + ']', this->textures[i]);
     }
+}
+
+void Renderer::saveScene(const std::string& filePath)
+{
+    std::ofstream file;
+    file.open(filePath);
+
+    file << "c ";
+    file << this->camera << std::endl;
+
+    file << "e ";
+    file << this->environment << std::endl;
+
+    for (const Material& m : this->materials.get())
+    {
+        file << "a ";
+        file << m << std::endl;
+    }
+
+    for (const Sphere& s : this->spheres.get())
+    {
+        file << "s ";
+        file << s << std::endl;
+    }
+
+    for (const Box& b : this->boxes.get())
+    {
+        file << "b ";
+        file << b << std::endl;
+    }
+
+    for (const Mesh& me : this->meshes.get())
+    {
+        file << "m ";
+        file << me << std::endl;
+    }
+
+    for (int i : this->indices.get())
+    {
+        file << "i ";
+        file << i << std::endl;
+    }
+
+    for (const Vertex3& v : this->vertices.get())
+    {
+        file << "v ";
+        file << v << std::endl;
+    }
+
+    file.close();
+}
+
+void Renderer::loadScene(const std::string& filePath)
+{
+    std::ifstream file;
+    file.open(filePath);
+    if (!file.is_open())
+    {
+        throw std::runtime_error("File not found");
+    }
+
+    while (!file.eof())
+    {
+        char token;
+        file >> token;
+
+        switch (token)
+        {
+        case 'c':
+            file >> this->camera;
+            this->prevCamera.set(this->camera);
+            break;
+        case 'e':
+            file >> this->environment;
+            break;
+        case 'a':
+        {
+            Material m;
+            file >> m;
+            this->materials.add(m);
+            break;
+        }
+        case 's':
+        {
+            Sphere s(sf::Vector3f(0, 0, 0), 0);
+            file >> s;
+            this->spheres.add(s);
+            break;
+        }
+        case 'b':
+        {
+            Box b(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0));
+            file >> b;
+            this->boxes.add(b);
+            break;
+        }
+        case 'm':
+        {
+            Mesh m(-1, -1, -1);
+            file >> m;
+            this->meshes.add(m);
+        }
+        case 'i':
+        {
+            int index;
+            file >> index;
+            this->indices.add(index);
+            break;
+        }
+        case 'v':
+        {
+            Vertex3 v(sf::Vector3f(0, 0, 0), sf::Vector3f(0, 0, 0));
+            file >> v;
+            this->vertices.add(v);
+            break;
+        }
+        }
+    }
+
+    file.close();
 }
 
 const char Renderer::ShaderCode[] = R"(

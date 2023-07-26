@@ -12,9 +12,7 @@ struct Sphere
     float radius;
     int materialId;
 
-    Sphere(sf::Vector3f origin, float radius);
-
-    Sphere(sf::Vector3f origin, float radius, int materialId);
+    Sphere(sf::Vector3f origin, float radius, int materialId = -1);
 };
 
 }
