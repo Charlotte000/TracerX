@@ -63,6 +63,10 @@ public:
 
     void updateTextures();
 
+    void saveScene(const std::string& filePath);
+
+    void loadScene(const std::string& filePath);
+
 protected:
     sf::RenderTexture buffer1;
     sf::RenderTexture buffer2;

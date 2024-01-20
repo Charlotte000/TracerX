@@ -6,6 +6,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Box.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Mesh.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Primitives/Sphere.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Serialization.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Animation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
