@@ -324,12 +324,7 @@ void InfoUI(Application& app)
             ImGui::DragFloatUBO("Focus strength", app.camera.focusStrength, .0001f, 0, 1000) |
             ImGui::SliderAngleUBO("FOV", app.camera.fov, 0, 180))
         {
-            app.prevCamera.position.set(app.camera.position.get());
-            app.prevCamera.forward.set(app.camera.forward.get());
-            app.prevCamera.up.set(app.camera.up.get());
-            app.prevCamera.focalLength.set(app.camera.focalLength.get());
-            app.prevCamera.focusStrength.set(app.camera.focusStrength.get());
-            app.prevCamera.fov.set(app.camera.fov.get());
+            app.prevCamera.set(app.camera);
             app.reset();
         }
 
@@ -413,6 +408,51 @@ void InfoUI(Application& app)
     if (ImGui::Button("Save"))
     {
         app.saveToFile(fileName);
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    if (ImGui::Button("Save scene"))
+    {
+        ImGui::OpenPopup("SaveScene");
+    }
+
+    if (ImGui::Button("Load scene"))
+    {
+        ImGui::OpenPopup("LoadScene");
+    }
+
+    if (ImGui::BeginPopupContextWindow("SaveScene"))
+    {
+        static std::string filePath;
+        ImGui::InputText("File path", &filePath);
+        if (ImGui::Button("Save"))
+        {
+            app.saveScene(filePath);
+            ImGui::CloseCurrentPopup();
+        }
+        
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopupContextWindow("LoadScene"))
+    {
+        static std::string filePath;
+        ImGui::InputText("File path", &filePath);
+        if (ImGui::Button("Load"))
+        {
+            try
+            {
+                app.loadScene(filePath);
+            }
+            catch (std::runtime_error&) { }
+
+            ImGui::CloseCurrentPopup();
+        }
+        
+        ImGui::EndPopup();
     }
 }
 
