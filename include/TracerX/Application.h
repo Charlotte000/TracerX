@@ -16,6 +16,8 @@ public:
 
     void create(sf::Vector2i size, const TracerX::Camera& camera, int sampleCount, int maxBounceCount);
 
+    void resize(sf::Vector2i size);
+
     void run();
 
     void reset();

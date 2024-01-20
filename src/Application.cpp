@@ -23,6 +23,18 @@ void Application::create(sf::Vector2i size, const TracerX::Camera& camera, int s
     this->cursor.setOutlineThickness(1);
 }
 
+void Application::resize(sf::Vector2i size)
+{
+    Renderer::resize(size);
+    this->window.setSize((sf::Vector2u)size);
+    this->window.setView(sf::View((sf::Vector2f)size / 2.f, (sf::Vector2f)size));
+    this->isProgressive = false;
+    if (!this->windowBuffer.create((sf::Vector2u)size))
+    {
+        throw std::runtime_error("Failed to create window buffer");
+    }
+}
+
 void Application::run()
 {
     this->updateTextures();
@@ -51,6 +63,11 @@ void Application::run()
             {
                 this->isCameraControl = false;
                 this->window.setMouseCursorVisible(true);
+            }
+
+            if (event.type == sf::Event::Resized)
+            {
+                this->resize(sf::Vector2i(event.size.width, event.size.height));
             }
         }
 

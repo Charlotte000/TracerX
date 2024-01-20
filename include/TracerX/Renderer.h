@@ -45,6 +45,8 @@ public:
 
     void create(sf::Vector2i size, const Camera& camera, int sampleCount, int maxBounceCount);
 
+    void resize(sf::Vector2i size);
+
     void renderFrame();
 
     void saveToFile(const std::string& name);

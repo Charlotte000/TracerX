@@ -42,6 +42,16 @@ void Renderer::create(sf::Vector2i size, const Camera& camera, int sampleCount, 
     this->updateTextures();
 }
 
+void Renderer::resize(sf::Vector2i size)
+{
+    if (!this->buffer1.create(sf::Vector2u(size.x, size.y)) | !this->buffer2.create(sf::Vector2u(size.x, size.y)))
+    {
+        throw std::runtime_error("Failed to create buffer");
+    }
+
+    this->size.set((sf::Vector2f)size);
+}
+
 void Renderer::loadShader()
 {
     GLenum err = glewInit();

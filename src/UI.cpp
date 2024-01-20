@@ -314,6 +314,12 @@ void UI(Application& app)
 
 void InfoUI(Application& app)
 {
+    sf::Vector2i size(app.size.get());
+    if (ImGui::DragInt2("Window size", (int*)&size, 10.f, 1, 100000))
+    {
+        app.resize(size);
+    }
+
     ImGui::Text("Window size: %dx%d", (int)app.size.get().x, (int)app.size.get().y);
     if (ImGui::BeginMenu("Camera"))
     {
@@ -405,7 +411,7 @@ void InfoUI(Application& app)
 
     static std::string fileName;
     ImGui::InputText("Filename", &fileName);
-    if (ImGui::Button("Save"))
+    if (ImGui::Button("Save the image"))
     {
         app.saveToFile(fileName);
     }
@@ -419,6 +425,7 @@ void InfoUI(Application& app)
         ImGui::OpenPopup("SaveScene");
     }
 
+    ImGui::SameLine();
     if (ImGui::Button("Load scene"))
     {
         ImGui::OpenPopup("LoadScene");
