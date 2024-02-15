@@ -18,6 +18,7 @@ public:
     Shader viewer;
     GLFWwindow* window = nullptr;
     float cameraSpeed = 5.f;
+    float renderScale = 1.f;
     std::vector<std::string> environmentFiles;
     std::vector<std::string> sceneFiles;
 

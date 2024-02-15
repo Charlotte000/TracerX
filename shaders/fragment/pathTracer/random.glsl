@@ -1,4 +1,4 @@
-uint Seed = uint((gl_FragCoord.x + gl_FragCoord.y * gl_FragCoord.x / 1000) * 549856.0) + uint(FrameCount) * 5458u;
+uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + uint(FrameCount) * 5458u;
 
 float RandomValue()
 {

@@ -106,13 +106,21 @@ void UI::info()
         this->app->resize(this->app->size);
     }
 
+    if (ImGui::DragFloat("Render scale", &this->app->renderScale, .1f, .0f, 1000.f, "%.3f", ImGuiSliderFlags_Logarithmic))
+    {
+        this->app->resize(this->app->size);
+    }
+
+    glm::ivec2 renderSize = (glm::vec2)this->app->size * this->app->renderScale;
+    ImGui::Text("Render size: %dx%d", renderSize.x, renderSize.y);
+
     ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f);
     if (ImGui::DragInt("Max bouce count", &renderer.maxBouceCount, .01f, 0, 1000))
     {
         renderer.resetAccumulator();
     }
 
-    ImGui::DragFloat("Camera speed", &this->app->cameraSpeed, 1.f, 1.f, 10000.f);
+    ImGui::DragFloat("Camera speed", &this->app->cameraSpeed, 1.f, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
     ImGui::EndMenu();
 }

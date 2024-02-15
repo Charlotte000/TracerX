@@ -84,7 +84,7 @@ void Application::init(glm::ivec2 size)
         this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
     }
 
-    this->renderer.init(this->size, this->scene);
+    this->renderer.init((glm::ivec2)((glm::vec2)this->size * this->renderScale), this->scene);
     this->ui.init(this);
     this->viewer.init("../shaders/vertex/main.glsl", "../shaders/fragment/viewer/main.glsl");
 }
@@ -93,7 +93,7 @@ void Application::resize(glm::ivec2 size)
 {
     this->size = size;
     glfwSetWindowSize(this->window, this->size.x, this->size.y);
-    this->renderer.resize(this->size);
+    this->renderer.resize((glm::ivec2)((glm::vec2)this->size * this->renderScale));
 }
 
 void Application::shutdown()
@@ -114,7 +114,7 @@ void Application::run()
 
         // Render
         this->renderer.render();
-
+ 
         // Draw
         this->viewer.use();
         glViewport(0, 0, this->size.x, this->size.y);

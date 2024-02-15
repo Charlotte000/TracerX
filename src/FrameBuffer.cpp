@@ -23,7 +23,6 @@ void FrameBuffer::shutdown()
 
 void FrameBuffer::draw()
 {
-    // glActiveTexture(GL_TEXTURE0);
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
     glViewport(0, 0, this->colorTexture.width, this->colorTexture.height);
     Quad::draw();
