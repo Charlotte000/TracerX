@@ -121,6 +121,7 @@ void UI::info()
     }
 
     ImGui::DragFloat("Camera speed", &this->app->cameraSpeed, 1.f, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
+    ImGui::SliderFloat("Camera rotation", &this->app->cameraRotationSpeed, .001f, 1.f);
 
     ImGui::EndMenu();
 }

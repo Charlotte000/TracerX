@@ -19,7 +19,6 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec3 normal = cross(edge12, edge13);
     float det = -dot(ray.Direction, normal);
 
-    bool isFrontFace = det >= 0;
     if (abs(det) <= 0.00000000001)
     {
         return false;
@@ -35,7 +34,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     float v = -dot(edge12, dao) * invDet;
     float w = 1.0 - u - v;
 
-    if (dst <= 0.001 || u < 0.0 || v < 0.0 || u + v > 1.0)
+    if (dst <= 0.001 || u < 0.0 || v < 0.0 || w < 0.0)
     {
         return false;
     }
@@ -52,7 +51,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
         normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV),
         normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV),
         materialId,
-        isFrontFace);
+        det >= 0);
     return true;
 }
 

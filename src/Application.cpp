@@ -119,7 +119,6 @@ void Application::run()
         this->viewer.use();
         glViewport(0, 0, this->size.x, this->size.y);
         Quad::draw();
-        glBindTexture(GL_TEXTURE_2D, 0);
         Shader::stopUse();
 
         // UI
@@ -148,16 +147,13 @@ void Application::save()
 
 void Application::control()
 {
-    static const float RotateSpeed = 3;
-    static const float MouseSensitivity = 100;
-
     static double lastTime = 0;
     static glm::vec2 mousePosition;
 
     double newX, newY;
     glfwGetCursorPos(this->window, &newX, &newY);
     glm::vec2 newMousePos(newX, newY);
-    glm::vec2 mouseDelta = (newMousePos - mousePosition) / MouseSensitivity;
+    glm::vec2 mouseDelta = (newMousePos - mousePosition) * this->cameraRotationSpeed / 100.f;
     mousePosition = newMousePos;
 
     double nextTime = glfwGetTime();
@@ -170,7 +166,7 @@ void Application::control()
     }
 
     float elapsedMove = this->cameraSpeed * elapsedTime;
-    float elapsedRotate = RotateSpeed * elapsedTime;
+    float elapsedRotate = this->cameraRotationSpeed * 3.f * elapsedTime;
 
     Camera& camera = this->renderer.camera;
     glm::vec3 right = glm::cross(camera.forward, camera.up);

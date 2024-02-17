@@ -278,13 +278,14 @@ Scene Scene::loadGLTF(const std::string& folder)
     }
 
     // Textures
-    for (const tinygltf::Texture& gltfTexture : model.textures)
+    for (size_t textureId = 0; textureId < model.textures.size(); textureId++)
     {
+        const tinygltf::Texture& gltfTexture = model.textures[textureId];
         const tinygltf::Image& gltfImage = model.images[gltfTexture.source];
         Image image;
         image.width = gltfImage.width;
         image.height = gltfImage.height;
-        image.name = gltfTexture.name;
+        image.name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
 
         image.pixels.reserve(gltfImage.width * gltfImage.height * 3);
         for (size_t i = 0; i < gltfImage.image.size(); i += gltfImage.component)
@@ -327,6 +328,12 @@ Scene Scene::loadGLTF(const std::string& folder)
 
         scene.materials.push_back(material);
         scene.materialNames.push_back(gltfMaterial.name);
+    }
+
+    if (scene.materials.size() == 0)
+    {
+        scene.materials.push_back(Material::matte(glm::vec3(1)));
+        scene.materialNames.push_back("Default");
     }
 
     for (const tinygltf::Mesh& gltfMesh : model.meshes)

@@ -123,5 +123,7 @@ const std::string Shader::load(const std::string& path)
         code += line + '\n';
     }
 
+    file.close();
+
     return code;
 }
