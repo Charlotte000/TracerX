@@ -19,7 +19,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec3 normal = cross(edge12, edge13);
     float det = -dot(ray.Direction, normal);
 
-    if (abs(det) <= 0.00000000001)
+    if (abs(det) <= length(normal) * 0.01)
     {
         return false;
     }
