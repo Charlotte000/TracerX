@@ -21,7 +21,6 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/src/glew.c
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_demo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_draw.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_tables.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_widgets.cpp
@@ -29,8 +28,6 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_impl_opengl3.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo/ImGuizmo.cpp
-
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyobjloader/tiny_obj_loader.h
 )
 
 add_executable(
@@ -55,9 +52,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui)
 
 # ImGuizmo
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo)
-
-# TinyOBJLoader
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyobjloader)
 
 # TinyDir
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/tinydir)

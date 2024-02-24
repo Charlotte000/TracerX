@@ -53,6 +53,7 @@ void Application::init(glm::ivec2 size)
 
     glfwMakeContextCurrent(this->window);
     glfwSetWindowUserPointer(this->window, this);
+    glfwSwapInterval(0);
     
     // Key listener
     glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int scancode, int action, int mode)
@@ -101,6 +102,7 @@ void Application::shutdown()
     this->viewer.shutdown();
     this->ui.shutdown();
     this->renderer.shutdown();
+    glfwDestroyWindow(this->window);
     glfwTerminate();
 }
 

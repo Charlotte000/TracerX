@@ -37,9 +37,7 @@ private:
     Shader toneMapper;
     FrameBuffer accumulator;
     Texture environmentTexture;
-    Buffer<glm::vec3> vertexBuffer;
-    Buffer<glm::vec3> normalBuffer;
-    Buffer<glm::vec2> uvBuffer;
+    Buffer<Vertex> vertexBuffer;
     Buffer<Triangle> triangleBuffer;
     TextureArray textureArray;
     Buffer<Mesh> meshBuffer;

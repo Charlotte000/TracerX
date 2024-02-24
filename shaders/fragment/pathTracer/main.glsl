@@ -36,7 +36,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 
     if (material.MetalnessTextureId >= 0)
     {
-        material.Metalness *= texture(Textures, vec3(manifold.TextureCoordinate, material.MetalnessTextureId)).r;
+        material.Metalness *= texture(Textures, vec3(manifold.TextureCoordinate, material.MetalnessTextureId)).b;
     }
 
     if (material.RoughnessTextureId >= 0)
@@ -71,12 +71,17 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
     vec3 specularDir = reflect(ray.Direction, manifold.Normal);
     vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
 
+    if (material.Metalness <= RandomValue() && RandomValue() >= 0.2)
+    {
+        material.Roughness = 1;
+    }
+
     // Fresnel
     if (material.FresnelStrength > 0.0 &&
         1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
     {
         ray.Origin = manifold.Point;
-        ray.Direction = reflect(ray.Direction, manifold.Normal);
+        ray.Direction = specularDir;
 
         ray.IncomingLight += material.EmissionColor * ray.Color;
         ray.Color *= material.FresnelColor;

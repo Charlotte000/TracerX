@@ -42,9 +42,8 @@ void Buffer<T>::shutdown()
     glDeleteBuffers(1, &this->handler);
 }
 
-template class Buffer<glm::vec2>;
 template class Buffer<glm::vec3>;
-template class Buffer<glm::vec4>;
 template class Buffer<Triangle>;
 template class Buffer<Material>;
 template class Buffer<Mesh>;
+template class Buffer<Vertex>;

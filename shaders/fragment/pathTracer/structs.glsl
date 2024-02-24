@@ -45,9 +45,9 @@ struct Vertex
 
 struct Triangle
 {
-    ivec3 V1;
-    ivec3 V2;
-    ivec3 V3;
+    int V1;
+    int V2;
+    int V3;
     int MeshId;
 };
 

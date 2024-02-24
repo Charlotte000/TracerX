@@ -33,23 +33,23 @@ public:
     static Material mirror();
 };
 
-struct Index
+struct Vertex
 {
-    int vertex;
-    int normal;
-    int uv;
+public:
+    glm::vec3 position;
+    glm::vec3 normal;
+    glm::vec2 uv;
+private:
+    float padding1 = 0;
 };
 
 struct Triangle
 {
 public:
-    Index v1;
-    Index v2;
-    Index v3;
+    int v1;
+    int v2;
+    int v3;
     int meshId;
-private:
-    int padding1 = 0;
-    int padding2 = 0;
 };
 
 struct Mesh
@@ -66,9 +66,7 @@ private:
 class Scene
 {
 public:
-    std::vector<glm::vec3> vertices;
-    std::vector<glm::vec3> normals;
-    std::vector<glm::vec2> uvCoords;
+    std::vector<Vertex> vertices;
     std::vector<Triangle> triangles;
     std::vector<Image> textures;
     std::vector<Material> materials;
@@ -78,7 +76,6 @@ public:
     Image environment = Image::empty;
     std::string name = "Empty";
 
-    void loadOBJ(const std::string& fileName);
     void loadEnvironmentMap(const std::string& fileName);
     int loadTexture(const std::string& fileName);
     int loadMaterial(const Material& material, const std::string& name);

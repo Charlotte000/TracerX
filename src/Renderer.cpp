@@ -38,8 +38,6 @@ void Renderer::shutdown()
     this->textureArray.shutdown();
 
     this->vertexBuffer.shutdown();
-    this->normalBuffer.shutdown();
-    this->uvBuffer.shutdown();
     this->triangleBuffer.shutdown();
     this->meshBuffer.shutdown();
     this->materialBuffer.shutdown();
@@ -125,8 +123,6 @@ void Renderer::resetScene(Scene& scene)
 
     this->textureArray.update(2048, 2048, scene.textures);
     this->vertexBuffer.update(scene.vertices);
-    this->normalBuffer.update(scene.normals);
-    this->uvBuffer.update(scene.uvCoords);
     this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
     this->materialBuffer.update(scene.materials);
@@ -149,9 +145,7 @@ void Renderer::initData(glm::ivec2 size, Scene& scene)
 
     // Buffers
     this->vertexBuffer.init(scene.vertices, GL_RGB32F);
-    this->normalBuffer.init(scene.normals, GL_RGB32F);
-    this->uvBuffer.init(scene.uvCoords, GL_RG32F);
-    this->triangleBuffer.init(scene.triangles, GL_RGB32I);
+    this->triangleBuffer.init(scene.triangles, GL_RGBA32I);
     this->meshBuffer.init(scene.meshes, GL_RGBA32F);
     this->materialBuffer.init(scene.materials, GL_RGBA32F);
     this->bvhBuffer.init(nodes, GL_RGB32F);
@@ -161,13 +155,11 @@ void Renderer::initData(glm::ivec2 size, Scene& scene)
     this->accumulator.colorTexture.bind(1);
     this->environmentTexture.bind(2);
     this->vertexBuffer.bind(3);
-    this->normalBuffer.bind(4);
-    this->uvBuffer.bind(5);
-    this->triangleBuffer.bind(6);
-    this->textureArray.bind(7);
-    this->meshBuffer.bind(8);
-    this->materialBuffer.bind(9);
-    this->bvhBuffer.bind(10);
+    this->triangleBuffer.bind(4);
+    this->textureArray.bind(5);
+    this->meshBuffer.bind(6);
+    this->materialBuffer.bind(7);
+    this->bvhBuffer.bind(8);
 }
 
 void Renderer::updateShaders()
