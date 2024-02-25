@@ -133,14 +133,17 @@ vec3 SendRay(in Ray ray)
     for (int i = 0; i <= MaxBouceCount; i++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, manifold) || (i == 0 && manifold.Depth < MIN_RENDER_DISTANCE))
+        if (!FindIntersection(ray, manifold))
         {
             ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
             break;
         }
 
-        CollisionReact(ray, manifold);
-        ray.InvDirection = 1 / ray.Direction;
+        if (i != 0 || manifold.Depth >= MIN_RENDER_DISTANCE)
+        {
+            CollisionReact(ray, manifold);
+            ray.InvDirection = 1 / ray.Direction;
+        }
     }
 
     return ray.IncomingLight;

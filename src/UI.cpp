@@ -166,7 +166,7 @@ void UI::materials()
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
 
-    if (!ImGui::BeginMenu("Materials", scene.materials.size() != 0))
+    if (!ImGui::BeginMenu("Materials", !scene.materials.empty()))
     {
         return;
     }
@@ -352,7 +352,7 @@ void UI::meshes()
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
 
-    if (!ImGui::BeginMenu("Meshes", scene.meshes.size() != 0))
+    if (!ImGui::BeginMenu("Meshes", !scene.meshes.empty()))
     {
         return;
     }
@@ -451,7 +451,7 @@ void UI::scene()
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
 
-    if (!ImGui::BeginMenu("Scene", this->app->sceneFiles.size() != 0))
+    if (!ImGui::BeginMenu("Scene", !this->app->sceneFiles.empty()))
     {
         return;
     }

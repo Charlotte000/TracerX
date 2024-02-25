@@ -73,7 +73,7 @@ int Scene::loadMaterial(const Material& material, const std::string& name)
 
 const std::vector<glm::vec3> Scene::createBVH()
 {
-    if (this->triangles.size() == 0)
+    if (this->triangles.empty())
     {
         return std::vector<glm::vec3>();
     }
@@ -191,7 +191,7 @@ Scene Scene::loadGLTF(const std::string& folder)
         scene.materialNames.push_back(gltfMaterial.name);
     }
 
-    if (scene.materials.size() == 0)
+    if (scene.materials.empty())
     {
         scene.materials.push_back(Material::matte(glm::vec3(1)));
         scene.materialNames.push_back("Default");

@@ -80,7 +80,7 @@ void Application::init(glm::ivec2 size)
     });
 
     // Init components
-    if (this->scene.environment.name == "None" && this->environmentFiles.size() > 0)
+    if (this->scene.environment.name == "None" && !this->environmentFiles.empty())
     {
         this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
     }
