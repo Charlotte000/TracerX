@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <tinydir.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 
 Material Material::lightSource(glm::vec3 emissionColor, float emissionStrength)
@@ -138,11 +139,19 @@ Scene Scene::loadGLTF(const std::string& folder)
         }
     }
 
-    // Textures
-    for (size_t textureId = 0; textureId < model.textures.size(); textureId++)
+    scene.GLTFtextures(model.textures, model.images);
+    scene.GLTFmaterials(model.materials);
+    scene.GLTFmeshes(model);
+    scene.GLTFnodes(model.nodes, model.scenes[model.defaultScene].nodes, glm::mat4(1));
+    return scene;
+}
+
+void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
+{
+    for (size_t textureId = 0; textureId < textures.size(); textureId++)
     {
-        const tinygltf::Texture& gltfTexture = model.textures[textureId];
-        const tinygltf::Image& gltfImage = model.images[gltfTexture.source];
+        const tinygltf::Texture& gltfTexture = textures[textureId];
+        const tinygltf::Image& gltfImage = images[gltfTexture.source];
         Image image;
         image.width = gltfImage.width;
         image.height = gltfImage.height;
@@ -156,11 +165,13 @@ Scene Scene::loadGLTF(const std::string& folder)
             image.pixels.push_back(gltfImage.image[i + 2] / 255.f);
         }
 
-        scene.textures.push_back(image);
+        this->textures.push_back(image);
     }
+}
 
-    // Materials
-    for (const tinygltf::Material& gltfMaterial : model.materials)
+void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
+{
+    for (const tinygltf::Material& gltfMaterial : materials)
     {
         const tinygltf::PbrMetallicRoughness& pbr = gltfMaterial.pbrMetallicRoughness;
 
@@ -187,16 +198,19 @@ Scene Scene::loadGLTF(const std::string& folder)
             }
         }
 
-        scene.materials.push_back(material);
-        scene.materialNames.push_back(gltfMaterial.name);
+        this->materials.push_back(material);
+        this->materialNames.push_back(gltfMaterial.name);
     }
 
-    if (scene.materials.empty())
+    if (this->materials.empty())
     {
-        scene.materials.push_back(Material::matte(glm::vec3(1)));
-        scene.materialNames.push_back("Default");
+        this->materials.push_back(Material::matte(glm::vec3(1)));
+        this->materialNames.push_back("Default");
     }
+}
 
+void Scene::GLTFmeshes(const tinygltf::Model& model)
+{
     for (const tinygltf::Mesh& gltfMesh : model.meshes)
     {
         for (tinygltf::Primitive primitive : gltfMesh.primitives)
@@ -221,7 +235,7 @@ Scene Scene::loadGLTF(const std::string& folder)
             const tinygltf::Buffer& uvBuffer = model.buffers[uvBufferView.buffer];
             const uint8_t* uvBufferAddress = uvBuffer.data.data();
 
-            size_t vertexOffset = scene.vertices.size();
+            size_t vertexOffset = this->vertices.size();
             for (size_t i = 0; i < positionAccessor.count; i++)
             {
                 Vertex v;
@@ -239,7 +253,7 @@ Scene Scene::loadGLTF(const std::string& folder)
                 const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset + (i * sizeof(float) * 2);
                 std::memcpy(glm::value_ptr(v.uv), uvData, sizeof(float) * 2);
 
-                scene.vertices.push_back(v);
+                this->vertices.push_back(v);
             }
 
             // Indices
@@ -253,7 +267,7 @@ Scene Scene::loadGLTF(const std::string& folder)
                 const uint8_t* data = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset + (i * indexStride);
 
                 Triangle triangle;
-                triangle.meshId = scene.meshes.size();
+                triangle.meshId = this->meshes.size();
 
                 if (indexStride == 2)
                 {
@@ -272,17 +286,82 @@ Scene Scene::loadGLTF(const std::string& folder)
                     triangle.v3 = (int)(index.z + vertexOffset);
                 }
 
-                scene.triangles.push_back(triangle);
+                this->triangles.push_back(triangle);
             }
 
             // Mesh
             Mesh mesh;
             mesh.materialId = primitive.material;
             mesh.triangleSize = indexAccessor.count / 3;
-            scene.meshes.push_back(mesh);
-            scene.meshNames.push_back(gltfMesh.name);
+            this->meshes.push_back(mesh);
+            this->meshNames.push_back(gltfMesh.name);
         }
     }
+}
 
-    return scene;
+void Scene::GLTFnodes(const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world)
+{
+    for (int index : parents)
+    {
+        this->GLTFtraverseNode(nodes, nodes[index], world);
+    }
+}
+
+void Scene::GLTFtraverseNode(const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform)
+{
+    glm::mat4 localTranform(1);
+    if (!node.matrix.empty())
+    {
+        localTranform[0][0] = node.matrix[0];
+        localTranform[0][1] = node.matrix[1];
+        localTranform[0][2] = node.matrix[2];
+        localTranform[0][3] = node.matrix[3];
+
+        localTranform[1][0] = node.matrix[4];
+        localTranform[1][1] = node.matrix[5];
+        localTranform[1][2] = node.matrix[6];
+        localTranform[1][3] = node.matrix[7];
+
+        localTranform[2][0] = node.matrix[8];
+        localTranform[2][1] = node.matrix[9];
+        localTranform[2][2] = node.matrix[10];
+        localTranform[2][3] = node.matrix[11];
+
+        localTranform[3][0] = node.matrix[12];
+        localTranform[3][1] = node.matrix[13];
+        localTranform[3][2] = node.matrix[14];
+        localTranform[3][3] = node.matrix[15];
+    }
+    else
+    {
+        glm::mat4 translate(1), rotate(1), scale(1);
+        if (!node.scale.empty())
+        {
+            scale = glm::scale(glm::mat4(1), glm::vec3(node.scale[0], node.scale[1], node.scale[2]));
+        }
+
+        if (!node.rotation.empty())
+        {
+            rotate = glm::toMat4(glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]));
+        }
+
+        if (!node.translation.empty())
+        {
+            translate = glm::translate(glm::mat4(1), glm::vec3(node.translation[0], node.translation[1], node.translation[2]));
+        }
+
+        localTranform = translate * rotate * scale;
+    }
+
+    glm::mat4 transform = localTranform * globalTransform;
+
+    if (node.children.empty() && node.mesh != -1)
+    {
+        this->meshes[node.mesh].transform = transform * this->meshes[node.mesh].transform;
+    }
+
+    for (int child : node.children)
+    {
+        this->GLTFtraverseNode(nodes, nodes[child], transform);
+    }
 }
