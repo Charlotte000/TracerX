@@ -180,7 +180,7 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
         material.albedoColor = glm::vec3(pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]);
         material.roughness = pbr.roughnessFactor;
         material.emissionColor = glm::vec3(gltfMaterial.emissiveFactor[0], gltfMaterial.emissiveFactor[1], gltfMaterial.emissiveFactor[2]);
-        material.emissionStrength = glm::length(material.emissionColor);
+        material.emissionStrength = 1;
         material.metalness = pbr.metallicFactor;
 
         material.albedoTextureId = pbr.baseColorTexture.index;
@@ -195,6 +195,15 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
             if (ext.Has("ior"))
             {
                 material.ior = ext.Get("ior").Get<double>();
+            }
+        }
+
+        if (gltfMaterial.extensions.find("KHR_materials_emissive_strength") != gltfMaterial.extensions.end())
+        {
+            const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_emissive_strength")->second;
+            if (ext.Has("emissiveStrength"))
+            {
+                material.emissionStrength = ext.Get("emissiveStrength").Get<double>();
             }
         }
 
