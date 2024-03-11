@@ -18,5 +18,5 @@ glm::mat4 Camera::createView() const
 glm::mat4 Camera::createProjection() const
 {
     float fovY = atanf(tanf(this->fov / 2) / this->aspectRatio) * 2;
-    return glm::infinitePerspective(fovY, this->aspectRatio, .1f);
+    return glm::infinitePerspective(fovY, this->aspectRatio, .0001f);
 }
