@@ -1,14 +1,13 @@
 #include "TracerX/Texture.h"
 
 
-void Texture::init(int width, int height)
+void Texture::init(glm::ivec2 size)
 {
-    this->width = width;
-    this->height = height;
+    this->size = size;
 
     glGenTextures(1, &this->handler);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->width, this->height, 0, GL_RGB, GL_FLOAT, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->size.x, this->size.y, 0, GL_RGB, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -16,12 +15,11 @@ void Texture::init(int width, int height)
 
 void Texture::init(const Image& image)
 {
-    this->width = image.width;
-    this->height = image.height;
+    this->size = image.size;
 
     glGenTextures(1, &this->handler);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->width, this->height, 0, GL_RGB, GL_FLOAT, image.pixels.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->size.x, this->size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -36,20 +34,19 @@ void Texture::bind(int binding)
 void Texture::update(const Image& image)
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, image.width, image.height, 0, GL_RGB, GL_FLOAT, image.pixels.data());
-
-    this->width = image.width;
-    this->height = image.height;
-}
-
-void Texture::update(int width, int height, float* pixels)
-{
-    glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, width, height, 0, GL_RGB, GL_FLOAT, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, image.size.x, image.size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    this->width = width;
-    this->height = height;
+    this->size = image.size;
+}
+
+void Texture::update(glm::ivec2 size, float* pixels)
+{
+    glBindTexture(GL_TEXTURE_2D, this->handler);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size.x, size.y, 0, GL_RGB, GL_FLOAT, pixels);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    this->size = size;
 }
 
 void Texture::upload(float* pixels)

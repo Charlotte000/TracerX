@@ -1,6 +1,11 @@
 #pragma once
 
 #include "Scene.h"
+#include "Image.h"
+#include "Camera.h"
+
+#include <imgui.h>
+#include <ImGuizmo.h>
 
 
 class Application;
@@ -15,14 +20,25 @@ public:
     void render();
 private:
     Mesh* editMesh = nullptr;
+    Material* editMaterial = nullptr;
+    Camera* editCamera = nullptr;
+    Image* editEnvironment = nullptr;
     glm::mat4 editMeshTransform;
+    ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
+    ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
+    bool showBox = true;
+    ImVec2 imagePos;
+    ImVec2 imageSize;
 
-    void mainMenu();
-    void info();
-    void camera();
-    void materials();
-    void meshes();
-    void environment();
-    void scene();
-    void transform();
+    void barMenu();
+    void mainWindowMenu();
+    void drawingPanelMenu();
+    void sidePanelMenu();
+    void sceneMenu();
+    void propertyMenu();
+    void propertyMeshMenu();
+    void propertyMaterialMenu();
+    void propertyCameraMenu();
+    void propertyEnvironmentMenu();
+    void propertySceneMenu();
 };

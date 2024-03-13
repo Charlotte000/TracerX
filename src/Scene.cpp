@@ -153,8 +153,7 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
         const tinygltf::Texture& gltfTexture = textures[textureId];
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
         Image image;
-        image.width = gltfImage.width;
-        image.height = gltfImage.height;
+        image.size = glm::ivec2(gltfImage.width, gltfImage.height);
         image.name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
 
         image.pixels.reserve(gltfImage.width * gltfImage.height * 3);
@@ -255,7 +254,6 @@ void Scene::GLTFmeshes(const tinygltf::Model& model)
 
                 // Normal
                 const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset + (i * sizeof(float) * 3);
-                glm::vec3 normal;
                 std::memcpy(glm::value_ptr(v.normal), normalData, sizeof(float) * 3);
 
                 // Texture coordinate

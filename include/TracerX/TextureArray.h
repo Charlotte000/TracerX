@@ -9,12 +9,11 @@
 class TextureArray
 {
 public:
-    int width;
-    int height;
+    glm::ivec2 size;
 
-    void init(int width, int height, const std::vector<Image>& images);
+    void init(glm::ivec2 size, const std::vector<Image>& images);
     void bind(int binding);
-    void update(int width, int height, const std::vector<Image>& images);
+    void update(glm::ivec2 size, const std::vector<Image>& images);
     void shutdown();
 private:
     GLuint handler;

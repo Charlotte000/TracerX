@@ -44,7 +44,6 @@ void Application::init(glm::ivec2 size)
     }
 
     // Create window
-    this->size = size;
     this->window = glfwCreateWindow(size.x, size.y, "TracerX", nullptr, nullptr);
     if (this->window == nullptr)
     {
@@ -52,7 +51,7 @@ void Application::init(glm::ivec2 size)
     }
 
     glfwMakeContextCurrent(this->window);
-    glfwSetWindowUserPointer(this->window, this);
+    glfwMaximizeWindow(this->window);
     glfwSwapInterval(0);
     
     // Key listener
@@ -62,21 +61,11 @@ void Application::init(glm::ivec2 size)
         {
             switch (key)
             {
-                case GLFW_KEY_ESCAPE:
-                    glfwSetWindowShouldClose(window, GL_TRUE);
-                    break;
                 case GLFW_KEY_C:
                     glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED :  GLFW_CURSOR_NORMAL);
                     break;
             }
         }
-    });
-
-    // Resize listener
-    glfwSetFramebufferSizeCallback(this->window, [](GLFWwindow* window, int width, int height)
-    {
-        Application* app = (Application*)glfwGetWindowUserPointer(window);
-        app->resize(glm::ivec2(width, height));
     });
 
     // Init components
@@ -85,21 +74,12 @@ void Application::init(glm::ivec2 size)
         this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
     }
 
-    this->renderer.init((glm::ivec2)((glm::vec2)this->size * this->renderScale), this->scene);
+    this->renderer.init(size, this->scene);
     this->ui.init(this);
-    this->viewer.init("../shaders/vertex/main.glsl", "../shaders/fragment/viewer/main.glsl");
-}
-
-void Application::resize(glm::ivec2 size)
-{
-    this->size = size;
-    glfwSetWindowSize(this->window, this->size.x, this->size.y);
-    this->renderer.resize((glm::ivec2)((glm::vec2)this->size * this->renderScale));
 }
 
 void Application::shutdown()
 {
-    this->viewer.shutdown();
     this->ui.shutdown();
     this->renderer.shutdown();
     glfwDestroyWindow(this->window);
@@ -115,13 +95,10 @@ void Application::run()
         this->control();
 
         // Render
-        this->renderer.render();
- 
-        // Draw
-        this->viewer.use();
-        glViewport(0, 0, this->size.x, this->size.y);
-        Quad::draw();
-        Shader::stopUse();
+        if (this->isRendering || this->renderer.frameCount == 1)
+        {
+            this->renderer.render();
+        }
 
         // UI
         this->ui.render();
@@ -139,11 +116,10 @@ void Application::save()
     std::stringstream name;
     name << "img" << this->renderer.frameCount << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
 
-    int w = this->renderer.output.colorTexture.width;
-    int h = this->renderer.output.colorTexture.height;
-    unsigned char* pixels = new unsigned char[w * h * 3];
+    glm::ivec2 size = this->renderer.output.colorTexture.size;
+    unsigned char* pixels = new unsigned char[size.x * size.y * 3];
     this->renderer.output.colorTexture.upload(pixels);
-    Image::saveToDisk(name.str(), w, h, pixels);
+    Image::saveToDisk(name.str(), size, pixels);
     delete[] pixels;
 }
 

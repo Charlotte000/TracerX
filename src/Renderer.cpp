@@ -24,8 +24,8 @@ void Renderer::init(glm::ivec2 size, Scene& scene)
 void Renderer::resize(glm::ivec2 size)
 {
     this->camera.aspectRatio = (float)size.x / size.y;
-    this->accumulator.colorTexture.update(size.x, size.y, 0);
-    this->output.colorTexture.update(size.x, size.y, 0);
+    this->accumulator.colorTexture.update(size, 0);
+    this->output.colorTexture.update(size, 0);
     this->resetAccumulator();
 }
 
@@ -51,9 +51,11 @@ void Renderer::render()
 {
     this->updateShaders();
 
+    // Update accumulator
     this->pathTracer.use();
     this->accumulator.draw();
 
+    // Update output
     this->toneMapper.use();
     this->output.draw();
 
@@ -64,20 +66,23 @@ void Renderer::render()
 
 void Renderer::denoise()
 {
+    // Create device
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    int w = this->accumulator.colorTexture.width;
-    int h = this->accumulator.colorTexture.height;
-    oidn::BufferRef colorBuf = device.newBuffer(w * h * 3 * sizeof(float));
+    // Create color buffer
+    glm::ivec2 size = this->accumulator.colorTexture.size;
+    oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 3 * sizeof(float));
     this->accumulator.colorTexture.upload((float*)colorBuf.getData());
-    
+
+    // Create filter
     oidn::FilterRef filter = device.newFilter("RT");
-    filter.setImage("color", colorBuf, oidn::Format::Float3, w, h);
-    filter.setImage("output", colorBuf, oidn::Format::Float3, w, h);
+    filter.setImage("color", colorBuf, oidn::Format::Float3, size.x, size.y);
+    filter.setImage("output", colorBuf, oidn::Format::Float3, size.x, size.y);
     filter.set("hdr", true);
     filter.commit();
 
+    // Denoise
     filter.execute();
     const char* errorMessage;
     if (device.getError(errorMessage) != oidn::Error::None)
@@ -85,9 +90,13 @@ void Renderer::denoise()
         std::cerr << "Failed to denoise: " << errorMessage << std::endl;
     }
 
-    this->accumulator.colorTexture.update(w, h, (float*)colorBuf.getData());
-
+    // Update accumulator
+    this->accumulator.colorTexture.update(size, (float*)colorBuf.getData());
     colorBuf.release();
+
+    // Update output
+    this->toneMapper.use();
+    this->output.draw();
 }
 
 void Renderer::resetAccumulator()
@@ -121,7 +130,7 @@ void Renderer::resetScene(Scene& scene)
 {
     std::vector<glm::vec3> bvh = scene.createBVH();
 
-    this->textureArray.update(2048, 2048, scene.textures);
+    this->textureArray.update(glm::ivec2(2048, 2048), scene.textures);
     this->vertexBuffer.update(scene.vertices);
     this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
@@ -137,11 +146,11 @@ void Renderer::initData(glm::ivec2 size, Scene& scene)
 
     // Textures
     this->environmentTexture.init(scene.environment);
-    this->textureArray.init(2048, 2048, scene.textures);
+    this->textureArray.init(glm::ivec2(2048, 2048), scene.textures);
 
     // Frame buffers
-    this->accumulator.init(size.x, size.y);
-    this->output.init(size.x, size.y);
+    this->accumulator.init(size);
+    this->output.init(size);
 
     // Buffers
     this->vertexBuffer.init(scene.vertices, GL_RGB32F);

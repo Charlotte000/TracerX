@@ -2,9 +2,9 @@
 #include "TracerX/FrameBuffer.h"
 
 
-void FrameBuffer::init(int width, int height)
+void FrameBuffer::init(glm::ivec2 size)
 {
-    this->colorTexture.init(width, height);
+    this->colorTexture.init(size);
 
     // Create framebuffer
     glGenFramebuffers(1, &this->handler);
@@ -24,7 +24,7 @@ void FrameBuffer::shutdown()
 void FrameBuffer::draw()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
-    glViewport(0, 0, this->colorTexture.width, this->colorTexture.height);
+    glViewport(0, 0, this->colorTexture.size.x, this->colorTexture.size.y);
     Quad::draw();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

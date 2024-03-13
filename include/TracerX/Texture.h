@@ -8,14 +8,13 @@
 class Texture
 {
 public:
-    int width;
-    int height;
+    glm::ivec2 size;
 
-    void init(int width, int height);
+    void init(glm::ivec2 size);
     void init(const Image& image);
     void bind(int binding);
     void update(const Image& image);
-    void update(int width, int height, float* pixels);
+    void update(glm::ivec2 size, float* pixels);
     void upload(float* pixels);
     void upload(unsigned char* pixels);
     void shutdown();

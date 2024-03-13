@@ -14,13 +14,13 @@ Image Image::empty;
 Image Image::loadFromFile(const std::string& fileName)
 {
     Image img;
-    float* data = stbi_loadf(fileName.c_str(), &img.width, &img.height, nullptr, 3);
+    float* data = stbi_loadf(fileName.c_str(), &img.size.x, &img.size.y, nullptr, 3);
     if (data == nullptr)
     {
         throw std::runtime_error("Failed to load the image: " + fileName);
     }
 
-    size_t size = img.width * img.height * 3;
+    size_t size = img.size.x * img.size.y * 3;
     img.pixels.resize(size);
     std::copy(data, data + size, img.pixels.data());
 
@@ -30,10 +30,10 @@ Image Image::loadFromFile(const std::string& fileName)
     return img;
 }
 
-void Image::saveToDisk(const std::string& fileName, int width, int height, unsigned char* pixels)
+void Image::saveToDisk(const std::string& fileName, glm::ivec2 size, unsigned char* pixels)
 {
     stbi_flip_vertically_on_write(true);
-    if (!stbi_write_png(fileName.c_str(), width, height, 3, pixels, 0))
+    if (!stbi_write_png(fileName.c_str(), size.x, size.y, 3, pixels, 0))
     {
         std::cerr << "Failed to save the image" << std::endl;
     }
