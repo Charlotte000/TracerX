@@ -26,9 +26,7 @@ private:
     glm::mat4 editMeshTransform;
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
-    bool showBox = true;
-    ImVec2 imagePos;
-    ImVec2 imageSize;
+    bool autoApply = false;
 
     void barMenu();
     void mainWindowMenu();

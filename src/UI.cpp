@@ -134,24 +134,9 @@ void UI::render()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
-    ImGuizmo::SetRect(this->imagePos.x, this->imagePos.y, this->imageSize.x, this->imageSize.y);
-    ImGuizmo::SetDrawlist(ImGui::GetForegroundDrawList());
 
     this->barMenu();
     this->mainWindowMenu();
-
-    if (this->editMesh)
-    {
-        glm::mat4 view = this->app->renderer.camera.createView();
-        glm::mat4 projection = this->app->renderer.camera.createProjection();
-
-        if (this->showBox)
-        {
-            ImGuizmo::DrawCubes(glm::value_ptr(view), glm::value_ptr(projection), glm::value_ptr(this->editMeshTransform), 1);
-        }
-
-        ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), this->operation, this->mode, glm::value_ptr(this->editMeshTransform));
-    }
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -180,6 +165,12 @@ void UI::barMenu()
                         this->app->scene = Scene::loadGLTF(Application::sceneFolder + name);
                         this->app->scene.environment = oldEnv;
                         this->app->renderer.resetScene(this->app->scene);
+
+                        this->editMesh = nullptr;
+                        this->editMeshTransform = glm::mat4(1);
+                        this->editMaterial = nullptr;
+                        this->editCamera = nullptr;
+                        this->editEnvironment = nullptr;
                     }
                 }
 
@@ -229,12 +220,33 @@ void UI::drawingPanelMenu()
     ImVec2 size = ImGui::GetContentRegionAvail();
     float aspectRatio = size.x / size.y;
     float imAspectRatio = this->app->renderer.camera.aspectRatio;
-    this->imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
-    this->imagePos = ImVec2((ImGui::GetWindowSize().x - this->imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - this->imageSize.y) * 0.5f);
+    ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
+    ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
-    ImGui::SetCursorPos(this->imagePos);
-    this->imagePos = ImVec2(this->imagePos.x + ImGui::GetWindowContentRegionMin().x, this->imagePos.y + ImGui::GetWindowContentRegionMin().y);
-    ImGui::Image((void*)(intptr_t)this->app->renderer.output.colorTexture.getHandler(), this->imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    ImGui::SetCursorPos(imagePos);
+    ImGui::Image((void*)(intptr_t)this->app->renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+
+    if (this->editMesh)
+    {
+        glm::mat4 view = this->app->renderer.camera.createView();
+        glm::mat4 projection = this->app->renderer.camera.createProjection();
+
+        ImVec2 winPos = ImGui::GetMainViewport()->WorkPos;
+        ImVec2 menuPos = ImGui::GetWindowContentRegionMin();
+        ImVec2 globalPos = ImVec2(imagePos.x + menuPos.x + winPos.x, imagePos.y + menuPos.y + winPos.y);
+        ImGuizmo::SetRect(globalPos.x, globalPos.y, imageSize.x, imageSize.y);
+        ImGuizmo::SetDrawlist();
+        if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), this->operation, this->mode, glm::value_ptr(this->editMeshTransform)) && this->autoApply)
+        {
+            this->editMesh->transform = this->editMeshTransform;
+            const std::vector<glm::vec3>& bvh = this->app->scene.createBVH();
+
+            this->app->renderer.resetAccumulator();
+            this->app->renderer.resetMeshes(this->app->scene.meshes);
+            this->app->renderer.resetBVH(bvh, this->app->scene.triangles);
+        }
+    }
+
     ImGui::EndChild();
 }
 
@@ -397,8 +409,18 @@ void UI::propertyMeshMenu()
     ImGui::SameLine();
     ImGui::RadioButton("Local", (int*)&this->mode, (int)ImGuizmo::MODE::LOCAL);
 
-    ImGui::Checkbox("Show box", &this->showBox);
+    ImGui::Separator();
+    ImGui::Checkbox("Auto apply", &this->autoApply);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::Text("May cause lags due to bvh recalculation");
+        ImGui::EndTooltip();
+    }
 
+    ImGui::SameLine();
+    ImGui::BeginDisabled(this->autoApply);
     if (ImGui::Button("Apply", ImVec2(-1, 0)))
     {
         this->editMesh->transform = this->editMeshTransform;
@@ -408,6 +430,8 @@ void UI::propertyMeshMenu()
         renderer.resetMeshes(scene.meshes);
         renderer.resetBVH(bvh, scene.triangles);
     }
+
+    ImGui::EndDisabled();
 }
 
 void UI::propertyMaterialMenu()
