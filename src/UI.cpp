@@ -234,7 +234,7 @@ void UI::drawingPanelMenu()
 
     ImGui::SetCursorPos(this->imagePos);
     this->imagePos = ImVec2(this->imagePos.x + ImGui::GetWindowContentRegionMin().x, this->imagePos.y + ImGui::GetWindowContentRegionMin().y);
-    ImGui::Image((void*)(uint64_t)this->app->renderer.output.colorTexture.getHandler(), this->imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    ImGui::Image((void*)(intptr_t)this->app->renderer.output.colorTexture.getHandler(), this->imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
     ImGui::EndChild();
 }
 
