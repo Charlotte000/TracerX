@@ -5,6 +5,7 @@ This path tracing app is a computer graphics program that simulates the behavior
 This renderer was inspired by the book series [_Ray Tracing in One Weekend_](https://raytracing.github.io/) and [knightcrawler25/GLSL-PathTracer](https://github.com/knightcrawler25/GLSL-PathTracer)
 
 # Renders
+![](img/UI.jpg)
 ![](img/Ajax.jpg)
 ![](img/DamagedHelmet.jpg)
 ![](img/SciFiHelmet.jpg)
@@ -31,7 +32,7 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
 
 # Visual Mode Control
 - С - start/stop camera control mode
-- W, A, S, D - camera left, right, forward, backward movement
+- W, A, S, D - camera forward, left, backward, right movement
 - LShift, LCtrl - camera up, down movement
 - Mouse - camera rotation
 - Q, E - camera tilt

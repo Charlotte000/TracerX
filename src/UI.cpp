@@ -180,12 +180,30 @@ void UI::barMenu()
             ImGui::EndMenu();
         }
 
-        if (ImGui::Selectable("Save (as png)"))
+        if (ImGui::MenuItem("Save (as png)"))
         {
             this->app->save();
         }
 
         ImGui::EndMenu();
+    }
+
+    if (ImGui::MenuItem("Info"))
+    {
+        ImGui::OpenPopup("infoMenu");
+    }
+    
+    if (ImGui::BeginPopup("infoMenu"))
+    {
+        ImGui::Text(
+            "C - start/stop camera control mode\n"
+            "W, A, S, D - camera forward, left, backward, right movement\n"
+            "LShift, LCtrl - camera up, down movement\n"
+            "Mouse - camera rotation\n"
+            "Q, E - camera tilt\n"
+            "Space - start/stop rendering"
+        );
+        ImGui::EndPopup();
     }
 
     float elapsedTime = ImGui::GetIO().DeltaTime;

@@ -51,18 +51,23 @@ void Application::init(glm::ivec2 size)
     }
 
     glfwMakeContextCurrent(this->window);
+    glfwSetWindowUserPointer(this->window, this);
     glfwMaximizeWindow(this->window);
     glfwSwapInterval(0);
     
     // Key listener
     glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int scancode, int action, int mode)
     {
+        Application* app = (Application*)glfwGetWindowUserPointer(window);
         if (action == GLFW_PRESS)
         {
             switch (key)
             {
                 case GLFW_KEY_C:
                     glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED :  GLFW_CURSOR_NORMAL);
+                    break;
+                case GLFW_KEY_SPACE:
+                    app->isRendering = !app->isRendering;
                     break;
             }
         }
