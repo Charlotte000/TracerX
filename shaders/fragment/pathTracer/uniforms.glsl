@@ -1,11 +1,11 @@
-layout(binding=1) uniform sampler2D AccumulatorTexture;
-layout(binding=2) uniform sampler2D EnvironmentTexture;
+layout(binding=0) uniform sampler2D AccumulatorTexture;
+layout(binding=1) uniform sampler2D EnvironmentTexture;
+layout(binding=2) uniform sampler2DArray Textures;
 layout(binding=3) uniform samplerBuffer Vertices;
 layout(binding=4) uniform isamplerBuffer Triangles;
-layout(binding=5) uniform sampler2DArray Textures;
-layout(binding=6) uniform samplerBuffer Meshes;
-layout(binding=7) uniform samplerBuffer Materials;
-layout(binding=8) uniform samplerBuffer BVH;
+layout(binding=5) uniform samplerBuffer Meshes;
+layout(binding=6) uniform samplerBuffer Materials;
+layout(binding=7) uniform samplerBuffer BVH;
 
 uniform float EnvironmentIntensity;
 uniform int MaxBouceCount;

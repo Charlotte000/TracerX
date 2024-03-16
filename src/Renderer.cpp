@@ -160,15 +160,14 @@ void Renderer::initData(glm::ivec2 size, Scene& scene)
     this->bvhBuffer.init(nodes, GL_RGB32F);
 
     // Bind textures
-    this->output.colorTexture.bind(0);
-    this->accumulator.colorTexture.bind(1);
-    this->environmentTexture.bind(2);
+    this->accumulator.colorTexture.bind(0);
+    this->environmentTexture.bind(1);
+    this->textureArray.bind(2);
     this->vertexBuffer.bind(3);
     this->triangleBuffer.bind(4);
-    this->textureArray.bind(5);
-    this->meshBuffer.bind(6);
-    this->materialBuffer.bind(7);
-    this->bvhBuffer.bind(8);
+    this->meshBuffer.bind(5);
+    this->materialBuffer.bind(6);
+    this->bvhBuffer.bind(7);
 }
 
 void Renderer::updateShaders()

@@ -10,7 +10,6 @@
 
 struct Material
 {
-public:
     glm::vec3 albedoColor = glm::vec3(1);
     float roughness = 0;
     glm::vec3 emissionColor = glm::vec3(1);
@@ -45,7 +44,6 @@ private:
 
 struct Triangle
 {
-public:
     int v1;
     int v2;
     int v3;
@@ -81,7 +79,6 @@ public:
     int loadMaterial(const Material& material, const std::string& name);
     const std::vector<glm::vec3> createBVH();
 
-    static Scene load(const std::string& folder);
     static Scene loadGLTF(const std::string& folder);
 private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);

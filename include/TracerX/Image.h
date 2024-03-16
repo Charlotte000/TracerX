@@ -7,7 +7,6 @@
 
 struct Image
 {
-public:
     glm::ivec2 size;
     std::vector<float> pixels;
     std::string name = "None";
@@ -18,5 +17,4 @@ public:
 
     static Image loadFromFile(const std::string& fileName);
     static void saveToDisk(const std::string& fileName, glm::ivec2 size, unsigned char* pixels);
-private:
 };

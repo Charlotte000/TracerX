@@ -48,6 +48,8 @@ void TextureArray::update(glm::ivec2 size, const std::vector<Image>& images)
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB32F, size.x, size.y, images.size(), 0, GL_RGB, GL_FLOAT, data);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    delete[] data;
 }
 
 void TextureArray::shutdown()
