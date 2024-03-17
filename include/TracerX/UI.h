@@ -3,6 +3,7 @@
 #include "Scene.h"
 #include "Image.h"
 #include "Camera.h"
+#include "Texture.h"
 
 #include <imgui.h>
 #include <ImGuizmo.h>
@@ -27,6 +28,7 @@ private:
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
     bool autoApply = false;
+    Texture textureView;
 
     void barMenu();
     void mainWindowMenu();
@@ -39,4 +41,5 @@ private:
     void propertyCameraMenu();
     void propertyEnvironmentMenu();
     void propertySceneMenu();
+    void materialTextureSelector(const std::string& name, float& currentTextureId);
 };

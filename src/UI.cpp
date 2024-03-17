@@ -110,6 +110,7 @@ void UI::shutdown()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    this->textureView.shutdown();
 }
 
 void UI::init(Application* app)
@@ -121,6 +122,8 @@ void UI::init(Application* app)
     ImGui_ImplOpenGL3_Init();
 
     SetupImGuiStyle();
+
+    this->textureView.init(glm::ivec2(2048, 2048));
 }
 
 void UI::render()
@@ -208,7 +211,7 @@ void UI::barMenu()
 
     float elapsedTime = ImGui::GetIO().DeltaTime;
     ImGui::Separator();
-    ImGui::Text("%.0fms", 1000 * elapsedTime);
+    ImGui::Text("%4.0fms", 1000 * elapsedTime);
 
     ImGui::Separator();
     ImGui::Text("Frame count: %d", renderer.frameCount - 1);
@@ -411,9 +414,11 @@ void UI::propertyMeshMenu()
     static float rotation[3];
     static float scale[3];
     ImGuizmo::DecomposeMatrixToComponents( glm::value_ptr(this->editMeshTransform), translation, rotation, scale);
-    ImGui::DragFloat3("Translation", translation, .01f);
-    ImGui::DragFloat3("Rotation", rotation, .01f);
-    ImGui::DragFloat3("Scale", scale, .01f, 0.f, 1000.f);
+
+    bool modified = false;
+    modified |= ImGui::DragFloat3("Translation", translation, .01f);
+    modified |= ImGui::DragFloat3("Rotation", rotation, .01f);
+    modified |= ImGui::DragFloat3("Scale", scale, .01f, 0.f, 1000.f);
 
     ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale,  glm::value_ptr(this->editMeshTransform));
 
@@ -439,7 +444,7 @@ void UI::propertyMeshMenu()
 
     ImGui::SameLine();
     ImGui::BeginDisabled(this->autoApply);
-    if (ImGui::Button("Apply", ImVec2(-1, 0)))
+    if (ImGui::Button("Apply", ImVec2(-1, 0)) || modified && this->autoApply)
     {
         this->editMesh->transform = this->editMeshTransform;
         const std::vector<glm::vec3>& bvh = scene.createBVH();
@@ -471,29 +476,7 @@ void UI::propertyMaterialMenu()
             renderer.resetMaterials(scene.materials);
         }
 
-        if (ImGui::BeginCombo("Texture##albedo", material.albedoTextureId == -1 ? "None" : scene.textures[material.albedoTextureId].name.c_str()))
-        {
-            if (ImGui::Selectable("None", (int)material.albedoTextureId == -1))
-            {
-                material.albedoTextureId = -1.f;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
-            }
-
-            for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
-            {
-                Image& texture = scene.textures[textureId];
-                if (ImGui::Selectable((texture.name + "##albedoTexture" + std::to_string(textureId)).c_str(), (int)material.albedoTextureId == textureId))
-                {
-                    material.albedoTextureId = (float)textureId;
-                    renderer.resetAccumulator();
-                    renderer.resetMaterials(scene.materials);
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
+        this->materialTextureSelector("albedo", material.albedoTextureId);
         ImGui::EndTabItem();
     }
 
@@ -505,29 +488,7 @@ void UI::propertyMaterialMenu()
             renderer.resetMaterials(scene.materials);
         }
 
-        if (ImGui::BeginCombo("Texture##roughness", material.roughnessTextureId == -1 ? "None" : scene.textures[material.roughnessTextureId].name.c_str()))
-        {
-            if (ImGui::Selectable("None", (int)material.roughnessTextureId == -1))
-            {
-                material.roughnessTextureId = -1.f;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
-            }
-
-            for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
-            {
-                Image& texture = scene.textures[textureId];
-                if (ImGui::Selectable((texture.name + "##roughnessTexture" + std::to_string(textureId)).c_str(), (int)material.roughnessTextureId == textureId))
-                {
-                    material.roughnessTextureId = (float)textureId;
-                    renderer.resetAccumulator();
-                    renderer.resetMaterials(scene.materials);
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
+        this->materialTextureSelector("roughness", material.roughnessTextureId);
         ImGui::EndTabItem();
     }
 
@@ -539,29 +500,7 @@ void UI::propertyMaterialMenu()
             renderer.resetMaterials(scene.materials);
         }
 
-        if (ImGui::BeginCombo("Texture##metalness", material.metalnessTextureId == -1 ? "None" : scene.textures[material.metalnessTextureId].name.c_str()))
-        {
-            if (ImGui::Selectable("None", (int)material.metalnessTextureId == -1))
-            {
-                material.metalnessTextureId = -1.f;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
-            }
-
-            for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
-            {
-                Image& texture = scene.textures[textureId];
-                if (ImGui::Selectable((texture.name + "##metalnessTexture" + std::to_string(textureId)).c_str(), (int)material.metalnessTextureId == textureId))
-                {
-                    material.metalnessTextureId = (float)textureId;
-                    renderer.resetAccumulator();
-                    renderer.resetMaterials(scene.materials);
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
+        this->materialTextureSelector("metalness", material.metalnessTextureId);
         ImGui::EndTabItem();
     }
 
@@ -574,29 +513,7 @@ void UI::propertyMaterialMenu()
             renderer.resetMaterials(scene.materials);
         }
 
-        if (ImGui::BeginCombo("Texture##emission", material.emissionTextureId == -1 ? "None" : scene.textures[material.emissionTextureId].name.c_str()))
-        {
-            if (ImGui::Selectable("None", (int)material.emissionTextureId == -1))
-            {
-                material.emissionTextureId = -1.f;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
-            }
-
-            for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
-            {
-                Image& texture = scene.textures[textureId];
-                if (ImGui::Selectable((texture.name + "##emissionTexture" + std::to_string(textureId)).c_str(), (int)material.emissionTextureId == textureId))
-                {
-                    material.emissionTextureId = (float)textureId;
-                    renderer.resetAccumulator();
-                    renderer.resetMaterials(scene.materials);
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
+        this->materialTextureSelector("emission", material.emissionTextureId);
         ImGui::EndTabItem();
     }
 
@@ -614,29 +531,7 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        if (ImGui::BeginCombo("Texture##normal", material.normalTextureId == -1 ? "None" : scene.textures[material.normalTextureId].name.c_str()))
-        {
-            if (ImGui::Selectable("None", (int)material.normalTextureId == -1))
-            {
-                material.normalTextureId = -1.f;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
-            }
-
-            for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
-            {
-                Image& texture = scene.textures[textureId];
-                if (ImGui::Selectable((texture.name + "##normalTexture" + std::to_string(textureId)).c_str(), (int)material.normalTextureId == textureId))
-                {
-                    material.normalTextureId = (float)textureId;
-                    renderer.resetAccumulator();
-                    renderer.resetMaterials(scene.materials);
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
+        this->materialTextureSelector("normal", material.normalTextureId);
         ImGui::EndTabItem();
     }
 
@@ -746,5 +641,40 @@ void UI::propertySceneMenu()
     if (ImGui::Button("Denoise", ImVec2(-1, 0)))
     {
         renderer.denoise();
+    }
+}
+
+void UI::materialTextureSelector(const std::string& name, float& currentTextureId)
+{
+    Renderer& renderer = this->app->renderer;
+    Scene& scene = this->app->scene;
+
+    if (ImGui::BeginCombo(("Texture##" + name).c_str(), currentTextureId == -1 ? "None" : scene.textures[currentTextureId].name.c_str()))
+    {
+        if (ImGui::Selectable("None", (int)currentTextureId == -1))
+        {
+            currentTextureId = -1.f;
+            renderer.resetAccumulator();
+            renderer.resetMaterials(scene.materials);
+        }
+
+        for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
+        {
+            const Image& texture = scene.textures[textureId];
+            if (ImGui::Selectable((texture.name + "##" + name + "Texture" + std::to_string(textureId)).c_str(), (int)currentTextureId == textureId))
+            {
+                currentTextureId = (float)textureId;
+                renderer.resetAccumulator();
+                renderer.resetMaterials(scene.materials);
+            }
+        }
+
+        ImGui::EndCombo();
+    }
+
+    if (currentTextureId != -1)
+    {
+        this->app->renderer.textureArray.copy(this->textureView, currentTextureId);
+        ImGui::Image((void*)(intptr_t)this->textureView.getHandler(), ImVec2(200, 200));
     }
 }

@@ -20,6 +20,7 @@ public:
     float gamma = 2.2f;
     float environmentIntensity = 1.f;
     FrameBuffer output;
+    TextureArray textureArray;
 
     void init(glm::ivec2 size, Scene& scene);
     void resize(glm::ivec2 size);
@@ -39,7 +40,6 @@ private:
     Texture environmentTexture;
     Buffer<Vertex> vertexBuffer;
     Buffer<Triangle> triangleBuffer;
-    TextureArray textureArray;
     Buffer<Mesh> meshBuffer;
     Buffer<Material> materialBuffer;
     Buffer<glm::vec3> bvhBuffer;
