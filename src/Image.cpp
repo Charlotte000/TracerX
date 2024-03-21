@@ -1,5 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
 
 #include "TracerX/Image.h"
 
@@ -7,9 +8,27 @@
 #include <stdexcept>
 #include <stb_image.h>
 #include <stb_image_write.h>
+#include <stb_image_resize2.h>
 
 
 Image Image::empty;
+
+void Image::saveToFile() const
+{
+    std::vector<unsigned char> data(this->pixels.begin(), this->pixels.end());
+    stbi_flip_vertically_on_write(true);
+    if (!stbi_write_png(this->name.c_str(), this->size.x, this->size.y, 3, data.data(), 0))
+    {
+        std::cerr << "Failed to save the image" << std::endl;
+    }
+}
+
+Image Image::resize(glm::ivec2 size) const
+{
+    std::vector<float> newPixels(size.x * size.y * 3);
+    stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, newPixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGB);
+    return Image::loadFromMemory(this->name, size, newPixels);
+}
 
 Image Image::loadFromFile(const std::string& fileName)
 {
@@ -30,13 +49,22 @@ Image Image::loadFromFile(const std::string& fileName)
     return img;
 }
 
-void Image::saveToDisk(const std::string& fileName, glm::ivec2 size, unsigned char* pixels)
+Image Image::loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<unsigned char> pixels)
 {
-    stbi_flip_vertically_on_write(true);
-    if (!stbi_write_png(fileName.c_str(), size.x, size.y, 3, pixels, 0))
-    {
-        std::cerr << "Failed to save the image" << std::endl;
-    }
+    Image img;
+    img.name = name;
+    img.size = size;
+    img.pixels = std::vector<float>(pixels.begin(), pixels.end());
+    return img;
+}
+
+Image Image::loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<float> pixels)
+{
+    Image img;
+    img.name = name;
+    img.size = size;
+    img.pixels = pixels;
+    return img;
 }
 
 Image::Image()

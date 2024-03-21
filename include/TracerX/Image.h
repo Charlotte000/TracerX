@@ -7,14 +7,19 @@
 
 struct Image
 {
+public:
     glm::ivec2 size;
     std::vector<float> pixels;
     std::string name = "None";
 
     static Image empty;
 
-    Image();
+    void saveToFile() const;
+    Image resize(glm::ivec2 size) const;
 
     static Image loadFromFile(const std::string& fileName);
-    static void saveToDisk(const std::string& fileName, glm::ivec2 size, unsigned char* pixels);
+    static Image loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<unsigned char> pixels);
+    static Image loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<float> pixels);
+private:
+    Image();
 };

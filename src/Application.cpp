@@ -122,10 +122,9 @@ void Application::save() const
     name << "img" << this->renderer.frameCount << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
 
     glm::ivec2 size = this->renderer.output.colorTexture.size;
-    unsigned char* pixels = new unsigned char[size.x * size.y * 3];
-    this->renderer.output.colorTexture.upload(pixels);
-    Image::saveToDisk(name.str(), size, pixels);
-    delete[] pixels;
+    std::vector<unsigned char> pixels(size.x * size.y * 3);
+    this->renderer.output.colorTexture.upload(pixels.data());
+    Image::loadFromMemory(name.str(), size, pixels).saveToFile();
 }
 
 void Application::control()

@@ -152,19 +152,20 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
     {
         const tinygltf::Texture& gltfTexture = textures[textureId];
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
-        Image image;
-        image.size = glm::ivec2(gltfImage.width, gltfImage.height);
-        image.name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
 
-        image.pixels.reserve(gltfImage.width * gltfImage.height * 3);
+        std::string name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
+        glm::ivec2 size = glm::ivec2(gltfImage.width, gltfImage.height);
+
+        std::vector<float> pixels;
+        pixels.reserve(gltfImage.width * gltfImage.height * 3);
         for (size_t i = 0; i < gltfImage.image.size(); i += gltfImage.component)
         {
-            image.pixels.push_back(gltfImage.image[i + 0] / 255.f);
-            image.pixels.push_back(gltfImage.image[i + 1] / 255.f);
-            image.pixels.push_back(gltfImage.image[i + 2] / 255.f);
+            pixels.push_back(gltfImage.image[i + 0] / 255.f);
+            pixels.push_back(gltfImage.image[i + 1] / 255.f);
+            pixels.push_back(gltfImage.image[i + 2] / 255.f);
         }
 
-        this->textures.push_back(image);
+        this->textures.push_back(Image::loadFromMemory(name, size, pixels));
     }
 }
 
