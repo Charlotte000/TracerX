@@ -10,7 +10,7 @@ class FrameBuffer
 public:
     Texture colorTexture;
 
-    void init(glm::ivec2 size);
+    void init();
     void shutdown();
     void draw();
     void clear();

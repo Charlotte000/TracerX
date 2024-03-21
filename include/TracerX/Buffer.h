@@ -8,7 +8,7 @@ template <class T>
 class Buffer
 {
 public:
-    void init(const std::vector<T>& data, GLenum internalFormat);
+    void init(GLenum internalFormat);
     void update(const std::vector<T>& data);
     void bind(int binding);
     void shutdown();

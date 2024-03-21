@@ -2,9 +2,9 @@
 #include "TracerX/FrameBuffer.h"
 
 
-void FrameBuffer::init(glm::ivec2 size)
+void FrameBuffer::init()
 {
-    this->colorTexture.init(size);
+    this->colorTexture.init();
 
     // Create framebuffer
     glGenFramebuffers(1, &this->handler);

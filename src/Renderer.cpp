@@ -4,7 +4,7 @@
 #include <OpenImageDenoise/oidn.hpp>
 
 
-void Renderer::init(glm::ivec2 size, Scene& scene)
+void Renderer::init()
 {
     // Init GLEW
     GLenum status = glewInit();
@@ -13,12 +13,10 @@ void Renderer::init(glm::ivec2 size, Scene& scene)
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-    this->camera.aspectRatio = (float)size.x / size.y;
-
     this->pathTracer.init("../shaders/vertex/main.glsl", "../shaders/fragment/pathTracer/main.glsl");
     this->toneMapper.init("../shaders/vertex/main.glsl", "../shaders/fragment/toneMapper/main.glsl");
 
-    this->initData(size, scene);
+    this->initData();
 }
 
 void Renderer::resize(glm::ivec2 size)
@@ -138,26 +136,25 @@ void Renderer::resetScene(Scene& scene)
     this->bvhBuffer.update(bvh);
 
     this->resetAccumulator();
+    this->resetEnvironment(scene.environment);
 }
 
-void Renderer::initData(glm::ivec2 size, Scene& scene)
+void Renderer::initData()
 {
-    const std::vector<glm::vec3>& nodes = scene.createBVH();
-
     // Textures
-    this->environmentTexture.init(scene.environment);
-    this->textureArray.init(glm::ivec2(2048, 2048), scene.textures);
+    this->environmentTexture.init();
+    this->textureArray.init();
 
     // Frame buffers
-    this->accumulator.init(size);
-    this->output.init(size);
+    this->accumulator.init();
+    this->output.init();
 
     // Buffers
-    this->vertexBuffer.init(scene.vertices, GL_RGB32F);
-    this->triangleBuffer.init(scene.triangles, GL_RGBA32I);
-    this->meshBuffer.init(scene.meshes, GL_RGBA32F);
-    this->materialBuffer.init(scene.materials, GL_RGBA32F);
-    this->bvhBuffer.init(nodes, GL_RGB32F);
+    this->vertexBuffer.init(GL_RGB32F);
+    this->triangleBuffer.init(GL_RGBA32I);
+    this->meshBuffer.init(GL_RGBA32F);
+    this->materialBuffer.init(GL_RGBA32F);
+    this->bvhBuffer.init(GL_RGB32F);
 
     // Bind textures
     this->accumulator.colorTexture.bind(0);

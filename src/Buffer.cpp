@@ -5,13 +5,12 @@
 
 
 template <class T>
-void Buffer<T>::init(const std::vector<T>& data, GLenum internalFormat)
+void Buffer<T>::init(GLenum internalFormat)
 {
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
     glGenBuffers(1, &this->handler);
     glBindBuffer(GL_TEXTURE_BUFFER, this->handler);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(T) * data.size(), data.data(), GL_STATIC_DRAW);
     glGenTextures(1, &this->textureHandler);
     glBindTexture(GL_TEXTURE_BUFFER, this->textureHandler);
     glTexBuffer(GL_TEXTURE_BUFFER, internalFormat, this->handler);

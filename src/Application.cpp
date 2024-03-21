@@ -79,8 +79,11 @@ void Application::init(glm::ivec2 size)
         this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
     }
 
-    this->renderer.init(size, this->scene);
+    this->renderer.init();
     this->ui.init(this);
+
+    this->renderer.resize(size);
+    this->renderer.resetScene(this->scene);
 }
 
 void Application::shutdown()

@@ -22,7 +22,7 @@ public:
     FrameBuffer output;
     TextureArray textureArray;
 
-    void init(glm::ivec2 size, Scene& scene);
+    void init();
     void resize(glm::ivec2 size);
     void shutdown();
     void render();
@@ -44,6 +44,6 @@ private:
     Buffer<Material> materialBuffer;
     Buffer<glm::vec3> bvhBuffer;
 
-    void initData(glm::ivec2 size, Scene& scene);
+    void initData();
     void updateShaders();
 };

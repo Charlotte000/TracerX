@@ -123,7 +123,8 @@ void UI::init(Application* app)
 
     SetupImGuiStyle();
 
-    this->textureView.init(glm::ivec2(2048, 2048));
+    this->textureView.init();
+    this->textureView.update(glm::ivec2(2048, 2048), 0);
 }
 
 void UI::render()

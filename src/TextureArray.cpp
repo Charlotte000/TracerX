@@ -1,22 +1,10 @@
 #include "TracerX/TextureArray.h"
 
 
-void TextureArray::init(glm::ivec2 size, const std::vector<Image>& images)
+void TextureArray::init()
 {
-    this->size = size;
-
-    size_t count = size.x * size.y * 3;
-    std::vector<float> data(count * images.size());
-    for (size_t i = 0; i < images.size(); i++)
-    {
-        const Image& img = images[i];
-        const Image& resizedImg = img.resize(size);
-        data.insert(data.begin() + count * i, resizedImg.pixels.begin(), resizedImg.pixels.end());
-    }
-
     glGenTextures(1, &this->handler);
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB32F, size.x, size.y, images.size(), 0, GL_RGB, GL_FLOAT, data.data());
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
