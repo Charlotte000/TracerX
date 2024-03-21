@@ -13,9 +13,7 @@ public:
     void init();
     void bind(int binding);
     void update(const Image& image);
-    void update(glm::ivec2 size, float* pixels);
-    void upload(float* pixels) const;
-    void upload(unsigned char* pixels) const;
+    Image upload(const std::string& name) const;
     void shutdown();
     GLuint getHandler() const;
 private:

@@ -25,27 +25,13 @@ void Texture::update(const Image& image)
     this->size = image.size;
 }
 
-void Texture::update(glm::ivec2 size, float* pixels)
+Image Texture::upload(const std::string& name) const
 {
+    std::vector<float> pixels(this->size.x * this->size.y * 3);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size.x, size.y, 0, GL_RGB, GL_FLOAT, pixels);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
-
-    this->size = size;
-}
-
-void Texture::upload(float* pixels) const
-{
-    glBindTexture(GL_TEXTURE_2D, this->handler);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels);
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void Texture::upload(unsigned char* pixels) const
-{
-    glBindTexture(GL_TEXTURE_2D, this->handler);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    return Image::loadFromMemory(name, this->size, pixels);
 }
 
 void Texture::shutdown()

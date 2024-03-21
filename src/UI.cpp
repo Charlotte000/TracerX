@@ -124,7 +124,7 @@ void UI::init(Application* app)
     SetupImGuiStyle();
 
     this->textureView.init();
-    this->textureView.update(glm::ivec2(2048, 2048), 0);
+    this->textureView.update(Image::loadFromMemory("empty", glm::ivec2(2048, 2048), std::vector<float>()));
 }
 
 void UI::render()

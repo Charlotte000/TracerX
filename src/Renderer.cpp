@@ -22,8 +22,8 @@ void Renderer::init()
 void Renderer::resize(glm::ivec2 size)
 {
     this->camera.aspectRatio = (float)size.x / size.y;
-    this->accumulator.colorTexture.update(size, 0);
-    this->output.colorTexture.update(size, 0);
+    this->accumulator.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
+    this->output.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
     this->resetAccumulator();
 }
 
@@ -69,9 +69,10 @@ void Renderer::denoise()
     device.commit();
 
     // Create color buffer
+    Image colorImage = this->accumulator.colorTexture.upload("colorImage");
     glm::ivec2 size = this->accumulator.colorTexture.size;
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 3 * sizeof(float));
-    this->accumulator.colorTexture.upload((float*)colorBuf.getData());
+    colorBuf.write(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create filter
     oidn::FilterRef filter = device.newFilter("RT");
@@ -89,7 +90,9 @@ void Renderer::denoise()
     }
 
     // Update accumulator
-    this->accumulator.colorTexture.update(size, (float*)colorBuf.getData());
+    float* data = (float*)colorBuf.getData();
+    std::vector<float> pixels(data, data + colorImage.pixels.size());
+    this->accumulator.colorTexture.update(Image::loadFromMemory("colorImage", size, pixels));
     colorBuf.release();
 
     // Update output

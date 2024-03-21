@@ -15,7 +15,12 @@ Image Image::empty;
 
 void Image::saveToFile() const
 {
-    std::vector<unsigned char> data(this->pixels.begin(), this->pixels.end());
+    std::vector<unsigned char> data(this->pixels.size());
+    for (size_t i = 0; i < this->pixels.size(); i++)
+    {
+        data[i] = (unsigned char)(this->pixels[i] * 255);
+    }
+
     stbi_flip_vertically_on_write(true);
     if (!stbi_write_png(this->name.c_str(), this->size.x, this->size.y, 3, data.data(), 0))
     {
@@ -46,15 +51,6 @@ Image Image::loadFromFile(const std::string& fileName)
     img.name = fileName.substr(fileName.find_last_of("/\\") + 1);
 
     stbi_image_free(data);
-    return img;
-}
-
-Image Image::loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<unsigned char> pixels)
-{
-    Image img;
-    img.name = name;
-    img.size = size;
-    img.pixels = std::vector<float>(pixels.begin(), pixels.end());
     return img;
 }
 

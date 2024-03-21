@@ -18,7 +18,6 @@ public:
     Image resize(glm::ivec2 size) const;
 
     static Image loadFromFile(const std::string& fileName);
-    static Image loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<unsigned char> pixels);
     static Image loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<float> pixels);
 private:
     Image();
