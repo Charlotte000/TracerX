@@ -49,14 +49,14 @@ void Texture::update(glm::ivec2 size, float* pixels)
     this->size = size;
 }
 
-void Texture::upload(float* pixels)
+void Texture::upload(float* pixels) const
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Texture::upload(unsigned char* pixels)
+void Texture::upload(unsigned char* pixels) const
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
     glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);

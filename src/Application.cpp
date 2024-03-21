@@ -115,7 +115,7 @@ void Application::run()
     this->shutdown();
 }
 
-void Application::save()
+void Application::save() const
 {
     auto t = std::time(nullptr);
     std::stringstream name;

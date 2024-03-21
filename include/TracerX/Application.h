@@ -28,7 +28,7 @@ public:
     void init(glm::ivec2 size);
     void shutdown();
     void run();
-    void save();
+    void save() const;
     void control();
 private:
 };
