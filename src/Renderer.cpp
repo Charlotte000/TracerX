@@ -98,6 +98,7 @@ void Renderer::denoise()
     // Update output
     this->toneMapper.use();
     this->output.draw();
+    Shader::stopUse();
 }
 
 void Renderer::resetAccumulator()

@@ -339,6 +339,13 @@ void UI::sceneMenu()
                     this->editCamera = nullptr;
                     this->editEnvironment = nullptr;
                 }
+
+                if (ImGui::BeginDragDropSource())
+                {
+                    ImGui::SetDragDropPayload("material", &i, sizeof(size_t));
+                    ImGui::Text(this->app->scene.materialNames[i].c_str());
+                    ImGui::EndDragDropSource();
+                }
             }
 
             ImGui::TreePop();
@@ -399,6 +406,20 @@ void UI::propertyMeshMenu()
         }
 
         ImGui::EndCombo();
+    }
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("material");
+        if (payload)
+        {
+            size_t index = *(size_t*)payload->Data;
+            mesh.materialId = (float)index;
+            renderer.resetAccumulator();
+            renderer.resetMeshes(scene.meshes);
+        }
+
+        ImGui::EndDragDropTarget();
     }
 
     if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
