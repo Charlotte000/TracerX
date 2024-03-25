@@ -1,6 +1,7 @@
 #include "TracerX/Shader.h"
 
 #include <fstream>
+#include <glm/gtc/type_ptr.hpp>
 
 
 std::string Shader::includeIndentifier = "#include";
@@ -42,6 +43,11 @@ void Shader::updateParam(const std::string& name, float value)
 void Shader::updateParam(const std::string& name, glm::vec3 value)
 {
     glUniform3f(glGetUniformLocation(this->handler, name.c_str()), value.x, value.y, value.z);
+}
+
+void Shader::updateParam(const std::string& name, glm::mat3 value)
+{
+    glUniformMatrix3fv(glGetUniformLocation(this->handler, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::stopUse()

@@ -185,6 +185,7 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
     this->pathTracer.updateParam("Camera.AspectRatio", this->camera.aspectRatio);
     this->pathTracer.updateParam("EnvironmentIntensity", this->environmentIntensity);
+    this->pathTracer.updateParam("EnvironmentRotation", this->environmentRotation);
 
     // Tone mapper
     this->toneMapper.use();

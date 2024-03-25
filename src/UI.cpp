@@ -253,10 +253,7 @@ void UI::drawingPanelMenu()
         glm::mat4 view = this->app->renderer.camera.createView();
         glm::mat4 projection = this->app->renderer.camera.createProjection();
 
-        ImVec2 winPos = ImGui::GetMainViewport()->WorkPos;
-        ImVec2 menuPos = ImGui::GetWindowContentRegionMin();
-        ImVec2 globalPos = ImVec2(imagePos.x + menuPos.x + winPos.x, imagePos.y + menuPos.y + winPos.y);
-        ImGuizmo::SetRect(globalPos.x, globalPos.y, imageSize.x, imageSize.y);
+        ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
         ImGuizmo::SetDrawlist();
         if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), this->operation, this->mode, glm::value_ptr(this->editMeshTransform)) && this->autoApply)
         {
@@ -266,6 +263,22 @@ void UI::drawingPanelMenu()
             this->app->renderer.resetAccumulator();
             this->app->renderer.resetMeshes(this->app->scene.meshes);
             this->app->renderer.resetBVH(bvh, this->app->scene.triangles);
+        }
+    }
+
+    if (this->editEnvironment)
+    {
+        glm::mat4 view = this->app->renderer.camera.createView();
+        glm::mat4 projection = this->app->renderer.camera.createProjection();
+
+        ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
+        ImGuizmo::SetDrawlist();
+
+        glm::mat4 rotation(this->app->renderer.environmentRotation);
+        if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, glm::value_ptr(rotation)))
+        {
+            this->app->renderer.environmentRotation = rotation;
+            this->app->renderer.resetAccumulator();
         }
     }
 
@@ -636,6 +649,18 @@ void UI::propertyEnvironmentMenu()
         }
 
         ImGui::EndCombo();
+    }
+
+    static float translation[3];
+    static float rotation[3];
+    static float scale[3];
+    glm::mat4 rotationMat(this->app->renderer.environmentRotation);
+    ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(rotationMat), translation, rotation, scale);
+    if (ImGui::DragFloat3("Rotation", rotation, .01f))
+    {
+        ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale,  glm::value_ptr(rotationMat));
+        this->app->renderer.environmentRotation = rotationMat;
+        renderer.resetAccumulator();
     }
 }
 

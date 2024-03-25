@@ -25,8 +25,9 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
 
 vec3 GetEnvironmentLight(in Ray ray)
 {
-    float theta = acos(ray.Direction.y);
-    float phi = atan(ray.Direction.z, ray.Direction.x) + PI;
+    vec3 direction = EnvironmentRotation * ray.Direction;
+    float theta = acos(direction.y);
+    float phi = atan(direction.z, direction.x) + PI;
     return texture(EnvironmentTexture, vec2(phi * INV_TWO_PI, theta * INV_PI)).rgb * EnvironmentIntensity;
 }
 
@@ -88,32 +89,35 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
         return;
     }
 
-    // Absorb
+    // Density
+    if (material.Density > 0.0)
+    {
+        float depth = -log(RandomValue()) / material.Density;
+        if (manifold.IsFrontFace || depth >= manifold.Depth)
+        {
+            ray.Origin = manifold.Point;
+            return;
+        }
+
+        ray.Origin += ray.Direction * depth;
+        ray.Direction = RandomVector3();
+
+        ray.IncomingLight += material.EmissionColor * ray.Color;
+        ray.Color *= material.AlbedoColor;
+        return;
+    }
+
+    // Refract
     if (material.IOR > 0.0)
     {
         vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1.0 / material.IOR : material.IOR);
-
-        // Density
-        if (material.Density > 0.0)
+        if (refractedDir == vec3(0))
         {
-            float depth = -log(RandomValue()) / material.Density;
-            if (manifold.IsFrontFace || depth >= manifold.Depth)
-            {
-                ray.Origin = manifold.Point;
-                ray.Direction = Slerp(specularDir, refractedDir, material.Roughness);
-                return;
-            }
-
-            ray.Origin += ray.Direction * depth;
-            ray.Direction = RandomVector3();
-
-            ray.IncomingLight += material.EmissionColor * ray.Color;
-            ray.Color *= material.AlbedoColor;
-            return;
+            refractedDir = specularDir;
         }
-        
+
         ray.Origin = manifold.Point;
-        ray.Direction = Slerp(specularDir, refractedDir, material.Roughness);
+        ray.Direction = refractedDir;
 
         ray.IncomingLight += material.EmissionColor * ray.Color;
         ray.Color *= material.AlbedoColor;

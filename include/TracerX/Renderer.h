@@ -19,6 +19,7 @@ public:
     int frameCount = 1;
     float gamma = 2.2f;
     float environmentIntensity = 1.f;
+    glm::mat3 environmentRotation = glm::mat3(1);
     FrameBuffer output;
     TextureArray textureArray;
 

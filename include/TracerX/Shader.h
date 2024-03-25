@@ -16,6 +16,7 @@ public:
     void updateParam(const std::string& name, int value);
     void updateParam(const std::string& name, float value);
     void updateParam(const std::string& name, glm::vec3 value);
+    void updateParam(const std::string& name, glm::mat3 value);
 
     static void stopUse();
 private:
