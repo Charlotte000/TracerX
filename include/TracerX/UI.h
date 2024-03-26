@@ -5,8 +5,10 @@
 #include "Camera.h"
 #include "Texture.h"
 
+#include <string>
 #include <imgui.h>
 #include <ImGuizmo.h>
+#include <glm/glm.hpp>
 
 
 class Application;

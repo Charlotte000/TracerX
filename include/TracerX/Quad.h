@@ -6,10 +6,10 @@
 struct Quad
 {
 public:
-    static void draw();
+    void init();
+    void draw();
+    void shutdown();
 private:
-    static GLuint handler;
-    static bool initialized;
-
-    static void init();
+    GLuint handler;
+    GLuint vertexHandler;
 };

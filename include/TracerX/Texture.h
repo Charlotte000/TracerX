@@ -2,6 +2,7 @@
 
 #include "Image.h"
 
+#include <string>
 #include <GL/glew.h>
 
 

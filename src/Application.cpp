@@ -1,4 +1,3 @@
-#include "TracerX/Quad.h"
 #include "TracerX/Application.h"
 
 #include <iomanip>

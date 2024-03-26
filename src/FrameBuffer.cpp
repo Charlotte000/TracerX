@@ -1,4 +1,3 @@
-#include "TracerX/Quad.h"
 #include "TracerX/FrameBuffer.h"
 
 
@@ -21,12 +20,10 @@ void FrameBuffer::shutdown()
     glDeleteFramebuffers(1, &this->handler);
 }
 
-void FrameBuffer::draw()
+void FrameBuffer::use()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
     glViewport(0, 0, this->colorTexture.size.x, this->colorTexture.size.y);
-    Quad::draw();
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::clear()
@@ -34,5 +31,10 @@ void FrameBuffer::clear()
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void FrameBuffer::stopUse()
+{
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

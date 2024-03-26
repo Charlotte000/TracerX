@@ -13,8 +13,8 @@ void Renderer::init()
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-    this->pathTracer.init("../shaders/vertex/main.glsl", "../shaders/fragment/pathTracer/main.glsl");
-    this->toneMapper.init("../shaders/vertex/main.glsl", "../shaders/fragment/toneMapper/main.glsl");
+    this->pathTracer.init(Renderer::shaderFolder + "vertex/main.glsl", Renderer::shaderFolder + "fragment/pathTracer/main.glsl");
+    this->toneMapper.init(Renderer::shaderFolder + "vertex/main.glsl", Renderer::shaderFolder + "fragment/toneMapper/main.glsl");
 
     this->initData();
 }
@@ -29,6 +29,8 @@ void Renderer::resize(glm::ivec2 size)
 
 void Renderer::shutdown()
 {
+    this->quad.shutdown();
+
     this->accumulator.shutdown();
     this->output.shutdown();
 
@@ -51,13 +53,16 @@ void Renderer::render()
 
     // Update accumulator
     this->pathTracer.use();
-    this->accumulator.draw();
+    this->accumulator.use();
+    this->quad.draw();
 
     // Update output
     this->toneMapper.use();
-    this->output.draw();
+    this->output.use();
+    this->quad.draw();
 
     Shader::stopUse();
+    FrameBuffer::stopUse();
 
     this->frameCount++;
 }
@@ -97,8 +102,10 @@ void Renderer::denoise()
 
     // Update output
     this->toneMapper.use();
-    this->output.draw();
+    this->output.use();
+    this->quad.draw();
     Shader::stopUse();
+    FrameBuffer::stopUse();
 }
 
 void Renderer::resetAccumulator()
@@ -145,6 +152,8 @@ void Renderer::resetScene(Scene& scene)
 
 void Renderer::initData()
 {
+    this->quad.init();
+
     // Textures
     this->environmentTexture.init();
     this->textureArray.init();

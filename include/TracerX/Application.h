@@ -1,9 +1,11 @@
 #pragma once
 
 #include "UI.h"
-#include "Shader.h"
+#include "Scene.h"
 #include "Renderer.h"
 
+#include <vector>
+#include <string>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 

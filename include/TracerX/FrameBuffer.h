@@ -12,8 +12,10 @@ public:
 
     void init();
     void shutdown();
-    void draw();
+    void use();
     void clear();
+
+    static void stopUse(); 
 private:
     GLuint handler;
 };

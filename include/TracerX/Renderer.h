@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Quad.h"
+#include "Image.h"
 #include "Scene.h"
 #include "Shader.h"
 #include "Camera.h"
@@ -8,6 +10,8 @@
 #include "FrameBuffer.h"
 #include "TextureArray.h"
 
+#include <vector>
+#include <string>
 #include <glm/glm.hpp>
 
 
@@ -23,6 +27,8 @@ public:
     FrameBuffer output;
     TextureArray textureArray;
 
+    static inline const std::string shaderFolder = "../shaders/";
+
     void init();
     void resize(glm::ivec2 size);
     void shutdown();
@@ -35,6 +41,7 @@ public:
     void resetEnvironment(const Image& image);
     void resetScene(Scene& scene);
 private:
+    Quad quad;
     Shader pathTracer;
     Shader toneMapper;
     FrameBuffer accumulator;

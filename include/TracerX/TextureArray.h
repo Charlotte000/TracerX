@@ -5,6 +5,7 @@
 
 #include <vector>
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 
 class TextureArray

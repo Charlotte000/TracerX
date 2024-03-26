@@ -3,6 +3,7 @@
 #include "Image.h"
 
 #include <vector>
+#include <string>
 #include <FastBVH.h>
 #include <glm/glm.hpp>
 #include <tiny_gltf.h>
