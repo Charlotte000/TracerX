@@ -193,6 +193,7 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
     this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
     this->pathTracer.updateParam("Camera.AspectRatio", this->camera.aspectRatio);
+    this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
     this->pathTracer.updateParam("EnvironmentIntensity", this->environmentIntensity);
     this->pathTracer.updateParam("EnvironmentRotation", this->environmentRotation);
 

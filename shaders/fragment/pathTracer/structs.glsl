@@ -16,6 +16,7 @@ struct Cam
     float FocalDistance;
     float Aperture;
     float AspectRatio;
+    float Blur;
 };
 
 struct Material

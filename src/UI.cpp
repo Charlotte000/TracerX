@@ -613,6 +613,13 @@ void UI::propertyCameraMenu()
     }
 
     ImGui::Separator();
+    if (ImGui::DragFloat("Blur", &camera.blur, .000001f, 0.f, 1000.f, "%.5f"))
+    {
+        renderer.resetAccumulator();
+    }
+
+
+    ImGui::Separator();
     ImGui::DragFloat("Movement speed", &this->app->cameraSpeed, 1.f, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
     ImGui::SliderFloat("Rotation speed", &this->app->cameraRotationSpeed, .001f, 1.f);
 }

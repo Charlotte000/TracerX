@@ -13,6 +13,7 @@ struct Camera
     float focalDistance = 1;
     float aperture = 0;
     float aspectRatio = 1;
+    float blur = 0;
 
     void lookAt(glm::vec3 position);
     glm::mat4 createView() const;

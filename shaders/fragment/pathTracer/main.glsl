@@ -157,12 +157,20 @@ vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
 vec3 PathTrace(in Ray ray)
 {
-    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
+    vec3 rayOrigin = ray.Origin;
+    vec3 rayDirection = ray.Direction;
 
-    vec2 jitter = RandomVector2() * Camera.Aperture;
-    vec3 jitterOrigin = ray.Origin + jitter.x * CameraRight + jitter.y * Camera.Up;
-    vec3 jitterDirection = normalize(focalPoint - jitterOrigin);
-    vec3 resultLight = SendRay(Ray(jitterOrigin, jitterDirection, 1 / jitterDirection, ray.Color, ray.IncomingLight));
+    // Focal
+    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
+    vec2 focal = RandomVector2() * Camera.Aperture;
+    rayOrigin += focal.x * CameraRight + focal.y * Camera.Up;
+    rayDirection = normalize(focalPoint - rayOrigin);
+
+    // Blur
+    vec2 blur = RandomVector2() * Camera.Blur;
+    rayOrigin += blur.x * CameraRight + blur.y * Camera.Up;
+
+    vec3 resultLight = SendRay(Ray(rayOrigin, rayDirection, 1 / rayDirection, ray.Color, ray.IncomingLight));
 
     return resultLight;
 }
