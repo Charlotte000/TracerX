@@ -177,7 +177,8 @@ vec3 PathTrace(in Ray ray)
 
 void main()
 {
-    vec2 coord = (TexCoords - vec2(.5)) / vec2(1, Camera.AspectRatio) * 2 * tan(Camera.FOV / 2);
+    vec2 size = textureSize(AccumulatorTexture, 0);
+    vec2 coord = (TexCoords - vec2(.5)) * vec2(1, size.y / size.x) * 2 * tan(Camera.FOV / 2);
     Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0), vec3(1), vec3(0));
 
     vec3 pixelColor = PathTrace(ray);

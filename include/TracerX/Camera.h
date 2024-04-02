@@ -12,10 +12,9 @@ struct Camera
     float fov = glm::half_pi<float>();
     float focalDistance = 1;
     float aperture = 0;
-    float aspectRatio = 1;
     float blur = 0;
 
     void lookAt(glm::vec3 position);
     glm::mat4 createView() const;
-    glm::mat4 createProjection() const;
+    glm::mat4 createProjection(float aspectRatio) const;
 };

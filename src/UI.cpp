@@ -241,39 +241,32 @@ void UI::drawingPanelMenu()
     ImGui::BeginChild("drawingPanelMenu", ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar);
     ImVec2 size = ImGui::GetContentRegionAvail();
     float aspectRatio = size.x / size.y;
-    float imAspectRatio = this->app->renderer.camera.aspectRatio;
+    float imAspectRatio = (float)this->app->renderer.output.colorTexture.size.x / this->app->renderer.output.colorTexture.size.y;
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
     ImGui::SetCursorPos(imagePos);
     ImGui::Image((void*)(intptr_t)this->app->renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
 
-    if (this->editMesh)
-    {
-        glm::mat4 view = this->app->renderer.camera.createView();
-        glm::mat4 projection = this->app->renderer.camera.createProjection();
+    glm::mat4 view = this->app->renderer.camera.createView();
+    glm::mat4 projection = this->app->renderer.camera.createProjection(imAspectRatio);
+    ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
+    ImGuizmo::SetDrawlist();
 
-        ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
-        ImGuizmo::SetDrawlist();
-        if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), this->operation, this->mode, glm::value_ptr(this->editMeshTransform)) && this->autoApply)
-        {
+    if (this->editMesh &&
+        ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), this->operation, this->mode, glm::value_ptr(this->editMeshTransform)) &&
+        this->autoApply)
+    {
             this->editMesh->transform = this->editMeshTransform;
             const std::vector<glm::vec3>& bvh = this->app->scene.createBVH();
 
             this->app->renderer.resetAccumulator();
             this->app->renderer.resetMeshes(this->app->scene.meshes);
             this->app->renderer.resetBVH(bvh, this->app->scene.triangles);
-        }
     }
 
     if (this->editEnvironment)
     {
-        glm::mat4 view = this->app->renderer.camera.createView();
-        glm::mat4 projection = this->app->renderer.camera.createProjection();
-
-        ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
-        ImGuizmo::SetDrawlist();
-
         glm::mat4 rotation(this->app->renderer.environmentRotation);
         if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, glm::value_ptr(rotation)))
         {

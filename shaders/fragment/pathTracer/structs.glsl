@@ -15,7 +15,6 @@ struct Cam
     float FOV;
     float FocalDistance;
     float Aperture;
-    float AspectRatio;
     float Blur;
 };
 

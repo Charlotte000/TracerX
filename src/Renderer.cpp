@@ -21,7 +21,6 @@ void Renderer::init()
 
 void Renderer::resize(glm::ivec2 size)
 {
-    this->camera.aspectRatio = (float)size.x / size.y;
     this->accumulator.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
     this->output.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
     this->resetAccumulator();
@@ -192,7 +191,6 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("Camera.FOV", this->camera.fov);
     this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
     this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
-    this->pathTracer.updateParam("Camera.AspectRatio", this->camera.aspectRatio);
     this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
     this->pathTracer.updateParam("EnvironmentIntensity", this->environmentIntensity);
     this->pathTracer.updateParam("EnvironmentRotation", this->environmentRotation);
