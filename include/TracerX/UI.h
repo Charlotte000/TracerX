@@ -16,12 +16,11 @@ class Application;
 class UI
 {
 public:
-    Application* app = nullptr;
-
     void init(Application* app);
     void shutdown();
     void render();
 private:
+    Application* app = nullptr;
     Mesh* editMesh = nullptr;
     Material* editMaterial = nullptr;
     Camera* editCamera = nullptr;

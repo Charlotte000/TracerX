@@ -141,8 +141,8 @@ Scene Scene::loadGLTF(const std::string& folder)
 
     scene.GLTFtextures(model.textures, model.images);
     scene.GLTFmaterials(model.materials);
-    scene.GLTFmeshes(model);
-    scene.GLTFnodes(model.nodes, model.scenes[model.defaultScene].nodes, glm::mat4(1));
+    std::vector<size_t> meshIds = scene.GLTFmeshes(model);
+    scene.GLTFnodes(meshIds, model.nodes, model.scenes[model.defaultScene].nodes, glm::mat4(1));
     return scene;
 }
 
@@ -218,10 +218,12 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
     }
 }
 
-void Scene::GLTFmeshes(const tinygltf::Model& model)
+std::vector<size_t> Scene::GLTFmeshes(const tinygltf::Model& model)
 {
-    for (const tinygltf::Mesh& gltfMesh : model.meshes)
+    std::vector<size_t> meshIds;
+    for (size_t meshId = 0; meshId < model.meshes.size(); meshId++)
     {
+        const tinygltf::Mesh& gltfMesh = model.meshes[meshId];
         for (tinygltf::Primitive primitive : gltfMesh.primitives)
         {
             if (primitive.mode != TINYGLTF_MODE_TRIANGLES)
@@ -303,19 +305,22 @@ void Scene::GLTFmeshes(const tinygltf::Model& model)
             mesh.triangleSize = indexAccessor.count / 3;
             this->meshes.push_back(mesh);
             this->meshNames.push_back(gltfMesh.name);
+            meshIds.push_back(meshId);
         }
     }
+
+    return meshIds;
 }
 
-void Scene::GLTFnodes(const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world)
+void Scene::GLTFnodes(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world)
 {
     for (int index : parents)
     {
-        this->GLTFtraverseNode(nodes, nodes[index], world);
+        this->GLTFtraverseNode(meshIds, nodes, nodes[index], world);
     }
 }
 
-void Scene::GLTFtraverseNode(const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform)
+void Scene::GLTFtraverseNode(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform)
 {
     glm::mat4 localTranform(1);
     if (!node.matrix.empty())
@@ -361,15 +366,21 @@ void Scene::GLTFtraverseNode(const std::vector<tinygltf::Node>& nodes, const tin
         localTranform = translate * rotate * scale;
     }
 
-    glm::mat4 transform = localTranform * globalTransform;
+    glm::mat4 transform = globalTransform * localTranform;
 
     if (node.children.empty() && node.mesh != -1)
     {
-        this->meshes[node.mesh].transform = transform * this->meshes[node.mesh].transform;
+        for (size_t i = 0; i < meshIds.size(); i++)
+        {
+            if (meshIds[i] == node.mesh)
+            {
+                this->meshes[i].transform = transform * this->meshes[i].transform;
+            }
+        }
     }
 
     for (int child : node.children)
     {
-        this->GLTFtraverseNode(nodes, nodes[child], transform);
+        this->GLTFtraverseNode(meshIds, nodes, nodes[child], transform);
     }
 }

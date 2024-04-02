@@ -84,7 +84,7 @@ public:
 private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
-    void GLTFmeshes(const tinygltf::Model& model);
-    void GLTFnodes(const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world);
-    void GLTFtraverseNode(const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform);
+    std::vector<size_t> GLTFmeshes(const tinygltf::Model& model);
+    void GLTFnodes(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world);
+    void GLTFtraverseNode(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform);
 };

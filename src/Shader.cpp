@@ -12,7 +12,7 @@ void Shader::init(const std::string& vertexPath, const std::string& fragmentPath
     GLuint vertexHandler = this->initShader(vertexPath, GL_VERTEX_SHADER);
     GLuint fragmentHandler = this->initShader(fragmentPath, GL_FRAGMENT_SHADER);
 
-    // Create OpenGL programs
+    // Create OpenGL program
     this->handler = this->initProgram(vertexHandler, fragmentHandler);
 
     // Clean OpenGL shaders
