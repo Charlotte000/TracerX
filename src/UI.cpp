@@ -580,6 +580,7 @@ void UI::propertyMaterialMenu()
 
 void UI::propertyCameraMenu()
 {
+    const Scene& scene = this->app->scene;
     Renderer& renderer = this->app->renderer;
     Camera& camera = renderer.camera;
 
@@ -615,6 +616,24 @@ void UI::propertyCameraMenu()
     ImGui::Separator();
     ImGui::DragFloat("Movement speed", &this->app->cameraSpeed, 1.f, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
     ImGui::SliderFloat("Rotation speed", &this->app->cameraRotationSpeed, .001f, 1.f);
+
+    if (!scene.cameras.empty())
+    {
+        ImGui::Separator();
+        if (ImGui::TreeNode("Default cameras"))
+        {
+            for (size_t i = 0; i < scene.cameras.size(); i++)
+            {
+                if (ImGui::Selectable(("Camera " + std::to_string(i)).c_str()))
+                {
+                    camera = scene.cameras[i];
+                    renderer.resetAccumulator();
+                }
+            }
+
+            ImGui::TreePop();
+        }
+    }
 }
 
 void UI::propertyEnvironmentMenu()
@@ -694,7 +713,7 @@ void UI::propertySceneMenu()
 void UI::materialTextureSelector(const std::string& name, float& currentTextureId)
 {
     Renderer& renderer = this->app->renderer;
-    Scene& scene = this->app->scene;
+    const Scene& scene = this->app->scene;
 
     if (ImGui::BeginCombo(("Texture##" + name).c_str(), currentTextureId == -1 ? "None" : scene.textures[currentTextureId].name.c_str()))
     {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Image.h"
+#include "Camera.h"
 
 #include <vector>
 #include <string>
@@ -72,6 +73,7 @@ public:
     std::vector<std::string> materialNames;
     std::vector<Mesh> meshes;
     std::vector<std::string> meshNames;
+    std::vector<Camera> cameras;
     Image environment = Image::empty;
     std::string name = "Empty";
 
@@ -84,7 +86,8 @@ public:
 private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
-    std::vector<size_t> GLTFmeshes(const tinygltf::Model& model);
-    void GLTFnodes(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const std::vector<int>& parents, const glm::mat4& world);
-    void GLTFtraverseNode(const std::vector<size_t>& meshIds, const std::vector<tinygltf::Node>& nodes, const tinygltf::Node& node, const glm::mat4& globalTransform);
+    void GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform);
+    void GLTFcamera(const tinygltf::Camera& camera, const glm::mat4 tranform);
+    void GLTFnodes(const tinygltf::Model& model, const glm::mat4& world);
+    void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform);
 };
