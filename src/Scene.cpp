@@ -197,6 +197,12 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
             }
         }
 
+        if (gltfMaterial.extensions.find("KHR_materials_transmission") != gltfMaterial.extensions.end())
+        {
+            const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_transmission")->second;
+            material.ior = 1;
+        }
+
         if (gltfMaterial.extensions.find("KHR_materials_emissive_strength") != gltfMaterial.extensions.end())
         {
             const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_emissive_strength")->second;
