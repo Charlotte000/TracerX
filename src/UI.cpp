@@ -154,21 +154,24 @@ void UI::barMenu()
     }
 
     Renderer& renderer = this->app->renderer;
+    Scene& scene = this->app->scene;
 
     if (ImGui::BeginMenu("File"))
     {
         if (ImGui::BeginMenu("Open"))
         {
-            if (ImGui::BeginCombo("##fileOpen", this->app->scene.name.c_str()))
+            if (ImGui::BeginCombo("##fileOpen", scene.name.c_str()))
             {
                 for (const std::string& name : this->app->sceneFiles)
                 {
-                    if (ImGui::Selectable(name.c_str(), this->app->scene.name == name))
+                    if (ImGui::Selectable(name.c_str(), scene.name == name))
                     {
-                        Image oldEnv = this->app->scene.environment;
-                        this->app->scene = Scene::loadGLTF(Application::sceneFolder + name);
-                        this->app->scene.environment = oldEnv;
-                        this->app->renderer.resetScene(this->app->scene);
+                        Image oldEnv = scene.environment;
+                        std::string oldEnvName = scene.environmentName;
+                        scene = Scene::loadGLTF(Application::sceneFolder + name);
+                        scene.environment = oldEnv;
+                        scene.environmentName = oldEnvName;
+                        renderer.resetScene(scene);
 
                         this->editMesh = nullptr;
                         this->editMeshTransform = glm::mat4(1);
@@ -238,18 +241,21 @@ void UI::mainWindowMenu()
 
 void UI::drawingPanelMenu()
 {
+    Renderer& renderer = this->app->renderer;
+    Scene& scene = this->app->scene;
+
     ImGui::BeginChild("drawingPanelMenu", ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar);
     ImVec2 size = ImGui::GetContentRegionAvail();
     float aspectRatio = size.x / size.y;
-    float imAspectRatio = (float)this->app->renderer.output.colorTexture.size.x / this->app->renderer.output.colorTexture.size.y;
+    float imAspectRatio = (float)renderer.output.colorTexture.size.x / renderer.output.colorTexture.size.y;
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
     ImGui::SetCursorPos(imagePos);
-    ImGui::Image((void*)(intptr_t)this->app->renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
 
-    glm::mat4 view = this->app->renderer.camera.createView();
-    glm::mat4 projection = this->app->renderer.camera.createProjection(imAspectRatio);
+    glm::mat4 view = renderer.camera.createView();
+    glm::mat4 projection = renderer.camera.createProjection(imAspectRatio);
     ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
     ImGuizmo::SetDrawlist();
 
@@ -258,20 +264,20 @@ void UI::drawingPanelMenu()
         this->autoApply)
     {
             this->editMesh->transform = this->editMeshTransform;
-            const std::vector<glm::vec3>& bvh = this->app->scene.createBVH();
+            const std::vector<glm::vec3>& bvh = scene.createBVH();
 
-            this->app->renderer.resetAccumulator();
-            this->app->renderer.resetMeshes(this->app->scene.meshes);
-            this->app->renderer.resetBVH(bvh, this->app->scene.triangles);
+            renderer.resetAccumulator();
+            renderer.resetMeshes(scene.meshes);
+            renderer.resetBVH(bvh, scene.triangles);
     }
 
     if (this->editEnvironment)
     {
-        glm::mat4 rotation(this->app->renderer.environmentRotation);
+        glm::mat4 rotation(renderer.environmentRotation);
         if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, glm::value_ptr(rotation)))
         {
-            this->app->renderer.environmentRotation = rotation;
-            this->app->renderer.resetAccumulator();
+            renderer.environmentRotation = rotation;
+            renderer.resetAccumulator();
         }
     }
 
@@ -288,6 +294,8 @@ void UI::sidePanelMenu()
 
 void UI::sceneMenu()
 {
+    Scene& scene = this->app->scene;
+
     ImGui::BeginChild("sceneMenu", ImVec2(-1, ImGui::GetMainViewport()->WorkSize.y * .75f), ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
 
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
@@ -309,10 +317,10 @@ void UI::sceneMenu()
 
         if (ImGui::TreeNode("Meshes"))
         {
-            for (size_t i = 0; i < this->app->scene.meshes.size(); i++)
+            for (size_t i = 0; i < scene.meshes.size(); i++)
             {
-                Mesh& mesh = this->app->scene.meshes[i];
-                std::string name = this->app->scene.meshNames[i] + "##" + std::to_string(i);
+                Mesh& mesh = scene.meshes[i];
+                std::string name = scene.meshNames[i] + "##" + std::to_string(i);
                 bool isMesh = &mesh == this->editMesh;
                 if (ImGui::Selectable(name.c_str(), &isMesh))
                 {
@@ -329,10 +337,10 @@ void UI::sceneMenu()
 
         if (ImGui::TreeNode("Materials"))
         {
-            for (size_t i = 0; i < this->app->scene.materials.size(); i++)
+            for (size_t i = 0; i < scene.materials.size(); i++)
             {
-                Material& material = this->app->scene.materials[i];
-                std::string name = this->app->scene.materialNames[i] + "##" + std::to_string(i);
+                Material& material = scene.materials[i];
+                std::string name = scene.materialNames[i] + "##" + std::to_string(i);
                 bool isMaterial = &material == this->editMaterial;
                 if (ImGui::Selectable(name.c_str(), &isMaterial))
                 {
@@ -345,7 +353,7 @@ void UI::sceneMenu()
                 if (ImGui::BeginDragDropSource())
                 {
                     ImGui::SetDragDropPayload("material", &i, sizeof(size_t));
-                    ImGui::Text(this->app->scene.materialNames[i].c_str());
+                    ImGui::Text(scene.materialNames[i].c_str());
                     ImGui::EndDragDropSource();
                 }
             }
@@ -484,7 +492,7 @@ void UI::propertyMeshMenu()
 void UI::propertyMaterialMenu()
 {
     Renderer& renderer = this->app->renderer;
-    Scene& scene = this->app->scene;
+    const Scene& scene = this->app->scene;
     Material& material = *this->editMaterial;
 
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
@@ -576,8 +584,8 @@ void UI::propertyMaterialMenu()
 
 void UI::propertyCameraMenu()
 {
-    const Scene& scene = this->app->scene;
     Renderer& renderer = this->app->renderer;
+    const Scene& scene = this->app->scene;
     Camera& camera = renderer.camera;
 
     if (ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f) |
@@ -607,7 +615,6 @@ void UI::propertyCameraMenu()
     {
         renderer.resetAccumulator();
     }
-
 
     ImGui::Separator();
     ImGui::DragFloat("Movement speed", &this->app->cameraSpeed, 1.f, 0.f, 10000.f, "%.3f", ImGuiSliderFlags_Logarithmic);
@@ -669,12 +676,12 @@ void UI::propertyEnvironmentMenu()
     static float translation[3];
     static float rotation[3];
     static float scale[3];
-    glm::mat4 rotationMat(this->app->renderer.environmentRotation);
+    glm::mat4 rotationMat(renderer.environmentRotation);
     ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(rotationMat), translation, rotation, scale);
     if (ImGui::DragFloat3("Rotation", rotation, .01f))
     {
         ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale,  glm::value_ptr(rotationMat));
-        this->app->renderer.environmentRotation = rotationMat;
+        renderer.environmentRotation = rotationMat;
         renderer.resetAccumulator();
     }
 }
@@ -737,7 +744,7 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
 
     if (currentTextureId != -1)
     {
-        this->app->renderer.textureArray.copy(this->textureView, currentTextureId);
+        renderer.textureArray.copy(this->textureView, currentTextureId);
         ImGui::Image((void*)(intptr_t)this->textureView.getHandler(), ImVec2(200, 200));
     }
 }
