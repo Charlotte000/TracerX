@@ -2,7 +2,6 @@
 
 #include "Image.h"
 
-#include <string>
 #include <GL/glew.h>
 
 
@@ -14,7 +13,7 @@ public:
     void init();
     void bind(int binding);
     void update(const Image& image);
-    Image upload(const std::string& name) const;
+    Image upload() const;
     void shutdown();
     GLuint getHandler() const;
 private:

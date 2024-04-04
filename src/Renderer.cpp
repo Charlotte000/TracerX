@@ -21,8 +21,8 @@ void Renderer::init()
 
 void Renderer::resize(glm::ivec2 size)
 {
-    this->accumulator.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
-    this->output.colorTexture.update(Image::loadFromMemory("empty", size, std::vector<float>()));
+    this->accumulator.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
+    this->output.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
     this->resetAccumulator();
 }
 
@@ -73,7 +73,7 @@ void Renderer::denoise()
     device.commit();
 
     // Create color buffer
-    Image colorImage = this->accumulator.colorTexture.upload("colorImage");
+    Image colorImage = this->accumulator.colorTexture.upload();
     glm::ivec2 size = this->accumulator.colorTexture.size;
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 3 * sizeof(float));
     colorBuf.write(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
@@ -96,7 +96,7 @@ void Renderer::denoise()
     // Update accumulator
     float* data = (float*)colorBuf.getData();
     std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->accumulator.colorTexture.update(Image::loadFromMemory("colorImage", size, pixels));
+    this->accumulator.colorTexture.update(Image::loadFromMemory(size, pixels));
     colorBuf.release();
 
     // Update output

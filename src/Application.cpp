@@ -73,7 +73,7 @@ void Application::init(glm::ivec2 size)
     });
 
     // Init components
-    if (this->scene.environment.name == "None" && !this->environmentFiles.empty())
+    if (this->scene.environmentName == "None" && !this->environmentFiles.empty())
     {
         this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
     }
@@ -122,7 +122,7 @@ void Application::save() const
     auto t = std::time(nullptr);
     std::stringstream name;
     name << "img" << this->renderer.frameCount << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
-    this->renderer.output.colorTexture.upload(name.str()).saveToFile();
+    this->renderer.output.colorTexture.upload().saveToFile(name.str());
 }
 
 void Application::control()

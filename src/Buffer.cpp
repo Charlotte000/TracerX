@@ -1,5 +1,8 @@
+#include "TracerX/Mesh.h"
 #include "TracerX/Scene.h"
 #include "TracerX/Buffer.h"
+#include "TracerX/Vertex.h"
+#include "TracerX/Triangle.h"
 
 #include <glm/glm.hpp>
 

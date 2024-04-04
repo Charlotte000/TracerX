@@ -13,7 +13,7 @@
 
 Image Image::empty;
 
-void Image::saveToFile() const
+void Image::saveToFile(const std::string& name) const
 {
     std::vector<unsigned char> data(this->pixels.size());
     for (size_t i = 0; i < this->pixels.size(); i++)
@@ -22,7 +22,7 @@ void Image::saveToFile() const
     }
 
     stbi_flip_vertically_on_write(true);
-    if (!stbi_write_png(this->name.c_str(), this->size.x, this->size.y, 3, data.data(), 0))
+    if (!stbi_write_png(name.c_str(), this->size.x, this->size.y, 3, data.data(), 0))
     {
         std::cerr << "Failed to save the image" << std::endl;
     }
@@ -32,7 +32,7 @@ Image Image::resize(glm::ivec2 size) const
 {
     std::vector<float> newPixels(size.x * size.y * 3);
     stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, newPixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGB);
-    return Image::loadFromMemory(this->name, size, newPixels);
+    return Image::loadFromMemory(size, newPixels);
 }
 
 Image Image::loadFromFile(const std::string& fileName)
@@ -48,16 +48,13 @@ Image Image::loadFromFile(const std::string& fileName)
     img.pixels.resize(size);
     std::copy(data, data + size, img.pixels.data());
 
-    img.name = fileName.substr(fileName.find_last_of("/\\") + 1);
-
     stbi_image_free(data);
     return img;
 }
 
-Image Image::loadFromMemory(const std::string& name, glm::ivec2 size, const std::vector<float> pixels)
+Image Image::loadFromMemory(glm::ivec2 size, const std::vector<float> pixels)
 {
     Image img;
-    img.name = name;
     img.size = size;
     img.pixels = pixels;
     return img;

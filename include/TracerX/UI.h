@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Mesh.h"
 #include "Scene.h"
 #include "Image.h"
 #include "Camera.h"
 #include "Texture.h"
+#include "Material.h"
 
 #include <string>
 #include <imgui.h>
@@ -23,8 +25,8 @@ private:
     Application* app = nullptr;
     Mesh* editMesh = nullptr;
     Material* editMaterial = nullptr;
-    Camera* editCamera = nullptr;
-    Image* editEnvironment = nullptr;
+    bool editCamera = false;
+    bool editEnvironment = false;
     glm::mat4 editMeshTransform;
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;

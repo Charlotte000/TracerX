@@ -1,12 +1,16 @@
 #pragma once
 
 #include "Quad.h"
+#include "Mesh.h"
 #include "Image.h"
 #include "Scene.h"
 #include "Shader.h"
 #include "Camera.h"
 #include "Buffer.h"
+#include "Vertex.h"
 #include "Texture.h"
+#include "Material.h"
+#include "Triangle.h"
 #include "FrameBuffer.h"
 #include "TextureArray.h"
 

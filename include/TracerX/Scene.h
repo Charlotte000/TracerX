@@ -1,7 +1,11 @@
 #pragma once
 
+#include "Mesh.h"
 #include "Image.h"
 #include "Camera.h"
+#include "Vertex.h"
+#include "Material.h"
+#include "Triangle.h"
 
 #include <vector>
 #include <string>
@@ -10,71 +14,20 @@
 #include <tiny_gltf.h>
 
 
-struct Material
-{
-    glm::vec3 albedoColor = glm::vec3(1);
-    float roughness = 0;
-    glm::vec3 emissionColor = glm::vec3(1);
-    float emissionStrength = 0;
-    glm::vec3 fresnelColor = glm::vec3(1);
-    float fresnelStrength = 0;
-    float metalness = 0;
-    float ior = 0;
-    float density = 0;
-    float albedoTextureId = -1;
-    float metalnessTextureId = -1;
-    float emissionTextureId = -1;
-    float roughnessTextureId = -1;
-    float normalTextureId = -1;
-
-    static Material lightSource(glm::vec3 emissionColor, float emissionStrength);
-    static Material transparent(glm::vec3 albedoColor, float ior, glm::vec3 fresnelColor = glm::vec3(1), float fresnelStrength = 0);
-    static Material constantDensity(glm::vec3 albedoColor, float density);
-    static Material matte(glm::vec3 albedoColor, float metalness = 0);
-    static Material mirror();
-};
-
-struct Vertex
-{
-public:
-    glm::vec3 position;
-    glm::vec3 normal;
-    glm::vec2 uv;
-private:
-    float padding1 = 0;
-};
-
-struct Triangle
-{
-    int v1;
-    int v2;
-    int v3;
-    int meshId;
-};
-
-struct Mesh
-{
-public:
-    glm::mat4 transform = glm::mat4(1);
-    float materialId = -1;
-    float triangleSize = 0;
-private:
-    float padding1 = 0;
-    float padding2 = 0;
-};
-
 class Scene
 {
 public:
     std::vector<Vertex> vertices;
     std::vector<Triangle> triangles;
     std::vector<Image> textures;
+    std::vector<std::string> textureNames;
     std::vector<Material> materials;
     std::vector<std::string> materialNames;
     std::vector<Mesh> meshes;
     std::vector<std::string> meshNames;
     std::vector<Camera> cameras;
     Image environment = Image::empty;
+    std::string environmentName = "None";
     std::string name = "Empty";
 
     void loadEnvironmentMap(const std::string& fileName);

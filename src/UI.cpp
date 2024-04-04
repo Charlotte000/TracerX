@@ -124,7 +124,7 @@ void UI::init(Application* app)
     SetupImGuiStyle();
 
     this->textureView.init();
-    this->textureView.update(Image::loadFromMemory("empty", glm::ivec2(2048, 2048), std::vector<float>()));
+    this->textureView.update(Image::loadFromMemory(glm::ivec2(2048, 2048), std::vector<float>()));
 }
 
 void UI::render()
@@ -173,8 +173,8 @@ void UI::barMenu()
                         this->editMesh = nullptr;
                         this->editMeshTransform = glm::mat4(1);
                         this->editMaterial = nullptr;
-                        this->editCamera = nullptr;
-                        this->editEnvironment = nullptr;
+                        this->editCamera = false;
+                        this->editEnvironment = false;
                     }
                 }
 
@@ -293,22 +293,18 @@ void UI::sceneMenu()
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Scene"))
     {
-        bool isCamera = this->editCamera != nullptr;
-        if (ImGui::Selectable("Camera", &isCamera))
+        if (ImGui::Selectable("Camera", &this->editCamera))
         {
             this->editMesh = nullptr;
             this->editMaterial = nullptr;
-            this->editCamera = isCamera ? &this->app->renderer.camera : nullptr;
-            this->editEnvironment = nullptr;
+            this->editEnvironment = false;
         }
 
-        bool isEnvironment = this->editEnvironment != nullptr;
-        if (ImGui::Selectable("Environment", &isEnvironment))
+        if (ImGui::Selectable("Environment", &this->editEnvironment))
         {
             this->editMesh = nullptr;
             this->editMaterial = nullptr;
-            this->editCamera = nullptr;
-            this->editEnvironment = isEnvironment ? &this->app->scene.environment : nullptr;
+            this->editCamera = false;
         }
 
         if (ImGui::TreeNode("Meshes"))
@@ -323,8 +319,8 @@ void UI::sceneMenu()
                     this->editMesh = isMesh ? &mesh : nullptr;
                     this->editMeshTransform = isMesh ? mesh.transform : glm::mat4(1);
                     this->editMaterial = nullptr;
-                    this->editCamera = nullptr;
-                    this->editEnvironment = nullptr;
+                    this->editCamera = false;
+                    this->editEnvironment = false;
                 }
             }
 
@@ -342,8 +338,8 @@ void UI::sceneMenu()
                 {
                     this->editMesh = nullptr;
                     this->editMaterial = isMaterial ? &material : nullptr;
-                    this->editCamera = nullptr;
-                    this->editEnvironment = nullptr;
+                    this->editCamera = false;
+                    this->editEnvironment = false;
                 }
 
                 if (ImGui::BeginDragDropSource())
@@ -640,30 +636,30 @@ void UI::propertyEnvironmentMenu()
 {
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
-    Image& environment = *this->editEnvironment;
 
     if (ImGui::DragFloat("Intensity", &renderer.environmentIntensity, .001f, .0f, 1000000.f))
     {
         renderer.resetAccumulator();
     }
 
-    if (ImGui::BeginCombo("##environment", environment.name.c_str()))
+    if (ImGui::BeginCombo("##environment", scene.environmentName.c_str()))
     {
-        if (ImGui::Selectable("None", environment.name == "None"))
+        if (ImGui::Selectable("None", scene.environmentName == "None"))
         {
-            environment = Image::empty;
+            scene.environment = Image::empty;
+            scene.environmentName = "None";
             renderer.resetAccumulator();
-            renderer.resetEnvironment(environment);
+            renderer.resetEnvironment(scene.environment);
         }
 
         for (size_t i = 0; i < this->app->environmentFiles.size(); i++)
         {
             const std::string& environmentName = this->app->environmentFiles[i];
-            if (ImGui::Selectable((environmentName + "##environmentTexture" + std::to_string(i)).c_str(), environmentName == environment.name))
+            if (ImGui::Selectable((environmentName + "##environmentTexture" + std::to_string(i)).c_str(), environmentName == scene.environmentName))
             {
                 scene.loadEnvironmentMap(Application::environmentFolder + environmentName);
                 renderer.resetAccumulator();
-                renderer.resetEnvironment(environment);
+                renderer.resetEnvironment(scene.environment);
             }
         }
 
@@ -715,7 +711,7 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
     Renderer& renderer = this->app->renderer;
     const Scene& scene = this->app->scene;
 
-    if (ImGui::BeginCombo(("Texture##" + name).c_str(), currentTextureId == -1 ? "None" : scene.textures[currentTextureId].name.c_str()))
+    if (ImGui::BeginCombo(("Texture##" + name).c_str(), currentTextureId == -1 ? "None" : scene.textureNames[currentTextureId].c_str()))
     {
         if (ImGui::Selectable("None", (int)currentTextureId == -1))
         {
@@ -727,7 +723,8 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
         for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
         {
             const Image& texture = scene.textures[textureId];
-            if (ImGui::Selectable((texture.name + "##" + name + "Texture" + std::to_string(textureId)).c_str(), (int)currentTextureId == textureId))
+            const std::string& textureName = scene.textureNames[textureId];
+            if (ImGui::Selectable((textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(), (int)currentTextureId == textureId))
             {
                 currentTextureId = (float)textureId;
                 renderer.resetAccumulator();
