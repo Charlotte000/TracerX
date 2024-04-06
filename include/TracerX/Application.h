@@ -31,6 +31,6 @@ public:
     void shutdown();
     void run();
     void save() const;
-    void control();
 private:
+    void control();
 };

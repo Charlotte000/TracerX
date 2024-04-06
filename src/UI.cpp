@@ -695,8 +695,8 @@ void UI::propertySceneMenu()
         renderer.resize(renderer.output.colorTexture.size);
     }
 
-    ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f);
-    if (ImGui::DragInt("Max bouce count", &renderer.maxBouceCount, .01f, 0, 1000))
+    if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f) |
+        ImGui::DragInt("Max bouce count", &renderer.maxBouceCount, .01f, 0, 1000))
     {
         renderer.resetAccumulator();
     }

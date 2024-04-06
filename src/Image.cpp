@@ -30,9 +30,11 @@ void Image::saveToFile(const std::string& name) const
 
 Image Image::resize(glm::ivec2 size) const
 {
-    std::vector<float> newPixels(size.x * size.y * 3);
-    stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, newPixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGB);
-    return Image::loadFromMemory(size, newPixels);
+    Image img;
+    img.size = size;
+    img.pixels.resize(size.x * size.y * 3);
+    stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, img.pixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGB);
+    return img;
 }
 
 Image Image::loadFromFile(const std::string& fileName)
