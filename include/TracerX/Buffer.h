@@ -15,4 +15,5 @@ public:
 private:
     GLuint handler;
     GLuint textureHandler;
+    size_t size;
 };

@@ -19,10 +19,19 @@ void Texture::bind(int binding)
 void Texture::update(const Image& image)
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, image.size.x, image.size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
+
+    if (image.size != this->size)
+    {
+        this->size = image.size;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, image.size.x, image.size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
+    }
+    else
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->size.x, this->size.y, GL_RGB, GL_FLOAT, image.pixels.data());
+    }
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    this->size = image.size;
 }
 
 Image Texture::upload() const

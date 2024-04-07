@@ -11,7 +11,7 @@
 class TextureArray
 {
 public:
-    glm::ivec2 size;
+    glm::ivec3 size;
 
     void init();
     void bind(int binding);

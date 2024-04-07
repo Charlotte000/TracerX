@@ -26,7 +26,18 @@ template <class T>
 void Buffer<T>::update(const std::vector<T>& data)
 {
     glBindBuffer(GL_TEXTURE_BUFFER, this->handler);
-    glBufferData(GL_TEXTURE_BUFFER, sizeof(T) * data.size(), data.data(), GL_STATIC_DRAW);
+
+    size_t size = sizeof(T) * data.size();
+    if (this->size != size)
+    {
+        this->size = size;
+        glBufferData(GL_TEXTURE_BUFFER, size, data.data(), GL_STATIC_DRAW);
+    }
+    else
+    {
+        glBufferSubData(GL_TEXTURE_BUFFER, 0, this->size, data.data());
+    }
+
     glBindBuffer(GL_TEXTURE_BUFFER, 0);
 }
 
