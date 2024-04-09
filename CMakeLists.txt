@@ -69,10 +69,17 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/stb)
 # OIDN
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/oidn/include)
 target_link_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/oidn/lib)
-file(GLOB OIDN_DLL "${CMAKE_CURRENT_SOURCE_DIR}/libs/oidn/bin/*.dll")
+if(WIN32)
+    file(GLOB OIDN_DLL "${CMAKE_CURRENT_SOURCE_DIR}/libs/oidn/bin/*.dll")
+    set(OIDN_LIB OpenImageDenoise OpenImageDenoise_core)
+elseif(UNIX)
+    set(OIDN_LIB OpenImageDenoise)
+else()
+    message(FATAL_ERROR "Unsupported target system")
+endif()
 file(COPY ${OIDN_DLL} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # FastBVH
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/fastBVH)
 
-target_link_libraries(${PROJECT_NAME} OpenGL::GL glfw glm::glm OpenImageDenoise OpenImageDenoise_core FastBVH)
+target_link_libraries(${PROJECT_NAME} OpenGL::GL glfw glm::glm ${OIDN_LIB} FastBVH)
