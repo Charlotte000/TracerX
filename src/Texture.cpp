@@ -23,7 +23,7 @@ void Texture::update(const Image& image)
     if (image.size != this->size)
     {
         this->size = image.size;
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, image.size.x, image.size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->size.x, this->size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
     }
     else
     {

@@ -690,9 +690,10 @@ void UI::propertySceneMenu()
 {
     Renderer& renderer = this->app->renderer;
 
-    if (ImGui::DragInt2("Render size", glm::value_ptr(renderer.output.colorTexture.size), 10.f, 1, 10000))
+    glm::ivec2 size = renderer.output.colorTexture.size;
+    if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10.f, 1, 10000))
     {
-        renderer.resize(renderer.output.colorTexture.size);
+        renderer.resize(size);
     }
 
     if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f) |
