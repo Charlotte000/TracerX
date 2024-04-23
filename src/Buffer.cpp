@@ -31,7 +31,7 @@ void Buffer<T>::update(const std::vector<T>& data)
     if (this->size != size)
     {
         this->size = size;
-        glBufferData(GL_TEXTURE_BUFFER, size, data.data(), GL_STATIC_DRAW);
+        glBufferData(GL_TEXTURE_BUFFER, this->size, data.data(), GL_STATIC_DRAW);
     }
     else
     {
