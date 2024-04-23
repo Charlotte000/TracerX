@@ -1,4 +1,5 @@
 #include "TracerX/Renderer.h"
+#include "TracerX/ShaderSrc.h"
 
 #include <iostream>
 #include <OpenImageDenoise/oidn.hpp>
@@ -13,8 +14,8 @@ void Renderer::init()
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-    this->pathTracer.init(Renderer::shaderFolder + "vertex/main.glsl", Renderer::shaderFolder + "fragment/pathTracer/main.glsl");
-    this->toneMapper.init(Renderer::shaderFolder + "vertex/main.glsl", Renderer::shaderFolder + "fragment/toneMapper/main.glsl");
+    this->pathTracer.init(vertexShader, pathTracerShader);
+    this->toneMapper.init(vertexShader, toneMapperShader);
 
     this->initData();
 }

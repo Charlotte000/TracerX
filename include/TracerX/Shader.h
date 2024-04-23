@@ -8,9 +8,7 @@
 class Shader
 {
 public:
-    static std::string includeIndentifier;
-
-    void init(const std::string& vertexPath, const std::string& fragmentPath);
+    void init(const std::string& vertexSrc, const std::string& fragmentSrc);
     void shutdown();
     void use();
     void updateParam(const std::string& name, int value);
@@ -22,7 +20,6 @@ public:
 private:
     GLuint handler;
 
-    static const std::string load(const std::string& path);
-    static GLuint initShader(const std::string& path, GLenum shaderType);
+    static GLuint initShader(const std::string& src, GLenum shaderType);
     static GLuint initProgram(GLuint vertexHandler, GLuint fragmentHandler);
 };

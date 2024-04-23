@@ -4,13 +4,11 @@
 #include <glm/gtc/type_ptr.hpp>
 
 
-std::string Shader::includeIndentifier = "#include";
-
-void Shader::init(const std::string& vertexPath, const std::string& fragmentPath)
+void Shader::init(const std::string& vertexSrc, const std::string& fragmentSrc)
 {
     // Create OpenGL shaders
-    GLuint vertexHandler = this->initShader(vertexPath, GL_VERTEX_SHADER);
-    GLuint fragmentHandler = this->initShader(fragmentPath, GL_FRAGMENT_SHADER);
+    GLuint vertexHandler = this->initShader(vertexSrc, GL_VERTEX_SHADER);
+    GLuint fragmentHandler = this->initShader(fragmentSrc, GL_FRAGMENT_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(vertexHandler, fragmentHandler);
@@ -55,9 +53,8 @@ void Shader::stopUse()
     glUseProgram(0);
 }
 
-GLuint Shader::initShader(const std::string& main_path, GLenum shaderType)
+GLuint Shader::initShader(const std::string& src, GLenum shaderType)
 {
-    const std::string src = Shader::load(main_path);
     const GLchar* code = (const GLchar*)src.c_str();
     GLuint handler = glCreateShader(shaderType);
     glShaderSource(handler, 1, &code, 0);
@@ -104,32 +101,4 @@ GLuint Shader::initProgram(GLuint vertexHandler, GLuint fragmentHandler)
     }
 
     return handler;
-}
-
-const std::string Shader::load(const std::string& path)
-{
-    std::ifstream file(path);
-    if (!file.is_open())
-    {
-        throw std::runtime_error("Shader source not found: " + path);
-    }
-
-    std::string code = "";
-
-    std::string line;
-    while (std::getline(file, line))
-    {
-        if (line.find(includeIndentifier) != line.npos)
-        {
-            line.erase(0, Shader::includeIndentifier.size() + 1);
-            code += Shader::load(path.substr(0, path.rfind('/') + 1) + line) + '\n';
-            continue;
-        }
-
-        code += line + '\n';
-    }
-
-    file.close();
-
-    return code;
 }

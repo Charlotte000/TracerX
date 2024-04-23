@@ -31,8 +31,6 @@ public:
     FrameBuffer output;
     TextureArray textureArray;
 
-    static inline const std::string shaderFolder = "../shaders/";
-
     void init();
     void resize(glm::ivec2 size);
     void shutdown();
