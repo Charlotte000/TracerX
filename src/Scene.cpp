@@ -1,7 +1,6 @@
 #define TINYGLTF_IMPLEMENTATION
 
 #include "TracerX/Scene.h"
-#include "TracerX/Application.h"
 
 #include <stdexcept>
 #include <tinydir.h>
