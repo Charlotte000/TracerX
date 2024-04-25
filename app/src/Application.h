@@ -1,8 +1,9 @@
 #pragma once
 
 #include "UI.h"
-#include "Scene.h"
-#include "Renderer.h"
+
+#include <TracerX/Scene.h>
+#include <TracerX/Renderer.h>
 
 #include <vector>
 #include <string>
@@ -23,8 +24,8 @@ public:
     std::vector<std::string> sceneFiles;
     bool isRendering = false;
 
-    static inline const std::string environmentFolder = "../assets/environments/";
-    static inline const std::string sceneFolder = "../assets/scenes/";
+    static inline const std::string environmentFolder = "../../assets/environments/";
+    static inline const std::string sceneFolder = "../../assets/scenes/";
 
     Application();
     void init(glm::ivec2 size);

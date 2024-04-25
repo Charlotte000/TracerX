@@ -1,5 +1,5 @@
-#include "TracerX/UI.h"
-#include "TracerX/Application.h"
+#include "UI.h"
+#include "Application.h"
 
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>

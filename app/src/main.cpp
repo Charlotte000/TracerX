@@ -1,5 +1,6 @@
-#include "TracerX/Scene.h"
-#include "TracerX/Application.h"
+#include "Application.h"
+
+#include <TracerX/Scene.h>
 
 
 int main()

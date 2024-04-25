@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Mesh.h"
-#include "Scene.h"
-#include "Image.h"
-#include "Camera.h"
-#include "Texture.h"
-#include "Material.h"
+#include <TracerX/Mesh.h>
+#include <TracerX/Scene.h>
+#include <TracerX/Image.h>
+#include <TracerX/Camera.h>
+#include <TracerX/Texture.h>
+#include <TracerX/Material.h>
 
 #include <string>
 #include <imgui.h>

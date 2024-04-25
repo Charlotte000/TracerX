@@ -1,7 +1,10 @@
-from os.path import dirname, join
+from os.path import dirname, exists, join
 
 
 def build_shader(shader: str) -> str:
+    if not exists(shader):
+        raise ValueError(f"shader not found ({shader})")
+
     result = ""
     with open(shader, "r") as file:
         for line in file.readlines():
@@ -32,12 +35,26 @@ def write_shaders(path: str, pathTracer: str, toneMapper: str, vertex: str) -> N
 
 
 project = join(dirname(__file__), "..")
-shaders = join(project, "shaders")
+shaders = join(project, "core", "shaders")
 
-pathTracer = build_shader(join(shaders, "fragment", "pathTracer", "main.glsl"))
-toneMapper = build_shader(join(shaders, "fragment", "toneMapper", "main.glsl"))
-vertex = build_shader(join(shaders, "vertex", "main.glsl"))
+try:
+    pathTracer = build_shader(join(shaders, "fragment", "pathTracer", "main.glsl"))
+    print("[Info] Build path tracer shader")
 
-write_shaders(
-    join(project, "include", "TracerX", "ShaderSrc.h"), pathTracer, toneMapper, vertex
-)
+    toneMapper = build_shader(join(shaders, "fragment", "toneMapper", "main.glsl"))
+    print("[Info] Build tone mapper shader")
+
+    vertex = build_shader(join(shaders, "vertex", "main.glsl"))
+    print("[Info] Build vertex shader")
+
+    write_shaders(
+        join(project, "core", "include", "TracerX", "ShaderSrc.h"),
+        pathTracer,
+        toneMapper,
+        vertex,
+    )
+
+    print("[Info] Build completed")
+except ValueError as err:
+    print(f"[Error] {err}")
+    exit(1)
