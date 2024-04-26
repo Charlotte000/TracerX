@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
+project(TracerXProject)
+
+option(ONLY_CORE "Build only core library" OFF)
 
 add_subdirectory(core)
-add_subdirectory(app)
+if (NOT ONLY_CORE)
+    add_subdirectory(app)
+endif()

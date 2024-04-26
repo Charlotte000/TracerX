@@ -38,6 +38,10 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
 - Q, E - camera tilt
 
 # Getting Started
+
+## CMake Configuration
+- `ONLY_CORE`: Build only core library
+
 ## Building
 ```bash
 cd ./build

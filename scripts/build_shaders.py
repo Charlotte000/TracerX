@@ -1,9 +1,9 @@
-from os.path import dirname, exists, join
+from os.path import dirname, exists, join, relpath
 
 
 def build_shader(shader: str) -> str:
     if not exists(shader):
-        raise ValueError(f"shader not found ({shader})")
+        raise ValueError(f"shader not found ({relpath(shader)})")
 
     result = ""
     with open(shader, "r") as file:
