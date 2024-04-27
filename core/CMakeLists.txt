@@ -19,10 +19,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/src/glew.c
 )
 
-add_library(
-    ${PROJECT_NAME}
-    ${SRC}
-)
+add_library(${PROJECT_NAME} ${SRC})
 
 add_compile_definitions(GLEW_STATIC)
 

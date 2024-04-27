@@ -24,8 +24,9 @@ public:
     std::vector<std::string> sceneFiles;
     bool isRendering = false;
 
-    static inline const std::string environmentFolder = "../../assets/environments/";
-    static inline const std::string sceneFolder = "../../assets/scenes/";
+    static inline const std::string assetsFolder = ASSETS_PATH;
+    static inline const std::string environmentFolder =  Application::assetsFolder + "/environments/";
+    static inline const std::string sceneFolder = Application::assetsFolder + "/scenes/";
 
     Application();
     void init(glm::ivec2 size);

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(TracerXProject)
 
-option(ONLY_CORE "Build only core library" OFF)
+option(TX_BUILD_EDITOR "Build graphic editor" ON)
 
 add_subdirectory(core)
-if (NOT ONLY_CORE)
+if (TX_BUILD_EDITOR)
     add_subdirectory(app)
 endif()

@@ -40,7 +40,8 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
 # Getting Started
 
 ## CMake Configuration
-- `ONLY_CORE`: Build only core library
+- `TX_BUILD_EDITOR`: Build graphic editor
+- `TX_ASSETS_PATH`: Assets folder (_"app/assets"_ by default)
 
 ## Building
 ```bash
