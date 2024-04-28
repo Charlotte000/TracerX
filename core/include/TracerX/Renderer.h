@@ -37,7 +37,9 @@ public:
     void resize(glm::ivec2 size);
     void shutdown();
     void render();
+#ifdef TX_DENOISE
     void denoise();
+#endif
     void resetAccumulator();
     void resetMeshes(const std::vector<core::Mesh>& meshes);
     void resetBVH(const std::vector<glm::vec3>& bvh, const std::vector<core::Triangle> triangles);

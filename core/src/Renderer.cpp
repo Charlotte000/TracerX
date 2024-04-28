@@ -1,7 +1,9 @@
 #include "TracerX/Renderer.h"
 
 #include <iostream>
+#ifdef TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
+#endif
 
 using namespace TracerX;
 using namespace TracerX::core;
@@ -68,6 +70,7 @@ void Renderer::render()
     this->frameCount++;
 }
 
+#ifdef TX_DENOISE
 void Renderer::denoise()
 {
     // Create device
@@ -108,6 +111,7 @@ void Renderer::denoise()
     Shader::stopUse();
     FrameBuffer::stopUse();
 }
+#endif
 
 void Renderer::resetAccumulator()
 {

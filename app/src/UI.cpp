@@ -710,10 +710,12 @@ void UI::propertySceneMenu()
         this->app->isRendering = !this->app->isRendering;
     }
 
+#ifdef TX_DENOISE
     if (ImGui::Button("Denoise", ImVec2(-1, 0)))
     {
         renderer.denoise();
     }
+#endif
 }
 
 void UI::materialTextureSelector(const std::string& name, float& currentTextureId)

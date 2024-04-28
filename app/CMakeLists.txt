@@ -31,9 +31,11 @@ target_include_directories(
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo
 )
 
-if(WIN32)
-    file(GLOB OIDN_DLL "${CMAKE_SOURCE_DIR}/core/libs/oidn/bin/*.dll")
-    file(COPY ${OIDN_DLL} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+if (TX_DENOISE)
+    if(WIN32)
+        file(GLOB OIDN_DLL "${CMAKE_SOURCE_DIR}/core/libs/oidn/bin/*.dll")
+        file(COPY ${OIDN_DLL} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
 endif()
 
 target_link_libraries(${PROJECT_NAME} TracerX OpenGL::GL glfw)

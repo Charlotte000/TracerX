@@ -40,8 +40,12 @@ This renderer was inspired by the book series [_Ray Tracing in One Weekend_](htt
 # Getting Started
 
 ## CMake Configuration
-- `TX_BUILD_EDITOR`: Build graphic editor
-- `TX_ASSETS_PATH`: Assets folder (_"app/assets"_ by default)
+| Name             | Description                   | Default value |
+|------------------|-------------------------------|---------------|
+| TX_DENOISE       | Include denoise functionality | ON            |
+| TX_BUILD_EDITOR  | Build graphic editor          | ON            |
+| TX_ASSETS_PATH   | Assets folder                 | "app/assets"  |
+| TX_BUILD_EXAMPLE | Build example                 | OFF           |
 
 ## Building
 ```bash
