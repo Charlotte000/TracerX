@@ -10,13 +10,12 @@
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
-
 class Application
 {
 public:
     UI ui;
-    Renderer renderer;
-    Scene scene;
+    TracerX::Renderer renderer;
+    TracerX::Scene scene;
     GLFWwindow* window = nullptr;
     float cameraSpeed = 5.f;
     float cameraRotationSpeed = 1.f;

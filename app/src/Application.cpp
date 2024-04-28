@@ -4,6 +4,7 @@
 #include <tinydir.h>
 #include <glm/gtx/rotate_vector.hpp>
 
+using namespace TracerX::core;
 
 Application::Application()
 {

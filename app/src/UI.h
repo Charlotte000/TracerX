@@ -12,7 +12,6 @@
 #include <ImGuizmo.h>
 #include <glm/glm.hpp>
 
-
 class Application;
 
 class UI
@@ -23,15 +22,15 @@ public:
     void render();
 private:
     Application* app = nullptr;
-    Mesh* editMesh = nullptr;
-    Material* editMaterial = nullptr;
+    TracerX::core::Mesh* editMesh = nullptr;
+    TracerX::core::Material* editMaterial = nullptr;
     bool editCamera = false;
     bool editEnvironment = false;
     glm::mat4 editMeshTransform;
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
     bool autoApply = false;
-    Texture textureView;
+    TracerX::core::Texture textureView;
 
     void barMenu();
     void mainWindowMenu();

@@ -1,5 +1,6 @@
 #include "TracerX/FrameBuffer.h"
 
+using namespace TracerX::core;
 
 void FrameBuffer::init()
 {

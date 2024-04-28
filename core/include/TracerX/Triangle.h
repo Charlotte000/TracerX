@@ -1,5 +1,8 @@
 #pragma once
 
+namespace TracerX::core
+{
+
 struct Triangle
 {
     int v1;
@@ -7,3 +10,5 @@ struct Triangle
     int v3;
     int meshId;
 };
+
+}

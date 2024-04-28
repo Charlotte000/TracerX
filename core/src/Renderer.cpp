@@ -4,6 +4,8 @@
 #include <iostream>
 #include <OpenImageDenoise/oidn.hpp>
 
+using namespace TracerX;
+using namespace TracerX::core;
 
 void Renderer::init()
 {

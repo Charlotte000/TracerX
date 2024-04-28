@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 struct Mesh
 {
@@ -13,3 +15,5 @@ private:
     float padding1 = 0;
     float padding2 = 0;
 };
+
+}

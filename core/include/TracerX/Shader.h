@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 class Shader
 {
@@ -23,3 +25,5 @@ private:
     static GLuint initShader(const std::string& src, GLenum shaderType);
     static GLuint initProgram(GLuint vertexHandler, GLuint fragmentHandler);
 };
+
+}

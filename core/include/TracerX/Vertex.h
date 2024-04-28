@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 struct Vertex
 {
@@ -12,3 +14,5 @@ public:
 private:
     float padding1 = 0;
 };
+
+}

@@ -10,6 +10,7 @@
 #include <stb_image_write.h>
 #include <stb_image_resize2.h>
 
+using namespace TracerX::core;
 
 Image Image::empty;
 

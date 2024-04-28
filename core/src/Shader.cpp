@@ -3,6 +3,7 @@
 #include <fstream>
 #include <glm/gtc/type_ptr.hpp>
 
+using namespace TracerX::core;
 
 void Shader::init(const std::string& vertexSrc, const std::string& fragmentSrc)
 {

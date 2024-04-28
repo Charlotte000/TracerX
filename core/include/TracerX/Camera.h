@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+namespace TracerX::core
+{
 
 struct Camera
 {
@@ -18,3 +20,5 @@ struct Camera
     glm::mat4 createView() const;
     glm::mat4 createProjection(float aspectRatio) const;
 };
+
+}

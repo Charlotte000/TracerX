@@ -1,5 +1,6 @@
 #include "TracerX/Material.h"
 
+using namespace TracerX::core;
 
 Material Material::lightSource(glm::vec3 emissionColor, float emissionStrength)
 {

@@ -2,6 +2,8 @@
 
 #include <GL/glew.h>
 
+namespace TracerX::core
+{
 
 struct Quad
 {
@@ -13,3 +15,5 @@ private:
     GLuint handler;
     GLuint vertexHandler;
 };
+
+}

@@ -7,6 +7,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/polar_coordinates.hpp>
 
+using namespace TracerX;
+using namespace TracerX::core;
 
 void SetupImGuiStyle()
 {

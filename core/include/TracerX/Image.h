@@ -4,6 +4,8 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 struct Image
 {
@@ -21,3 +23,5 @@ public:
 private:
     Image();
 };
+
+}

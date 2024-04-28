@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 struct Material
 {
@@ -26,3 +28,5 @@ struct Material
     static Material matte(glm::vec3 albedoColor, float metalness = 0);
     static Material mirror();
 };
+
+}

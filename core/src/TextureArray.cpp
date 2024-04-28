@@ -1,5 +1,6 @@
 #include "TracerX/TextureArray.h"
 
+using namespace TracerX::core;
 
 void TextureArray::init()
 {

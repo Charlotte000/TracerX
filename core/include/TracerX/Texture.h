@@ -4,6 +4,8 @@
 
 #include <GL/glew.h>
 
+namespace TracerX::core
+{
 
 class Texture
 {
@@ -19,3 +21,5 @@ public:
 private:
     GLuint handler;
 };
+
+}

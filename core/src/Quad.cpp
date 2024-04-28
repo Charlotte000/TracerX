@@ -1,5 +1,6 @@
 #include "TracerX/Quad.h"
 
+using namespace TracerX::core;
 
 void Quad::init()
 {

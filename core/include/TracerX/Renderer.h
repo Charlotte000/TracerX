@@ -18,18 +18,20 @@
 #include <string>
 #include <glm/glm.hpp>
 
+namespace TracerX
+{
 
 class Renderer
 {
 public:
-    Camera camera;
+    core::Camera camera;
     int maxBouceCount = 5;
     int frameCount = 1;
     float gamma = 2.2f;
     float environmentIntensity = 1.f;
     glm::mat3 environmentRotation = glm::mat3(1);
-    FrameBuffer output;
-    TextureArray textureArray;
+    core::FrameBuffer output;
+    core::TextureArray textureArray;
 
     void init();
     void resize(glm::ivec2 size);
@@ -37,23 +39,25 @@ public:
     void render();
     void denoise();
     void resetAccumulator();
-    void resetMeshes(const std::vector<Mesh>& meshes);
-    void resetBVH(const std::vector<glm::vec3>& bvh, const std::vector<Triangle> triangles);
-    void resetMaterials(const std::vector<Material>& materials);
-    void resetEnvironment(const Image& image);
+    void resetMeshes(const std::vector<core::Mesh>& meshes);
+    void resetBVH(const std::vector<glm::vec3>& bvh, const std::vector<core::Triangle> triangles);
+    void resetMaterials(const std::vector<core::Material>& materials);
+    void resetEnvironment(const core::Image& image);
     void resetScene(Scene& scene);
 private:
-    Quad quad;
-    Shader pathTracer;
-    Shader toneMapper;
-    FrameBuffer accumulator;
-    Texture environmentTexture;
-    Buffer<Vertex> vertexBuffer;
-    Buffer<Triangle> triangleBuffer;
-    Buffer<Mesh> meshBuffer;
-    Buffer<Material> materialBuffer;
-    Buffer<glm::vec3> bvhBuffer;
+    core::Quad quad;
+    core::Shader pathTracer;
+    core::Shader toneMapper;
+    core::FrameBuffer accumulator;
+    core::Texture environmentTexture;
+    core::Buffer<core::Vertex> vertexBuffer;
+    core::Buffer<core::Triangle> triangleBuffer;
+    core::Buffer<core::Mesh> meshBuffer;
+    core::Buffer<core::Material> materialBuffer;
+    core::Buffer<glm::vec3> bvhBuffer;
 
     void initData();
     void updateShaders();
 };
+
+}

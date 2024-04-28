@@ -6,6 +6,7 @@
 
 #include <glm/glm.hpp>
 
+using namespace TracerX::core;
 
 template <class T>
 void Buffer<T>::init(GLenum internalFormat)

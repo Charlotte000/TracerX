@@ -7,6 +7,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+using namespace TracerX;
+using namespace TracerX::core;
 
 void Scene::loadEnvironmentMap(const std::string& fileName)
 {

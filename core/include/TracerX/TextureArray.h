@@ -7,6 +7,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
+namespace TracerX::core
+{
 
 class TextureArray
 {
@@ -21,3 +23,5 @@ public:
 private:
     GLuint handler;
 };
+
+}

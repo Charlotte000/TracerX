@@ -2,6 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
+using namespace TracerX::core;
 
 void Camera::lookAt(glm::vec3 position)
 {

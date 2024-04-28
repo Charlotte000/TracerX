@@ -3,6 +3,8 @@
 #include <vector>
 #include <GL/glew.h>
 
+namespace TracerX::core
+{
 
 template <class T>
 class Buffer
@@ -17,3 +19,5 @@ private:
     GLuint textureHandler;
     size_t size;
 };
+
+}
