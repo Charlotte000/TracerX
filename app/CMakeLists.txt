@@ -3,9 +3,8 @@ project(App)
 
 set(TX_ASSETS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "Assets folder" FORCE)
 
-# SRC
-set(
-    SRC
+add_executable(
+    ${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/UI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Application.cpp
@@ -19,8 +18,6 @@ set(
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo/ImGuizmo.cpp
 )
-
-add_executable(${PROJECT_NAME} ${SRC})
 
 add_compile_definitions(ASSETS_PATH="${TX_ASSETS_PATH}")
 find_package(OpenGL REQUIRED)

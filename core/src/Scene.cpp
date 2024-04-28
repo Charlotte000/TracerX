@@ -157,7 +157,6 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
 
         if (gltfMaterial.extensions.find("KHR_materials_transmission") != gltfMaterial.extensions.end())
         {
-            const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_transmission")->second;
             material.ior = 1;
         }
 
@@ -268,7 +267,7 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
     }
 }
 
-void Scene::GLTFcamera(const tinygltf::Camera& camera, const glm::mat4 transform)
+void Scene::GLTFcamera(const glm::mat4 transform)
 {
     Camera c;
     c.position = glm::vec3(transform[3]);
@@ -340,7 +339,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
 
     if (node.children.empty() && node.camera != -1)
     {
-        this->GLTFcamera(model.cameras[node.camera], transform);
+        this->GLTFcamera(transform);
     }
 
     for (int child : node.children)

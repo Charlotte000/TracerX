@@ -42,7 +42,7 @@ private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
     void GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform);
-    void GLTFcamera(const tinygltf::Camera& camera, const glm::mat4 tranform);
+    void GLTFcamera(const glm::mat4 tranform);
     void GLTFnodes(const tinygltf::Model& model, const glm::mat4& world);
     void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform);
 };

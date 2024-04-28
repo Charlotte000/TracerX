@@ -1,15 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 project(TracerX)
 
-# SRC
-set(
-    SRC
+add_library(
+    ${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Quad.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Scene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Camera.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
@@ -19,8 +17,6 @@ set(
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/src/glew.c
 )
-
-add_library(${PROJECT_NAME} ${SRC})
 
 add_compile_definitions(GLEW_STATIC)
 
