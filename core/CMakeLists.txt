@@ -15,6 +15,7 @@ set(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FrameBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureArray.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/src/glew.c
 )

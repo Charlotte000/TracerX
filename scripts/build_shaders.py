@@ -19,19 +19,20 @@ def build_shader(shader: str) -> str:
 
 def write_shaders(path: str, pathTracer: str, toneMapper: str, vertex: str) -> None:
     with open(path, "w") as file:
-        file.write("#pragma once\n\n\n")
+        file.write("#include <TracerX/Renderer.h>\n\n")
+        file.write("using namespace TracerX;\n\n")
 
-        file.write(f'const char* pathTracerShader =\nR"(\n')
+        file.write(f'const char* Renderer::pathTracerShaderSrc =\nR"(\n')
         file.write(pathTracer)
         file.write(f'\n)";\n\n')
 
-        file.write(f'const char* toneMapperShader =\nR"(\n')
+        file.write(f'const char* Renderer::toneMapperShaderSrc =\nR"(\n')
         file.write(toneMapper)
         file.write(f'\n)";\n\n')
 
-        file.write(f'const char* vertexShader =\nR"(\n')
+        file.write(f'const char* Renderer::vertexShaderSrc =\nR"(\n')
         file.write(vertex)
-        file.write(f'\n)";\n\n')
+        file.write(f'\n)";\n')
 
 
 project = join(dirname(__file__), "..")
@@ -48,7 +49,7 @@ try:
     print("[Info] Build vertex shader")
 
     write_shaders(
-        join(project, "core", "include", "TracerX", "ShaderSrc.h"),
+        join(project, "core", "src", "RendererShaderSrc.cpp"),
         pathTracer,
         toneMapper,
         vertex,

@@ -1,7 +1,8 @@
-#pragma once
+#include <TracerX/Renderer.h>
 
+using namespace TracerX;
 
-const char* pathTracerShader =
+const char* Renderer::pathTracerShaderSrc =
 R"(
 #version 430 core
 
@@ -500,7 +501,7 @@ void main()
 
 )";
 
-const char* toneMapperShader =
+const char* Renderer::toneMapperShaderSrc =
 R"(
 #version 430 core
 
@@ -527,7 +528,7 @@ void main()
 
 )";
 
-const char* vertexShader =
+const char* Renderer::vertexShaderSrc =
 R"(
 #version 430 core
 
@@ -543,4 +544,3 @@ void main()
 }
 
 )";
-

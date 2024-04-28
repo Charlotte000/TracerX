@@ -56,6 +56,10 @@ private:
     core::Buffer<core::Material> materialBuffer;
     core::Buffer<glm::vec3> bvhBuffer;
 
+    static const char* pathTracerShaderSrc;
+    static const char* toneMapperShaderSrc;
+    static const char* vertexShaderSrc;
+
     void initData();
     void updateShaders();
 };
