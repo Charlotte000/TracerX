@@ -686,6 +686,11 @@ void UI::propertyEnvironmentMenu()
         renderer.environmentRotation = rotationMat;
         renderer.resetAccumulator();
     }
+
+    if (ImGui::Checkbox("Transparent background", &renderer.transparentBackground))
+    {
+        renderer.resetAccumulator();
+    }
 }
 
 void UI::propertySceneMenu()

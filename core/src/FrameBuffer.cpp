@@ -31,7 +31,7 @@ void FrameBuffer::use()
 void FrameBuffer::clear()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
-    glClearColor(0, 0, 0, 1);
+    glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

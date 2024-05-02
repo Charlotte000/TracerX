@@ -10,7 +10,8 @@ out vec4 FragColor;
 
 void main()
 {
-    vec3 color = texture(Accumulator, TexCoords).rgb / FrameCount;
+    vec4 pixel = texture(Accumulator, TexCoords) / FrameCount;
+    vec3 color = pixel.rgb;
     
     // Reinhard tone mapping
     vec3 mapped = color / (color + vec3(1));
@@ -18,5 +19,5 @@ void main()
     // Gamma correction
     mapped = pow(mapped, vec3(1 / Gamma));
 
-    FragColor = vec4(mapped, 1);
+    FragColor = vec4(mapped, pixel.a);
 }

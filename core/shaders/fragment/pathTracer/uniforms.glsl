@@ -9,6 +9,7 @@ layout(binding=7) uniform samplerBuffer BVH;
 
 uniform float EnvironmentIntensity;
 uniform mat3 EnvironmentRotation;
+uniform bool TransparentBackground;
 uniform int MaxBouceCount;
 uniform int FrameCount;
 uniform Cam Camera;

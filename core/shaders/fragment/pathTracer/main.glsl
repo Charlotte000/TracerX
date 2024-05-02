@@ -132,14 +132,20 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
     ray.Color *= material.AlbedoColor;
 }
 
-vec3 SendRay(in Ray ray)
+vec4 SendRay(in Ray ray)
 {
+    bool isBackground = false;
     for (int i = 0; i <= MaxBouceCount; i++)
     {
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))
         {
             ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
+            if (i == 0)
+            {
+                isBackground = true;
+            }
+
             break;
         }
 
@@ -150,12 +156,12 @@ vec3 SendRay(in Ray ray)
         }
     }
 
-    return ray.IncomingLight;
+    return vec4(ray.IncomingLight, TransparentBackground && isBackground ? 0 : 1);
 }
 
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
-vec3 PathTrace(in Ray ray)
+vec4 PathTrace(in Ray ray)
 {
     vec3 rayOrigin = ray.Origin;
     vec3 rayDirection = ray.Direction;
@@ -170,9 +176,7 @@ vec3 PathTrace(in Ray ray)
     vec2 blur = RandomVector2() * Camera.Blur;
     rayOrigin += blur.x * CameraRight + blur.y * Camera.Up;
 
-    vec3 resultLight = SendRay(Ray(rayOrigin, rayDirection, 1 / rayDirection, ray.Color, ray.IncomingLight));
-
-    return resultLight;
+    return SendRay(Ray(rayOrigin, rayDirection, 1 / rayDirection, ray.Color, ray.IncomingLight));
 }
 
 void main()
@@ -181,9 +185,9 @@ void main()
     vec2 coord = (TexCoords - vec2(.5)) * vec2(1, size.y / size.x) * 2 * tan(Camera.FOV / 2);
     Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0), vec3(1), vec3(0));
 
-    vec3 pixelColor = PathTrace(ray);
+    vec4 pixelColor = PathTrace(ray);
 
     // Accumulate
-    vec3 accumColor = texture(AccumulatorTexture, TexCoords).rgb;
-    FragColor = vec4(pixelColor + accumColor, 1);
+    vec4 accumColor = texture(AccumulatorTexture, TexCoords);
+    FragColor = pixelColor + accumColor;
 }

@@ -30,6 +30,7 @@ public:
     float gamma = 2.2f;
     float environmentIntensity = 1.f;
     glm::mat3 environmentRotation = glm::mat3(1);
+    bool transparentBackground = false;
     core::FrameBuffer output;
     core::TextureArray textureArray;
 

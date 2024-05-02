@@ -80,13 +80,13 @@ void Renderer::denoise()
     // Create color buffer
     Image colorImage = this->accumulator.colorTexture.upload();
     glm::ivec2 size = this->accumulator.colorTexture.size;
-    oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 3 * sizeof(float));
+    oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.write(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create filter
     oidn::FilterRef filter = device.newFilter("RT");
-    filter.setImage("color", colorBuf, oidn::Format::Float3, size.x, size.y);
-    filter.setImage("output", colorBuf, oidn::Format::Float3, size.x, size.y);
+    filter.setImage("color", colorBuf, oidn::Format::Float3, size.x, size.y, 0, 4 * sizeof(float));
+    filter.setImage("output", colorBuf, oidn::Format::Float3, size.x, size.y, 0, 4 * sizeof(float));
     filter.set("hdr", true);
     filter.commit();
 
@@ -200,6 +200,7 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
     this->pathTracer.updateParam("EnvironmentIntensity", this->environmentIntensity);
     this->pathTracer.updateParam("EnvironmentRotation", this->environmentRotation);
+    this->pathTracer.updateParam("TransparentBackground", this->transparentBackground);
 
     // Tone mapper
     this->toneMapper.use();

@@ -49,6 +49,11 @@ void Shader::updateParam(const std::string& name, glm::mat3 value)
     glUniformMatrix3fv(glGetUniformLocation(this->handler, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
 }
 
+void Shader::updateParam(const std::string& name, bool value)
+{
+    glUniform1i(glGetUniformLocation(this->handler, name.c_str()), value);
+}
+
 void Shader::stopUse()
 {
     glUseProgram(0);

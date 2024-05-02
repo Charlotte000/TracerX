@@ -19,7 +19,7 @@ void TextureArray::bind(int binding)
 
 void TextureArray::update(glm::ivec2 size, const std::vector<Image>& images)
 {
-    size_t count = size.x * size.y * 3;
+    size_t count = size.x * size.y * 4;
     std::vector<float> data(count * images.size());
     for (size_t i = 0; i < images.size(); i++)
     {
@@ -34,11 +34,11 @@ void TextureArray::update(glm::ivec2 size, const std::vector<Image>& images)
     if (this->size != size3)
     {
         this->size = size3;
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB32F, this->size.x, this->size.y, this->size.z, 0, GL_RGB, GL_FLOAT, data.data());
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, this->size.x, this->size.y, this->size.z, 0, GL_RGBA, GL_FLOAT, data.data());
     }
     else
     {
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, this->size.x, this->size.y, this->size.z, GL_RGB, GL_FLOAT, data.data());
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, this->size.x, this->size.y, this->size.z, GL_RGBA, GL_FLOAT, data.data());
     }
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);

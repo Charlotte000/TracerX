@@ -113,12 +113,13 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
         glm::ivec2 size = glm::ivec2(gltfImage.width, gltfImage.height);
 
         std::vector<float> pixels;
-        pixels.reserve(gltfImage.width * gltfImage.height * 3);
+        pixels.reserve(gltfImage.width * gltfImage.height * 4);
         for (size_t i = 0; i < gltfImage.image.size(); i += gltfImage.component)
         {
-            pixels.push_back(gltfImage.image[i + 0] / 255.f);
-            pixels.push_back(gltfImage.image[i + 1] / 255.f);
-            pixels.push_back(gltfImage.image[i + 2] / 255.f);
+            pixels.push_back(gltfImage.component > 0 ? gltfImage.image[i + 0] / 255.f : 0);
+            pixels.push_back(gltfImage.component > 1 ? gltfImage.image[i + 1] / 255.f : 0);
+            pixels.push_back(gltfImage.component > 2 ? gltfImage.image[i + 2] / 255.f : 0);
+            pixels.push_back(gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1);
         }
 
         this->textures.push_back(Image::loadFromMemory(size, pixels));

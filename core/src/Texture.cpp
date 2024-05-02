@@ -24,11 +24,11 @@ void Texture::update(const Image& image)
     if (image.size != this->size)
     {
         this->size = image.size;
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, this->size.x, this->size.y, 0, GL_RGB, GL_FLOAT, image.pixels.data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, this->size.x, this->size.y, 0, GL_RGBA, GL_FLOAT, image.pixels.data());
     }
     else
     {
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->size.x, this->size.y, GL_RGB, GL_FLOAT, image.pixels.data());
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->size.x, this->size.y, GL_RGBA, GL_FLOAT, image.pixels.data());
     }
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -37,9 +37,9 @@ void Texture::update(const Image& image)
 
 Image Texture::upload() const
 {
-    std::vector<float> pixels(this->size.x * this->size.y * 3);
+    std::vector<float> pixels(this->size.x * this->size.y * 4);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_FLOAT, pixels.data());
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, pixels.data());
     glBindTexture(GL_TEXTURE_2D, 0);
     return Image::loadFromMemory(this->size, pixels);
 }

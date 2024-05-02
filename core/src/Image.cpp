@@ -23,7 +23,7 @@ void Image::saveToFile(const std::string& name) const
     }
 
     stbi_flip_vertically_on_write(true);
-    if (!stbi_write_png(name.c_str(), this->size.x, this->size.y, 3, data.data(), 0))
+    if (!stbi_write_png(name.c_str(), this->size.x, this->size.y, 4, data.data(), 0))
     {
         std::cerr << "Failed to save the image" << std::endl;
     }
@@ -33,21 +33,21 @@ Image Image::resize(glm::ivec2 size) const
 {
     Image img;
     img.size = size;
-    img.pixels.resize(size.x * size.y * 3);
-    stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, img.pixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGB);
+    img.pixels.resize(size.x * size.y * 4);
+    stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, img.pixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGBA);
     return img;
 }
 
 Image Image::loadFromFile(const std::string& fileName)
 {
     Image img;
-    float* data = stbi_loadf(fileName.c_str(), &img.size.x, &img.size.y, nullptr, 3);
+    float* data = stbi_loadf(fileName.c_str(), &img.size.x, &img.size.y, nullptr, 4);
     if (data == nullptr)
     {
         throw std::runtime_error("Failed to load the image: " + fileName);
     }
 
-    size_t size = img.size.x * img.size.y * 3;
+    size_t size = img.size.x * img.size.y * 4;
     img.pixels.resize(size);
     std::copy(data, data + size, img.pixels.data());
 
