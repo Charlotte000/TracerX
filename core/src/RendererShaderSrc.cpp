@@ -338,9 +338,9 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
 vec3 GetEnvironmentLight(in Ray ray)
 {
     vec3 direction = EnvironmentRotation * ray.Direction;
-    float theta = acos(direction.y);
-    float phi = atan(direction.z, direction.x) + PI;
-    return texture(EnvironmentTexture, vec2(phi * INV_TWO_PI, theta * INV_PI)).rgb * EnvironmentIntensity;
+    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
+    float v = acos(direction.y) * INV_PI;
+    return texture(EnvironmentTexture, vec2(u, v)).rgb * EnvironmentIntensity;
 }
 
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)

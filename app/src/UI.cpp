@@ -253,8 +253,9 @@ void UI::drawingPanelMenu()
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
+    ImVec4 borderColor = renderer.transparentBackground ? ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight] : ImVec4(0, 0, 0, 0);
     ImGui::SetCursorPos(imagePos);
-    ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+    ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f), ImVec4(1, 1, 1, 1), borderColor);
 
     glm::mat4 view = renderer.camera.createView();
     glm::mat4 projection = renderer.camera.createProjection(imAspectRatio);
