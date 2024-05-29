@@ -10,12 +10,6 @@
 using namespace TracerX;
 using namespace TracerX::core;
 
-void Scene::loadEnvironmentMap(const std::string& fileName)
-{
-    this->environment = Image::loadFromFile(fileName);
-    this->environmentName = fileName.substr(fileName.find_last_of("/\\") + 1);
-}
-
 int Scene::loadTexture(const std::string& fileName)
 {
     this->textures.push_back(Image::loadFromFile(fileName));

@@ -37,7 +37,7 @@ void Renderer::shutdown()
     this->accumulator.shutdown();
     this->output.shutdown();
 
-    this->environmentTexture.shutdown();
+    this->environment.texture.shutdown();
     this->textureArray.shutdown();
 
     this->vertexBuffer.shutdown();
@@ -135,11 +135,6 @@ void Renderer::resetMaterials(const std::vector<Material>& materials)
     this->materialBuffer.update(materials);
 }
 
-void Renderer::resetEnvironment(const Image& image)
-{
-    this->environmentTexture.update(image);
-}
-
 void Renderer::resetScene(Scene& scene)
 {
     std::vector<glm::vec3> bvh = scene.createBVH();
@@ -152,7 +147,6 @@ void Renderer::resetScene(Scene& scene)
     this->bvhBuffer.update(bvh);
 
     this->resetAccumulator();
-    this->resetEnvironment(scene.environment);
 }
 
 void Renderer::initData()
@@ -160,7 +154,7 @@ void Renderer::initData()
     this->quad.init();
 
     // Textures
-    this->environmentTexture.init();
+    this->environment.texture.init();
     this->textureArray.init();
 
     // Frame buffers
@@ -176,7 +170,7 @@ void Renderer::initData()
 
     // Bind textures
     this->accumulator.colorTexture.bind(0);
-    this->environmentTexture.bind(1);
+    this->environment.texture.bind(1);
     this->textureArray.bind(2);
     this->vertexBuffer.bind(3);
     this->triangleBuffer.bind(4);
@@ -198,9 +192,9 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
     this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
     this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
-    this->pathTracer.updateParam("EnvironmentIntensity", this->environmentIntensity);
-    this->pathTracer.updateParam("EnvironmentRotation", this->environmentRotation);
-    this->pathTracer.updateParam("TransparentBackground", this->transparentBackground);
+    this->pathTracer.updateParam("EnvironmentIntensity", this->environment.intensity);
+    this->pathTracer.updateParam("EnvironmentRotation", this->environment.rotation);
+    this->pathTracer.updateParam("TransparentBackground", this->environment.transparent);
 
     // Tone mapper
     this->toneMapper.use();

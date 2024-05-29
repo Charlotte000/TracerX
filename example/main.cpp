@@ -1,9 +1,11 @@
 #include <TracerX/Scene.h>
 #include <TracerX/Renderer.h>
 
+#include <iostream>
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+using namespace std;
 using namespace TracerX;
 using namespace TracerX::core;
 
@@ -18,11 +20,11 @@ GLFWwindow* createWindow()
 
 int main()
 {
+    cout << "Setting up" << endl << endl;
     GLFWwindow* window = createWindow();
 
     // Loading the scene
     Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb");
-    scene.loadEnvironmentMap("../../app/assets/environments/konzerthaus_4k.hdr");
 
     // Move the mesh
     Mesh& ajax = scene.meshes[0];
@@ -31,6 +33,7 @@ int main()
     // Setting up the renderer
     Renderer renderer;
     renderer.init();
+    renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_4k.hdr");
     renderer.resize(glm::ivec2(1000, 1000));
     renderer.resetScene(scene);
 
@@ -43,12 +46,18 @@ int main()
     // Render
     for (size_t i = 0; i < 100; i++)
     {
+        cout << "Ajax white: " << i + 1 << "%    \r" << flush;
         renderer.render();
     }
 
+    cout << endl;
+
 #ifdef TX_DENOISE
+    cout << "Denoising" << endl;
     renderer.denoise();
 #endif
+
+    cout << "Saving" << endl << endl;
     renderer.output.colorTexture.upload().saveToFile("ajaxWhite.png");
 
     // Setting up the mesh material
@@ -62,12 +71,18 @@ int main()
     renderer.resetAccumulator();
     for (size_t i = 0; i < 100; i++)
     {
+        cout << "Ajax gold: " << i + 1 << "%    \r" << flush;
         renderer.render();
     }
 
+    cout << endl;
+
 #ifdef TX_DENOISE
+    cout << "Denoising" << endl;
     renderer.denoise();
 #endif
+
+    cout << "Saving" << endl;
     renderer.output.colorTexture.upload().saveToFile("ajaxGold.png");
 
     // Shutting down

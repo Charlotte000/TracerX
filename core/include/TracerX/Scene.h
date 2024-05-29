@@ -28,11 +28,8 @@ public:
     std::vector<core::Mesh> meshes;
     std::vector<std::string> meshNames;
     std::vector<core::Camera> cameras;
-    core::Image environment = core::Image::empty;
-    std::string environmentName = "None";
     std::string name = "Empty";
 
-    void loadEnvironmentMap(const std::string& fileName);
     int loadTexture(const std::string& fileName);
     int loadMaterial(const core::Material& material, const std::string& name);
     const std::vector<glm::vec3> createBVH();

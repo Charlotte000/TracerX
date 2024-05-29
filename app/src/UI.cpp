@@ -168,11 +168,7 @@ void UI::barMenu()
                 {
                     if (ImGui::Selectable(name.c_str(), scene.name == name))
                     {
-                        Image oldEnv = scene.environment;
-                        std::string oldEnvName = scene.environmentName;
                         scene = Scene::loadGLTF(Application::sceneFolder + name);
-                        scene.environment = oldEnv;
-                        scene.environmentName = oldEnvName;
                         renderer.resetScene(scene);
 
                         this->editMesh = nullptr;
@@ -253,7 +249,7 @@ void UI::drawingPanelMenu()
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
-    ImVec4 borderColor = renderer.transparentBackground ? ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight] : ImVec4(0, 0, 0, 0);
+    ImVec4 borderColor = renderer.environment.transparent ? ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight] : ImVec4(0, 0, 0, 0);
     ImGui::SetCursorPos(imagePos);
     ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f), ImVec4(1, 1, 1, 1), borderColor);
 
@@ -276,10 +272,10 @@ void UI::drawingPanelMenu()
 
     if (this->editEnvironment)
     {
-        glm::mat4 rotation(renderer.environmentRotation);
+        glm::mat4 rotation(renderer.environment.rotation);
         if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, glm::value_ptr(rotation)))
         {
-            renderer.environmentRotation = rotation;
+            renderer.environment.rotation = rotation;
             renderer.resetAccumulator();
         }
     }
@@ -645,31 +641,27 @@ void UI::propertyCameraMenu()
 void UI::propertyEnvironmentMenu()
 {
     Renderer& renderer = this->app->renderer;
-    Scene& scene = this->app->scene;
 
-    if (ImGui::DragFloat("Intensity", &renderer.environmentIntensity, .001f, .0f, 1000000.f))
+    if (ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, .0f, 1000000.f))
     {
         renderer.resetAccumulator();
     }
 
-    if (ImGui::BeginCombo("##environment", scene.environmentName.c_str()))
+    if (ImGui::BeginCombo("##environment", renderer.environment.name.c_str()))
     {
-        if (ImGui::Selectable("None", scene.environmentName == "None"))
+        if (ImGui::Selectable("None", renderer.environment.name == "None"))
         {
-            scene.environment = Image::empty;
-            scene.environmentName = "None";
+            renderer.environment.reset();
             renderer.resetAccumulator();
-            renderer.resetEnvironment(scene.environment);
         }
 
         for (size_t i = 0; i < this->app->environmentFiles.size(); i++)
         {
             const std::string& environmentName = this->app->environmentFiles[i];
-            if (ImGui::Selectable((environmentName + "##environmentTexture" + std::to_string(i)).c_str(), environmentName == scene.environmentName))
+            if (ImGui::Selectable((environmentName + "##environmentTexture" + std::to_string(i)).c_str(), environmentName == renderer.environment.name))
             {
-                scene.loadEnvironmentMap(Application::environmentFolder + environmentName);
+                renderer.environment.loadFromFile(Application::environmentFolder + environmentName);
                 renderer.resetAccumulator();
-                renderer.resetEnvironment(scene.environment);
             }
         }
 
@@ -679,16 +671,16 @@ void UI::propertyEnvironmentMenu()
     static float translation[3];
     static float rotation[3];
     static float scale[3];
-    glm::mat4 rotationMat(renderer.environmentRotation);
+    glm::mat4 rotationMat(renderer.environment.rotation);
     ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(rotationMat), translation, rotation, scale);
     if (ImGui::DragFloat3("Rotation", rotation, .01f))
     {
         ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale,  glm::value_ptr(rotationMat));
-        renderer.environmentRotation = rotationMat;
+        renderer.environment.rotation = rotationMat;
         renderer.resetAccumulator();
     }
 
-    if (ImGui::Checkbox("Transparent background", &renderer.transparentBackground))
+    if (ImGui::Checkbox("Transparent background", &renderer.environment.transparent))
     {
         renderer.resetAccumulator();
     }

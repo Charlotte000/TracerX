@@ -74,13 +74,12 @@ void Application::init(glm::ivec2 size)
     });
 
     // Init components
-    if (this->scene.environmentName == "None" && !this->environmentFiles.empty())
-    {
-        this->scene.loadEnvironmentMap(Application::environmentFolder + this->environmentFiles[0]);
-    }
-
     this->renderer.init();
     this->ui.init(this);
+    if (this->renderer.environment.name == "None" && !this->environmentFiles.empty())
+    {
+        this->renderer.environment.loadFromFile(Application::environmentFolder + this->environmentFiles[0]);
+    }
 
     this->renderer.resize(size);
     this->renderer.resetScene(this->scene);

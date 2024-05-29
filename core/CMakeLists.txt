@@ -11,6 +11,7 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/FrameBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureArray.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
