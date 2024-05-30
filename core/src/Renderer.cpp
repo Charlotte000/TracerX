@@ -50,24 +50,29 @@ void Renderer::shutdown()
     this->toneMapper.shutdown();
 }
 
-void Renderer::render()
+void Renderer::render(size_t count)
 {
-    this->updateShaders();
-
     // Update accumulator
     this->pathTracer.use();
-    this->accumulator.use();
-    this->quad.draw();
+    this->updatePathTracerShader();
+
+    for (size_t i = 0; i < count; i++)
+    {
+        this->accumulator.use();
+        this->pathTracer.updateParam("FrameCount", this->frameCount);
+        this->quad.draw();
+        this->frameCount++;
+        FrameBuffer::stopUse();
+    }
 
     // Update output
     this->toneMapper.use();
     this->output.use();
+    this->updateToneMapperShader();
     this->quad.draw();
 
     Shader::stopUse();
     FrameBuffer::stopUse();
-
-    this->frameCount++;
 }
 
 #ifdef TX_DENOISE
@@ -116,7 +121,7 @@ void Renderer::denoise()
 void Renderer::resetAccumulator()
 {
     this->accumulator.clear();
-    this->frameCount = 1;
+    this->frameCount = 0;
 }
 
 void Renderer::resetMeshes(const std::vector<Mesh>& meshes)
@@ -179,10 +184,8 @@ void Renderer::initData()
     this->bvhBuffer.bind(7);
 }
 
-void Renderer::updateShaders()
+void Renderer::updatePathTracerShader()
 {
-    // Path tracer
-    this->pathTracer.use();
     this->pathTracer.updateParam("MaxBouceCount", this->maxBouceCount);
     this->pathTracer.updateParam("FrameCount", this->frameCount);
     this->pathTracer.updateParam("Camera.Position", this->camera.position);
@@ -195,11 +198,10 @@ void Renderer::updateShaders()
     this->pathTracer.updateParam("EnvironmentIntensity", this->environment.intensity);
     this->pathTracer.updateParam("EnvironmentRotation", this->environment.rotation);
     this->pathTracer.updateParam("TransparentBackground", this->environment.transparent);
+}
 
-    // Tone mapper
-    this->toneMapper.use();
+void Renderer::updateToneMapperShader()
+{
     this->toneMapper.updateParam("FrameCount", this->frameCount);
     this->toneMapper.updateParam("Gamma", this->gamma);
-
-    Shader::stopUse();
 }

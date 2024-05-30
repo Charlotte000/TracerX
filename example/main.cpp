@@ -44,13 +44,8 @@ int main()
     renderer.camera.blur = 0.001f;
 
     // Render
-    for (size_t i = 0; i < 100; i++)
-    {
-        cout << "Ajax white: " << i + 1 << "%    \r" << flush;
-        renderer.render();
-    }
-
-    cout << endl;
+    cout << "Ajax white" << endl;
+    renderer.render(100);
 
 #ifdef TX_DENOISE
     cout << "Denoising" << endl;
@@ -69,13 +64,8 @@ int main()
 
     // Render
     renderer.resetAccumulator();
-    for (size_t i = 0; i < 100; i++)
-    {
-        cout << "Ajax gold: " << i + 1 << "%    \r" << flush;
-        renderer.render();
-    }
-
-    cout << endl;
+    cout << "Ajax gold" << endl;
+    renderer.render(100);
 
 #ifdef TX_DENOISE
     cout << "Denoising" << endl;

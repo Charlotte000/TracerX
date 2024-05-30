@@ -102,9 +102,9 @@ void Application::run()
         this->control();
 
         // Render
-        if (this->isRendering || this->renderer.frameCount == 1)
+        if (this->isRendering || this->renderer.frameCount == 0)
         {
-            this->renderer.render();
+            this->renderer.render(this->perFrameCount);
         }
 
         // UI

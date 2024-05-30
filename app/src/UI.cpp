@@ -216,7 +216,7 @@ void UI::barMenu()
     ImGui::Text("%4.0fms", 1000 * elapsedTime);
 
     ImGui::Separator();
-    ImGui::Text("Frame count: %d", renderer.frameCount - 1);
+    ImGui::Text("Frame count: %d", renderer.frameCount);
 
     ImGui::EndMainMenuBar();
 }
@@ -700,6 +700,15 @@ void UI::propertySceneMenu()
         ImGui::DragInt("Max bouce count", &renderer.maxBouceCount, .01f, 0, 1000))
     {
         renderer.resetAccumulator();
+    }
+
+    ImGui::DragInt("Render per frame", &this->app->perFrameCount, .1f, 1, 10000);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::Text("A high value can cause lags but the image quality improves faster");
+        ImGui::EndTooltip();
     }
 
     ImGui::Separator();

@@ -19,6 +19,7 @@ public:
     GLFWwindow* window = nullptr;
     float cameraSpeed = 5.f;
     float cameraRotationSpeed = 1.f;
+    int perFrameCount = 1;
     std::vector<std::string> environmentFiles;
     std::vector<std::string> sceneFiles;
     bool isRendering = false;
