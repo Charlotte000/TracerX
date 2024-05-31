@@ -104,7 +104,7 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
 
         std::string name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
-        glm::ivec2 size = glm::ivec2(gltfImage.width, gltfImage.height);
+        glm::uvec2 size(gltfImage.width, gltfImage.height);
 
         std::vector<float> pixels;
         pixels.reserve(gltfImage.width * gltfImage.height * 4);

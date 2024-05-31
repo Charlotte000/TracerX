@@ -29,7 +29,7 @@ public:
     static inline const std::string sceneFolder = Application::assetsFolder + "/scenes/";
 
     Application();
-    void init(glm::ivec2 size);
+    void init(glm::uvec2 size);
     void shutdown();
     void run();
     void save() const;

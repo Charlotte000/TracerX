@@ -135,7 +135,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (int i = 0; i <= MaxBouceCount; i++)
+    for (uint i = 0; i <= MaxBouceCount; i++)
     {
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))

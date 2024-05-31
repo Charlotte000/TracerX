@@ -23,17 +23,17 @@ class Renderer
 {
 public:
     core::Camera camera;
-    int maxBouceCount = 5;
-    int frameCount = 0;
+    unsigned int maxBouceCount = 5;
+    unsigned int frameCount = 0;
     float gamma = 2.2f;
     core::Environment environment;
     core::FrameBuffer output;
     core::TextureArray textureArray;
 
     void init();
-    void resize(glm::ivec2 size);
+    void resize(glm::uvec2 size);
     void shutdown();
-    void render(size_t count = 1);
+    void render(unsigned int count = 1);
 #ifdef TX_DENOISE
     void denoise();
 #endif
@@ -58,8 +58,6 @@ private:
     static const char* vertexShaderSrc;
 
     void initData();
-    void updatePathTracerShader();
-    void updateToneMapperShader();
 };
 
 }

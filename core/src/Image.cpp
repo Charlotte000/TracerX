@@ -29,7 +29,7 @@ void Image::saveToFile(const std::string& name) const
     }
 }
 
-Image Image::resize(glm::ivec2 size) const
+Image Image::resize(glm::uvec2 size) const
 {
     Image img;
     img.size = size;
@@ -41,21 +41,23 @@ Image Image::resize(glm::ivec2 size) const
 Image Image::loadFromFile(const std::string& fileName)
 {
     Image img;
-    float* data = stbi_loadf(fileName.c_str(), &img.size.x, &img.size.y, nullptr, 4);
+    glm::ivec2 size;
+    float* data = stbi_loadf(fileName.c_str(), &size.x, &size.y, nullptr, 4);
     if (data == nullptr)
     {
         throw std::runtime_error("Failed to load the image: " + fileName);
     }
 
-    size_t size = img.size.x * img.size.y * 4;
-    img.pixels.resize(size);
-    std::copy(data, data + size, img.pixels.data());
+    img.size = size;
+    size_t pixelCount = img.size.x * img.size.y * 4;
+    img.pixels.resize(pixelCount);
+    std::copy(data, data + pixelCount, img.pixels.data());
 
     stbi_image_free(data);
     return img;
 }
 
-Image Image::loadFromMemory(glm::ivec2 size, const std::vector<float> pixels)
+Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float> pixels)
 {
     Image img;
     img.size = size;

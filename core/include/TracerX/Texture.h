@@ -10,7 +10,7 @@ namespace TracerX::core
 class Texture
 {
 public:
-    glm::ivec2 size;
+    glm::uvec2 size;
 
     void init();
     void bind(int binding);

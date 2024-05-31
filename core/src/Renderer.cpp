@@ -23,7 +23,7 @@ void Renderer::init()
     this->initData();
 }
 
-void Renderer::resize(glm::ivec2 size)
+void Renderer::resize(glm::uvec2 size)
 {
     this->accumulator.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
     this->output.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
@@ -50,13 +50,23 @@ void Renderer::shutdown()
     this->toneMapper.shutdown();
 }
 
-void Renderer::render(size_t count)
+void Renderer::render(unsigned int count)
 {
     // Update accumulator
     this->pathTracer.use();
-    this->updatePathTracerShader();
+    this->pathTracer.updateParam("MaxBouceCount", this->maxBouceCount);
+    this->pathTracer.updateParam("Camera.Position", this->camera.position);
+    this->pathTracer.updateParam("Camera.Forward", this->camera.forward);
+    this->pathTracer.updateParam("Camera.Up", this->camera.up);
+    this->pathTracer.updateParam("Camera.FOV", this->camera.fov);
+    this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
+    this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
+    this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
+    this->pathTracer.updateParam("EnvironmentIntensity", this->environment.intensity);
+    this->pathTracer.updateParam("EnvironmentRotation", this->environment.rotation);
+    this->pathTracer.updateParam("TransparentBackground", this->environment.transparent);
 
-    for (size_t i = 0; i < count; i++)
+    for (unsigned int i = 0; i < count; i++)
     {
         this->accumulator.use();
         this->pathTracer.updateParam("FrameCount", this->frameCount);
@@ -67,8 +77,10 @@ void Renderer::render(size_t count)
 
     // Update output
     this->toneMapper.use();
+    this->toneMapper.updateParam("FrameCount", this->frameCount);
+    this->toneMapper.updateParam("Gamma", this->gamma);
+
     this->output.use();
-    this->updateToneMapperShader();
     this->quad.draw();
 
     Shader::stopUse();
@@ -84,7 +96,7 @@ void Renderer::denoise()
 
     // Create color buffer
     Image colorImage = this->accumulator.colorTexture.upload();
-    glm::ivec2 size = this->accumulator.colorTexture.size;
+    glm::uvec2 size = this->accumulator.colorTexture.size;
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.write(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
@@ -144,7 +156,7 @@ void Renderer::resetScene(Scene& scene)
 {
     std::vector<glm::vec3> bvh = scene.createBVH();
 
-    this->textureArray.update(glm::ivec2(2048, 2048), scene.textures);
+    this->textureArray.update(glm::uvec2(2048, 2048), scene.textures);
     this->vertexBuffer.update(scene.vertices);
     this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
@@ -182,26 +194,4 @@ void Renderer::initData()
     this->meshBuffer.bind(5);
     this->materialBuffer.bind(6);
     this->bvhBuffer.bind(7);
-}
-
-void Renderer::updatePathTracerShader()
-{
-    this->pathTracer.updateParam("MaxBouceCount", this->maxBouceCount);
-    this->pathTracer.updateParam("FrameCount", this->frameCount);
-    this->pathTracer.updateParam("Camera.Position", this->camera.position);
-    this->pathTracer.updateParam("Camera.Forward", this->camera.forward);
-    this->pathTracer.updateParam("Camera.Up", this->camera.up);
-    this->pathTracer.updateParam("Camera.FOV", this->camera.fov);
-    this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
-    this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
-    this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
-    this->pathTracer.updateParam("EnvironmentIntensity", this->environment.intensity);
-    this->pathTracer.updateParam("EnvironmentRotation", this->environment.rotation);
-    this->pathTracer.updateParam("TransparentBackground", this->environment.transparent);
-}
-
-void Renderer::updateToneMapperShader()
-{
-    this->toneMapper.updateParam("FrameCount", this->frameCount);
-    this->toneMapper.updateParam("Gamma", this->gamma);
 }

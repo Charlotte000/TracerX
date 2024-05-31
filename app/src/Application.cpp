@@ -30,7 +30,7 @@ Application::Application()
     }
 }
 
-void Application::init(glm::ivec2 size)
+void Application::init(glm::uvec2 size)
 {
     // Init GLFW
     glfwSetErrorCallback([](int, const char* err)
@@ -64,7 +64,7 @@ void Application::init(glm::ivec2 size)
             switch (key)
             {
                 case GLFW_KEY_C:
-                    glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED :  GLFW_CURSOR_NORMAL);
+                    glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
                     break;
                 case GLFW_KEY_SPACE:
                     app->isRendering = !app->isRendering;

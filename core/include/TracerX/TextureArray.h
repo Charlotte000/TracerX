@@ -13,11 +13,11 @@ namespace TracerX::core
 class TextureArray
 {
 public:
-    glm::ivec3 size;
+    glm::uvec3 size;
 
     void init();
     void bind(int binding);
-    void update(glm::ivec2 size, const std::vector<Image>& images);
+    void update(glm::uvec2 size, const std::vector<Image>& images);
     void copy(Texture& texture, size_t index) const;
     void shutdown();
 private:

@@ -126,7 +126,7 @@ void UI::init(Application* app)
     SetupImGuiStyle();
 
     this->textureView.init();
-    this->textureView.update(Image::loadFromMemory(glm::ivec2(2048, 2048), std::vector<float>()));
+    this->textureView.update(Image::loadFromMemory(glm::uvec2(2048, 2048), std::vector<float>()));
 }
 
 void UI::render()
@@ -696,9 +696,11 @@ void UI::propertySceneMenu()
         renderer.resize(size);
     }
 
+    int maxBouceCount = renderer.maxBouceCount;
     if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f) |
-        ImGui::DragInt("Max bouce count", &renderer.maxBouceCount, .01f, 0, 1000))
+        ImGui::DragInt("Max bouce count", &maxBouceCount, .01f, 0, 1000))
     {
+        renderer.maxBouceCount = maxBouceCount;
         renderer.resetAccumulator();
     }
 

@@ -2,7 +2,7 @@
 
 layout(binding=0) uniform sampler2D Accumulator;
 
-uniform int FrameCount;
+uniform uint FrameCount;
 uniform float Gamma;
 
 in vec2 TexCoords;

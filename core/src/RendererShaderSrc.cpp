@@ -108,8 +108,8 @@ layout(binding=7) uniform samplerBuffer BVH;
 uniform float EnvironmentIntensity;
 uniform mat3 EnvironmentRotation;
 uniform bool TransparentBackground;
-uniform int MaxBouceCount;
-uniform int FrameCount;
+uniform uint MaxBouceCount;
+uniform uint FrameCount;
 uniform Cam Camera;
 
 
@@ -154,7 +154,7 @@ Node GetNode(int index)
     vec4 data3 = texelFetch(BVH, index * 3 + 2);
     return Node(data1.xyz, data2.xyz, int(data3.x), int(data3.y), int(data3.z));
 }
-uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + uint(FrameCount) * 5458u;
+uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + FrameCount * 5458u;
 
 float RandomValue()
 {
@@ -447,7 +447,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (int i = 0; i <= MaxBouceCount; i++)
+    for (uint i = 0; i <= MaxBouceCount; i++)
     {
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))
@@ -512,7 +512,7 @@ R"(
 
 layout(binding=0) uniform sampler2D Accumulator;
 
-uniform int FrameCount;
+uniform uint FrameCount;
 uniform float Gamma;
 
 in vec2 TexCoords;

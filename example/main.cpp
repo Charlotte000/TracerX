@@ -34,7 +34,7 @@ int main()
     Renderer renderer;
     renderer.init();
     renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_4k.hdr");
-    renderer.resize(glm::ivec2(1000, 1000));
+    renderer.resize(glm::uvec2(1000, 1000));
     renderer.resetScene(scene);
 
     // Setting up the camera

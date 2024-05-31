@@ -29,9 +29,9 @@ void Shader::use()
     glUseProgram(this->handler);
 }
 
-void Shader::updateParam(const std::string& name, int value)
+void Shader::updateParam(const std::string& name, unsigned int value)
 {
-    glUniform1i(glGetUniformLocation(this->handler, name.c_str()), value);
+    glUniform1ui(glGetUniformLocation(this->handler, name.c_str()), value);
 }
 
 void Shader::updateParam(const std::string& name, float value)
