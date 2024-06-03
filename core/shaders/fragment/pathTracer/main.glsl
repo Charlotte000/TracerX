@@ -1,8 +1,5 @@
 #version 430 core
 
-const float MIN_RENDER_DISTANCE = 0.0001;
-const float MAX_RENDER_DISTANCE = 1000000.0;
-
 const float PI         = 3.14159265358979323;
 const float INV_PI     = 0.31830988618379067;
 const float TWO_PI     = 6.28318530717958648;
@@ -130,7 +127,7 @@ vec4 SendRay(in Ray ray)
     for (uint i = 0; i <= MaxBouceCount; i++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, manifold))
+        if (!FindIntersection(ray, i == 0, manifold))
         {
             ray.IncomingLight += GetEnvironment(ray) * ray.Color;
             if (i == 0)
@@ -141,11 +138,8 @@ vec4 SendRay(in Ray ray)
             break;
         }
 
-        if (i != 0 || manifold.Depth >= MIN_RENDER_DISTANCE)
-        {
-            CollisionReact(ray, manifold);
-            ray.InvDirection = 1 / ray.Direction;
-        }
+        CollisionReact(ray, manifold);
+        ray.InvDirection = 1 / ray.Direction;
     }
 
     return vec4(ray.IncomingLight, Environment.Transparent && isBackground ? 0 : 1);

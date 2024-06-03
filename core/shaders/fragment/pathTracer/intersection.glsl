@@ -66,9 +66,9 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
     return tNear <= tFar && tFar >= 0;
 }
 
-bool FindIntersection(in Ray ray, out CollisionManifold manifold)
+bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
 {
-    manifold.Depth = MAX_RENDER_DISTANCE;
+    manifold.Depth = MaxRenderDistance;
 
     float bbhits[4];
 
@@ -99,7 +99,7 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
                 Vertex v3 = GetVertex(triangle.V3, mesh.Transform);
 
                 CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth)
+                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= MinRenderDistance))
                 {
                     manifold = current;
                 }
@@ -139,5 +139,5 @@ bool FindIntersection(in Ray ray, out CollisionManifold manifold)
         }
     }
 
-    return manifold.Depth < MAX_RENDER_DISTANCE;
+    return manifold.Depth < MaxRenderDistance;
 }

@@ -60,6 +60,8 @@ void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 si
     // Update accumulator
     this->pathTracer.use();
     this->pathTracer.updateParam("MaxBouceCount", this->maxBouceCount);
+    this->pathTracer.updateParam("MinRenderDistance", this->minRenderDistance);
+    this->pathTracer.updateParam("MaxRenderDistance", this->maxRenderDistance);
     this->pathTracer.updateParam("Camera.Position", this->camera.position);
     this->pathTracer.updateParam("Camera.Forward", this->camera.forward);
     this->pathTracer.updateParam("Camera.Up", this->camera.up);

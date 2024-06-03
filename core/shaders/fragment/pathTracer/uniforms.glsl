@@ -8,6 +8,8 @@ layout(binding=6) uniform samplerBuffer Materials;
 layout(binding=7) uniform samplerBuffer BVH;
 
 uniform uint MaxBouceCount;
+uniform float MinRenderDistance;
+uniform float MaxRenderDistance;
 uniform uint FrameCount;
 uniform Cam Camera;
 uniform Env Environment;

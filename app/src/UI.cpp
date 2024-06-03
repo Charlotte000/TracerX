@@ -245,7 +245,8 @@ void UI::drawingPanelMenu()
     ImGui::BeginChild("drawingPanelMenu", ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar);
     ImVec2 size = ImGui::GetContentRegionAvail();
     float aspectRatio = size.x / size.y;
-    float imAspectRatio = (float)renderer.output.colorTexture.size.x / renderer.output.colorTexture.size.y;
+    glm::vec2 imSize = renderer.output.colorTexture.size;
+    float imAspectRatio = imSize.x / imSize.y;
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
@@ -254,7 +255,7 @@ void UI::drawingPanelMenu()
     ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f), ImVec4(1, 1, 1, 1), borderColor);
 
     glm::mat4 view = renderer.camera.createView();
-    glm::mat4 projection = renderer.camera.createProjection(imAspectRatio);
+    glm::mat4 projection = renderer.camera.createProjection(imSize.x, imSize.y, renderer.minRenderDistance, renderer.maxRenderDistance);
     ImGuizmo::SetRect(imagePos.x + ImGui::GetWindowPos().x, imagePos.y + ImGui::GetWindowPos().y, imageSize.x, imageSize.y);
     ImGuizmo::SetDrawlist();
 

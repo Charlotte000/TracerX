@@ -18,7 +18,7 @@ struct Camera
 
     void lookAt(glm::vec3 position);
     glm::mat4 createView() const;
-    glm::mat4 createProjection(float aspectRatio) const;
+    glm::mat4 createProjection(float width, float height, float zNear, float zFar) const;
 };
 
 }

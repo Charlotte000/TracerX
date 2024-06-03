@@ -26,6 +26,8 @@ public:
     unsigned int maxBouceCount = 5;
     unsigned int frameCount = 0;
     float gamma = 2.2f;
+    float minRenderDistance = .0001f;
+    float maxRenderDistance = 1000000;
     core::Environment environment;
     core::FrameBuffer output;
     core::TextureArray textureArray;
