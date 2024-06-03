@@ -26,6 +26,13 @@ struct Ray
     vec3 IncomingLight;
 };
 
+struct Env
+{
+    bool Transparent;
+    float Intensity;
+    mat3 Rotation;
+};
+
 struct Cam
 {
     vec3 Position;
@@ -105,13 +112,10 @@ layout(binding=5) uniform samplerBuffer Meshes;
 layout(binding=6) uniform samplerBuffer Materials;
 layout(binding=7) uniform samplerBuffer BVH;
 
-uniform float EnvironmentIntensity;
-uniform mat3 EnvironmentRotation;
-uniform bool TransparentBackground;
 uniform uint MaxBouceCount;
 uniform uint FrameCount;
 uniform Cam Camera;
-
+uniform Env Environment;
 
 Triangle GetTriangle(int index)
 {
@@ -153,6 +157,14 @@ Node GetNode(int index)
     vec4 data2 = texelFetch(BVH, index * 3 + 1);
     vec4 data3 = texelFetch(BVH, index * 3 + 2);
     return Node(data1.xyz, data2.xyz, int(data3.x), int(data3.y), int(data3.z));
+}
+
+vec3 GetEnvironment(in Ray ray)
+{
+    vec3 direction = Environment.Rotation * ray.Direction;
+    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
+    float v = acos(direction.y) * INV_PI;
+    return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
 }
 uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + FrameCount * 5458u;
 
@@ -335,14 +347,6 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
     return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
 }
 
-vec3 GetEnvironmentLight(in Ray ray)
-{
-    vec3 direction = EnvironmentRotation * ray.Direction;
-    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
-    float v = acos(direction.y) * INV_PI;
-    return texture(EnvironmentTexture, vec2(u, v)).rgb * EnvironmentIntensity;
-}
-
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold.MaterialId);
@@ -452,7 +456,7 @@ vec4 SendRay(in Ray ray)
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))
         {
-            ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
+            ray.IncomingLight += GetEnvironment(ray) * ray.Color;
             if (i == 0)
             {
                 isBackground = true;
@@ -468,7 +472,7 @@ vec4 SendRay(in Ray ray)
         }
     }
 
-    return vec4(ray.IncomingLight, TransparentBackground && isBackground ? 0 : 1);
+    return vec4(ray.IncomingLight, Environment.Transparent && isBackground ? 0 : 1);
 }
 
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);

@@ -28,9 +28,18 @@ void FrameBuffer::use()
     glViewport(0, 0, this->colorTexture.size.x, this->colorTexture.size.y);
 }
 
+void FrameBuffer::useRect(glm::uvec2 position, glm::uvec2 size)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
+    glViewport(0, 0, this->colorTexture.size.x, this->colorTexture.size.y);
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(position.x, position.y, size.x, size.y);
+}
+
 void FrameBuffer::clear()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
+    glViewport(0, 0, this->colorTexture.size.x, this->colorTexture.size.y); 
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -38,5 +47,6 @@ void FrameBuffer::clear()
 
 void FrameBuffer::stopUse()
 {
+    glDisable(GL_SCISSOR_TEST);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

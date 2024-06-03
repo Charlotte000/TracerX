@@ -52,6 +52,11 @@ void Renderer::shutdown()
 
 void Renderer::render(unsigned int count)
 {
+    this->renderRect(count, glm::uvec2(0, 0), this->output.colorTexture.size);
+}
+
+void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size)
+{
     // Update accumulator
     this->pathTracer.use();
     this->pathTracer.updateParam("MaxBouceCount", this->maxBouceCount);
@@ -62,14 +67,15 @@ void Renderer::render(unsigned int count)
     this->pathTracer.updateParam("Camera.FocalDistance", this->camera.focalDistance);
     this->pathTracer.updateParam("Camera.Aperture", this->camera.aperture);
     this->pathTracer.updateParam("Camera.Blur", this->camera.blur);
-    this->pathTracer.updateParam("EnvironmentIntensity", this->environment.intensity);
-    this->pathTracer.updateParam("EnvironmentRotation", this->environment.rotation);
-    this->pathTracer.updateParam("TransparentBackground", this->environment.transparent);
+    this->pathTracer.updateParam("Environment.Transparent", this->environment.transparent);
+    this->pathTracer.updateParam("Environment.Intensity", this->environment.intensity);
+    this->pathTracer.updateParam("Environment.Rotation", this->environment.rotation);
 
     for (unsigned int i = 0; i < count; i++)
     {
-        this->accumulator.use();
         this->pathTracer.updateParam("FrameCount", this->frameCount);
+
+        this->accumulator.useRect(position, size);
         this->quad.draw();
         this->frameCount++;
         FrameBuffer::stopUse();
@@ -80,7 +86,7 @@ void Renderer::render(unsigned int count)
     this->toneMapper.updateParam("FrameCount", this->frameCount);
     this->toneMapper.updateParam("Gamma", this->gamma);
 
-    this->output.use();
+    this->output.useRect(position, size);
     this->quad.draw();
 
     Shader::stopUse();

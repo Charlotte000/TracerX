@@ -34,6 +34,7 @@ public:
     void resize(glm::uvec2 size);
     void shutdown();
     void render(unsigned int count = 1);
+    void renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size);
 #ifdef TX_DENOISE
     void denoise();
 #endif

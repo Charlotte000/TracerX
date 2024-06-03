@@ -7,6 +7,13 @@ struct Ray
     vec3 IncomingLight;
 };
 
+struct Env
+{
+    bool Transparent;
+    float Intensity;
+    mat3 Rotation;
+};
+
 struct Cam
 {
     vec3 Position;

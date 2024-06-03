@@ -23,14 +23,6 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
     return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
 }
 
-vec3 GetEnvironmentLight(in Ray ray)
-{
-    vec3 direction = EnvironmentRotation * ray.Direction;
-    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
-    float v = acos(direction.y) * INV_PI;
-    return texture(EnvironmentTexture, vec2(u, v)).rgb * EnvironmentIntensity;
-}
-
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold.MaterialId);
@@ -140,7 +132,7 @@ vec4 SendRay(in Ray ray)
         CollisionManifold manifold;
         if (!FindIntersection(ray, manifold))
         {
-            ray.IncomingLight += GetEnvironmentLight(ray) * ray.Color;
+            ray.IncomingLight += GetEnvironment(ray) * ray.Color;
             if (i == 0)
             {
                 isBackground = true;
@@ -156,7 +148,7 @@ vec4 SendRay(in Ray ray)
         }
     }
 
-    return vec4(ray.IncomingLight, TransparentBackground && isBackground ? 0 : 1);
+    return vec4(ray.IncomingLight, Environment.Transparent && isBackground ? 0 : 1);
 }
 
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);
