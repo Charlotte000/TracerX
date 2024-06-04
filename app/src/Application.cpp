@@ -4,7 +4,7 @@
 #include <tinydir.h>
 #include <glm/gtx/rotate_vector.hpp>
 
-using namespace TracerX::core;
+using namespace TracerX;
 
 Application::Application()
 {
@@ -74,15 +74,14 @@ void Application::init(glm::uvec2 size)
     });
 
     // Init components
-    this->renderer.init();
+    this->renderer.init(size);
     this->ui.init(this);
     if (this->renderer.environment.name == "None" && !this->environmentFiles.empty())
     {
         this->renderer.environment.loadFromFile(Application::environmentFolder + this->environmentFiles[0]);
     }
 
-    this->renderer.resize(size);
-    this->renderer.resetScene(this->scene);
+    this->renderer.loadScene(this->scene, true);
 }
 
 void Application::shutdown()
@@ -122,7 +121,7 @@ void Application::save() const
     auto t = std::time(nullptr);
     std::stringstream name;
     name << "img" << this->renderer.frameCount << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
-    this->renderer.output.colorTexture.upload().saveToFile(name.str());
+    this->renderer.getImage().saveToFile(name.str());
 }
 
 void Application::control()
@@ -197,5 +196,5 @@ void Application::control()
     camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
     camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
 
-    this->renderer.resetAccumulator();
+    this->renderer.clear();
 }

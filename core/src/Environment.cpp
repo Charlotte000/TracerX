@@ -1,7 +1,7 @@
 #include "TracerX/Image.h"
 #include "TracerX/Environment.h"
 
-using namespace TracerX::core;
+using namespace TracerX;
 
 void Environment::reset()
 {

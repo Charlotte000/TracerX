@@ -22,17 +22,15 @@ namespace TracerX
 class Renderer
 {
 public:
-    core::Camera camera;
+    Camera camera;
     unsigned int maxBouceCount = 5;
     unsigned int frameCount = 0;
     float gamma = 2.2f;
     float minRenderDistance = .0001f;
     float maxRenderDistance = 1000000;
-    core::Environment environment;
-    core::FrameBuffer output;
-    core::TextureArray textureArray;
+    Environment environment;
 
-    void init();
+    void init(glm::uvec2 size);
     void resize(glm::uvec2 size);
     void shutdown();
     void render(unsigned int count = 1);
@@ -40,16 +38,18 @@ public:
 #ifdef TX_DENOISE
     void denoise();
 #endif
-    void resetAccumulator();
-    void resetMeshes(const std::vector<core::Mesh>& meshes);
-    void resetBVH(const std::vector<glm::vec3>& bvh, const std::vector<core::Triangle> triangles);
-    void resetMaterials(const std::vector<core::Material>& materials);
-    void resetScene(Scene& scene);
+    void clear();
+    GLuint getTextureHandler() const;
+    Image getImage() const;
+    glm::uvec2 getSize() const;
+    void loadScene(Scene& scene, bool rebuildBVH);
 private:
     core::Quad quad;
     core::Shader pathTracer;
     core::Shader toneMapper;
     core::FrameBuffer accumulator;
+    core::FrameBuffer output;
+    core::TextureArray textureArray;
     core::Buffer<core::Vertex> vertexBuffer;
     core::Buffer<core::Triangle> triangleBuffer;
     core::Buffer<core::Mesh> meshBuffer;

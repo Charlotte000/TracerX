@@ -8,7 +8,7 @@
 using namespace TracerX;
 using namespace TracerX::core;
 
-void Renderer::init()
+void Renderer::init(glm::uvec2 size)
 {
     // Init GLEW
     GLenum status = glewInit();
@@ -21,13 +21,15 @@ void Renderer::init()
     this->toneMapper.init(Renderer::vertexShaderSrc, Renderer::toneMapperShaderSrc);
 
     this->initData();
+
+    this->resize(size);
 }
 
 void Renderer::resize(glm::uvec2 size)
 {
     this->accumulator.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
     this->output.colorTexture.update(Image::loadFromMemory(size, std::vector<float>()));
-    this->resetAccumulator();
+    this->clear();
 }
 
 void Renderer::shutdown()
@@ -138,40 +140,40 @@ void Renderer::denoise()
 }
 #endif
 
-void Renderer::resetAccumulator()
+void Renderer::clear()
 {
     this->accumulator.clear();
     this->frameCount = 0;
 }
 
-void Renderer::resetMeshes(const std::vector<Mesh>& meshes)
+GLuint Renderer::getTextureHandler() const
 {
-    this->meshBuffer.update(meshes);
+    return this->output.colorTexture.getHandler();
 }
 
-void Renderer::resetBVH(const std::vector<glm::vec3>& bvh, const std::vector<Triangle> triangles)
+Image Renderer::getImage() const
 {
-    this->bvhBuffer.update(bvh);
-    this->triangleBuffer.update(triangles);
+    return this->output.colorTexture.upload();
 }
 
-void Renderer::resetMaterials(const std::vector<Material>& materials)
+glm::uvec2 Renderer::getSize() const
 {
-    this->materialBuffer.update(materials);
+    return this->output.colorTexture.size;
 }
 
-void Renderer::resetScene(Scene& scene)
+void Renderer::loadScene(Scene& scene, bool rebuildBVH)
 {
-    std::vector<glm::vec3> bvh = scene.createBVH();
+    if (rebuildBVH)
+    {
+        std::vector<glm::vec3> bvh = scene.createBVH();
+        this->bvhBuffer.update(bvh);
+    }
 
     this->textureArray.update(glm::uvec2(2048, 2048), scene.textures);
     this->vertexBuffer.update(scene.vertices);
     this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
     this->materialBuffer.update(scene.materials);
-    this->bvhBuffer.update(bvh);
-
-    this->resetAccumulator();
 }
 
 void Renderer::initData()

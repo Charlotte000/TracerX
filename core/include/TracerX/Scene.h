@@ -21,13 +21,13 @@ class Scene
 public:
     std::vector<core::Vertex> vertices;
     std::vector<core::Triangle> triangles;
-    std::vector<core::Image> textures;
+    std::vector<Image> textures;
     std::vector<std::string> textureNames;
     std::vector<core::Material> materials;
     std::vector<std::string> materialNames;
     std::vector<core::Mesh> meshes;
     std::vector<std::string> meshNames;
-    std::vector<core::Camera> cameras;
+    std::vector<Camera> cameras;
     std::string name = "Empty";
 
     int loadTexture(const std::string& fileName);

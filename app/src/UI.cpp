@@ -169,7 +169,8 @@ void UI::barMenu()
                     if (ImGui::Selectable(name.c_str(), scene.name == name))
                     {
                         scene = Scene::loadGLTF(Application::sceneFolder + name);
-                        renderer.resetScene(scene);
+                        renderer.clear();
+                        renderer.loadScene(scene, true);
 
                         this->editMesh = nullptr;
                         this->editMeshTransform = glm::mat4(1);
@@ -245,14 +246,14 @@ void UI::drawingPanelMenu()
     ImGui::BeginChild("drawingPanelMenu", ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1), ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border, ImGuiWindowFlags_NoScrollbar);
     ImVec2 size = ImGui::GetContentRegionAvail();
     float aspectRatio = size.x / size.y;
-    glm::vec2 imSize = renderer.output.colorTexture.size;
+    glm::vec2 imSize = renderer.getSize();
     float imAspectRatio = imSize.x / imSize.y;
     ImVec2 imageSize = imAspectRatio > aspectRatio ? ImVec2(size.x, size.y / imAspectRatio * aspectRatio) : ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
     ImVec2 imagePos((ImGui::GetWindowSize().x - imageSize.x) * 0.5f, (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
 
     ImVec4 borderColor = renderer.environment.transparent ? ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight] : ImVec4(0, 0, 0, 0);
     ImGui::SetCursorPos(imagePos);
-    ImGui::Image((void*)(intptr_t)renderer.output.colorTexture.getHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f), ImVec4(1, 1, 1, 1), borderColor);
+    ImGui::Image((void*)(intptr_t)renderer.getTextureHandler(), imageSize, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f), ImVec4(1, 1, 1, 1), borderColor);
 
     glm::mat4 view = renderer.camera.createView();
     glm::mat4 projection = renderer.camera.createProjection(imSize.x, imSize.y, renderer.minRenderDistance, renderer.maxRenderDistance);
@@ -266,9 +267,8 @@ void UI::drawingPanelMenu()
             this->editMesh->transform = this->editMeshTransform;
             const std::vector<glm::vec3>& bvh = scene.createBVH();
 
-            renderer.resetAccumulator();
-            renderer.resetMeshes(scene.meshes);
-            renderer.resetBVH(bvh, scene.triangles);
+            renderer.clear();
+            renderer.loadScene(scene, true);
     }
 
     if (this->editEnvironment)
@@ -277,7 +277,7 @@ void UI::drawingPanelMenu()
         if (ImGuizmo::Manipulate(glm::value_ptr(view), glm::value_ptr(projection), ImGuizmo::OPERATION::ROTATE, ImGuizmo::MODE::WORLD, glm::value_ptr(rotation)))
         {
             renderer.environment.rotation = rotation;
-            renderer.resetAccumulator();
+            renderer.clear();
         }
     }
 
@@ -410,8 +410,8 @@ void UI::propertyMeshMenu()
             if (ImGui::Selectable((scene.materialNames[index] + "##meshMaterial" + std::to_string(index)).c_str(), index == (int)mesh.materialId))
             {
                 mesh.materialId = (float)index;
-                renderer.resetAccumulator();
-                renderer.resetMeshes(scene.meshes);
+                renderer.clear();
+                renderer.loadScene(scene, false);
             }
         }
 
@@ -425,8 +425,8 @@ void UI::propertyMeshMenu()
         {
             size_t index = *(size_t*)payload->Data;
             mesh.materialId = (float)index;
-            renderer.resetAccumulator();
-            renderer.resetMeshes(scene.meshes);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         ImGui::EndDragDropTarget();
@@ -439,7 +439,7 @@ void UI::propertyMeshMenu()
         static glm::vec3 scale;
         ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(mesh.transform), glm::value_ptr(translation), glm::value_ptr(rotation), glm::value_ptr(scale));
         renderer.camera.lookAt(translation);
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     static float translation[3];
@@ -481,9 +481,8 @@ void UI::propertyMeshMenu()
         this->editMesh->transform = this->editMeshTransform;
         const std::vector<glm::vec3>& bvh = scene.createBVH();
 
-        renderer.resetAccumulator();
-        renderer.resetMeshes(scene.meshes);
-        renderer.resetBVH(bvh, scene.triangles);
+        renderer.clear();
+        renderer.loadScene(scene, true);
     }
 
     ImGui::EndDisabled();
@@ -492,7 +491,7 @@ void UI::propertyMeshMenu()
 void UI::propertyMaterialMenu()
 {
     Renderer& renderer = this->app->renderer;
-    const Scene& scene = this->app->scene;
+    Scene& scene = this->app->scene;
     Material& material = *this->editMaterial;
 
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
@@ -504,8 +503,8 @@ void UI::propertyMaterialMenu()
     {
         if (ImGui::ColorEdit3("Color##albedo", glm::value_ptr(material.albedoColor), ImGuiColorEditFlags_Float))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         this->materialTextureSelector("albedo", material.albedoTextureId);
@@ -516,8 +515,8 @@ void UI::propertyMaterialMenu()
     {
         if (ImGui::SliderFloat("Strength##roughness", &material.roughness, 0.f, 1.f))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         this->materialTextureSelector("roughness", material.roughnessTextureId);
@@ -528,8 +527,8 @@ void UI::propertyMaterialMenu()
     {
         if (ImGui::SliderFloat("Strength##metalness", &material.metalness, 0.f, 1.f))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         this->materialTextureSelector("metalness", material.metalnessTextureId);
@@ -541,8 +540,8 @@ void UI::propertyMaterialMenu()
         if (ImGui::ColorEdit3("Color##emission", glm::value_ptr(material.emissionColor), ImGuiColorEditFlags_Float) |
             ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, .0f, 10000.f))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         this->materialTextureSelector("emission", material.emissionTextureId);
@@ -554,8 +553,8 @@ void UI::propertyMaterialMenu()
         if (ImGui::ColorEdit3("Color##fresnel", glm::value_ptr(material.fresnelColor), ImGuiColorEditFlags_Float) |
             ImGui::DragFloat("Strength##fresnel", &material.fresnelStrength, .0001f, 0.f, 100.f))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         ImGui::EndTabItem();
@@ -572,8 +571,8 @@ void UI::propertyMaterialMenu()
         if (ImGui::DragFloat("Density", &material.density, .001f, 0.f, 100.f) |
             ImGui::DragFloat("IOR", &material.ior, .001f, 0.f, 100.f))
         {
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         ImGui::EndTabItem();
@@ -594,26 +593,26 @@ void UI::propertyCameraMenu()
     {
         camera.forward = glm::normalize(camera.forward);
         camera.up = glm::normalize(camera.up);
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     ImGui::Separator();
     if (ImGui::SliderAngle("FOV", &camera.fov, 0.f, 180.f))
     {
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     ImGui::Separator();
     if (ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0.f, 1000.f) |
         ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0.f, 1000.f))
     {
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     ImGui::Separator();
     if (ImGui::DragFloat("Blur", &camera.blur, .000001f, 0.f, 1000.f, "%.5f"))
     {
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     ImGui::Separator();
@@ -630,7 +629,7 @@ void UI::propertyCameraMenu()
                 if (ImGui::Selectable(("Camera " + std::to_string(i)).c_str()))
                 {
                     camera = scene.cameras[i];
-                    renderer.resetAccumulator();
+                    renderer.clear();
                 }
             }
 
@@ -645,7 +644,7 @@ void UI::propertyEnvironmentMenu()
 
     if (ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, .0f, 1000000.f))
     {
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     if (ImGui::BeginCombo("##environment", renderer.environment.name.c_str()))
@@ -653,7 +652,7 @@ void UI::propertyEnvironmentMenu()
         if (ImGui::Selectable("None", renderer.environment.name == "None"))
         {
             renderer.environment.reset();
-            renderer.resetAccumulator();
+            renderer.clear();
         }
 
         for (size_t i = 0; i < this->app->environmentFiles.size(); i++)
@@ -662,7 +661,7 @@ void UI::propertyEnvironmentMenu()
             if (ImGui::Selectable((environmentName + "##environmentTexture" + std::to_string(i)).c_str(), environmentName == renderer.environment.name))
             {
                 renderer.environment.loadFromFile(Application::environmentFolder + environmentName);
-                renderer.resetAccumulator();
+                renderer.clear();
             }
         }
 
@@ -678,12 +677,12 @@ void UI::propertyEnvironmentMenu()
     {
         ImGuizmo::RecomposeMatrixFromComponents(translation, rotation, scale,  glm::value_ptr(rotationMat));
         renderer.environment.rotation = rotationMat;
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     if (ImGui::Checkbox("Transparent background", &renderer.environment.transparent))
     {
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 }
 
@@ -691,7 +690,7 @@ void UI::propertySceneMenu()
 {
     Renderer& renderer = this->app->renderer;
 
-    glm::ivec2 size = renderer.output.colorTexture.size;
+    glm::ivec2 size = renderer.getSize();
     if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10.f, 1, 10000))
     {
         renderer.resize(size);
@@ -702,7 +701,7 @@ void UI::propertySceneMenu()
         ImGui::DragInt("Max bouce count", &maxBouceCount, .01f, 0, 1000))
     {
         renderer.maxBouceCount = maxBouceCount;
-        renderer.resetAccumulator();
+        renderer.clear();
     }
 
     ImGui::DragInt("Render per frame", &this->app->perFrameCount, .1f, 1, 10000);
@@ -731,15 +730,15 @@ void UI::propertySceneMenu()
 void UI::materialTextureSelector(const std::string& name, float& currentTextureId)
 {
     Renderer& renderer = this->app->renderer;
-    const Scene& scene = this->app->scene;
+    Scene& scene = this->app->scene;
 
     if (ImGui::BeginCombo(("Texture##" + name).c_str(), currentTextureId == -1 ? "None" : scene.textureNames[currentTextureId].c_str()))
     {
         if (ImGui::Selectable("None", (int)currentTextureId == -1))
         {
             currentTextureId = -1.f;
-            renderer.resetAccumulator();
-            renderer.resetMaterials(scene.materials);
+            renderer.clear();
+            renderer.loadScene(scene, false);
         }
 
         for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
@@ -749,8 +748,8 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
             if (ImGui::Selectable((textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(), (int)currentTextureId == textureId))
             {
                 currentTextureId = (float)textureId;
-                renderer.resetAccumulator();
-                renderer.resetMaterials(scene.materials);
+                renderer.clear();
+                renderer.loadScene(scene, false);
             }
         }
 
@@ -759,7 +758,7 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
 
     if (currentTextureId != -1)
     {
-        renderer.textureArray.copy(this->textureView, currentTextureId);
+        this->textureView.update(scene.textures[(int)currentTextureId]);
         ImGui::Image((void*)(intptr_t)this->textureView.getHandler(), ImVec2(200, 200));
     }
 }

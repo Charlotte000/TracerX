@@ -44,11 +44,6 @@ void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
-void TextureArray::copy(Texture& texture, size_t index) const
-{
-    glCopyImageSubData(this->handler, GL_TEXTURE_2D_ARRAY, 0, 0, 0, index, texture.getHandler(), GL_TEXTURE_2D, 0, 0, 0, 0, this->size.x, this->size.y, 1);
-}
-
 void TextureArray::shutdown()
 {
     glDeleteTextures(1, &this->handler);

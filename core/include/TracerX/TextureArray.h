@@ -18,7 +18,6 @@ public:
     void init();
     void bind(int binding);
     void update(glm::uvec2 size, const std::vector<Image>& images);
-    void copy(Texture& texture, size_t index) const;
     void shutdown();
 private:
     GLuint handler;

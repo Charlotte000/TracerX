@@ -1,5 +1,6 @@
 #include "TracerX/Texture.h"
 
+using namespace TracerX;
 using namespace TracerX::core;
 
 void Texture::init()

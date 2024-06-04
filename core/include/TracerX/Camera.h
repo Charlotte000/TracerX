@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-namespace TracerX::core
+namespace TracerX
 {
 
 struct Camera

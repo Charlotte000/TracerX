@@ -32,10 +32,9 @@ int main()
 
     // Setting up the renderer
     Renderer renderer;
-    renderer.init();
+    renderer.init(glm::uvec2(1000, 1000));
     renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_4k.hdr");
-    renderer.resize(glm::uvec2(1000, 1000));
-    renderer.resetScene(scene);
+    renderer.loadScene(scene, true);
 
     // Setting up the camera
     renderer.camera.fov = glm::radians(45.f);
@@ -53,17 +52,17 @@ int main()
 #endif
 
     cout << "Saving" << endl << endl;
-    renderer.output.colorTexture.upload().saveToFile("ajaxWhite.png");
+    renderer.getImage().saveToFile("ajaxWhite.png");
 
     // Setting up the mesh material
     Material& material = scene.materials[ajax.materialId];
     material.albedoColor = glm::vec3(.3f, .3f, .001f);
     material.metalness = 1;
     material.roughness = .1f;
-    renderer.resetMaterials(scene.materials);
+    renderer.loadScene(scene, false);
 
     // Render
-    renderer.resetAccumulator();
+    renderer.clear();
     cout << "Ajax gold" << endl;
     renderer.render(100);
 
@@ -73,7 +72,7 @@ int main()
 #endif
 
     cout << "Saving" << endl;
-    renderer.output.colorTexture.upload().saveToFile("ajaxGold.png");
+    renderer.getImage().saveToFile("ajaxGold.png");
 
     // Shutting down
     renderer.shutdown();

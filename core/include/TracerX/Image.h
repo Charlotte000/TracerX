@@ -4,7 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-namespace TracerX::core
+namespace TracerX
 {
 
 struct Image
