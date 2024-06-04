@@ -101,7 +101,7 @@ void Application::run()
         this->control();
 
         // Render
-        if (this->isRendering || this->renderer.frameCount == 0)
+        if (this->isRendering || this->renderer.getFrameCount() == 0)
         {
             this->renderer.render(this->perFrameCount);
         }
@@ -120,7 +120,7 @@ void Application::save() const
 {
     auto t = std::time(nullptr);
     std::stringstream name;
-    name << "img" << this->renderer.frameCount << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
+    name << "img" << this->renderer.getFrameCount() << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
     this->renderer.getImage().saveToFile(name.str());
 }
 

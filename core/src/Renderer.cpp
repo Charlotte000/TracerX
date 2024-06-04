@@ -161,6 +161,11 @@ glm::uvec2 Renderer::getSize() const
     return this->output.colorTexture.size;
 }
 
+unsigned int Renderer::getFrameCount() const
+{
+    return this->frameCount;
+}
+
 void Renderer::loadScene(Scene& scene, bool rebuildBVH)
 {
     if (rebuildBVH)

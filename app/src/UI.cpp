@@ -217,7 +217,7 @@ void UI::barMenu()
     ImGui::Text("%4.0fms", 1000 * elapsedTime);
 
     ImGui::Separator();
-    ImGui::Text("Frame count: %d", renderer.frameCount);
+    ImGui::Text("Frame count: %u", renderer.getFrameCount());
 
     ImGui::EndMainMenuBar();
 }

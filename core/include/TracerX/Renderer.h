@@ -24,7 +24,6 @@ class Renderer
 public:
     Camera camera;
     unsigned int maxBouceCount = 5;
-    unsigned int frameCount = 0;
     float gamma = 2.2f;
     float minRenderDistance = .0001f;
     float maxRenderDistance = 1000000;
@@ -42,8 +41,10 @@ public:
     GLuint getTextureHandler() const;
     Image getImage() const;
     glm::uvec2 getSize() const;
+    unsigned int getFrameCount() const;
     void loadScene(Scene& scene, bool rebuildBVH);
 private:
+    unsigned int frameCount = 0;
     core::Quad quad;
     core::Shader pathTracer;
     core::Shader toneMapper;
