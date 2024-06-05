@@ -24,17 +24,18 @@ int main()
     GLFWwindow* window = createWindow();
 
     // Loading the scene
-    Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb");
+    Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb", false);
 
     // Move the mesh
     Mesh& ajax = scene.meshes[0];
     ajax.transform = glm::translate(scene.meshes[0].transform, glm::vec3(0, -.5f, 0));
+    scene.buildBVH();
 
     // Setting up the renderer
     Renderer renderer;
     renderer.init(glm::uvec2(1000, 1000));
     renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_4k.hdr");
-    renderer.loadScene(scene, true);
+    renderer.loadScene(scene);
 
     // Setting up the camera
     renderer.camera.fov = glm::radians(45.f);
@@ -59,7 +60,7 @@ int main()
     material.albedoColor = glm::vec3(.3f, .3f, .001f);
     material.metalness = 1;
     material.roughness = .1f;
-    renderer.loadScene(scene, false);
+    renderer.updateSceneMaterials(scene);
 
     // Render
     renderer.clear();

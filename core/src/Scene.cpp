@@ -23,11 +23,13 @@ int Scene::loadMaterial(const Material& material, const std::string& name)
     return this->materials.size() - 1;
 }
 
-const std::vector<glm::vec3> Scene::createBVH()
+void Scene::buildBVH()
 {
+    this->bvh.clear();
+
     if (this->triangles.empty())
     {
-        return std::vector<glm::vec3>();
+        return;
     }
 
     class TriangleConverter
@@ -54,19 +56,16 @@ const std::vector<glm::vec3> Scene::createBVH()
 
     FastBVH::BVH<float, Triangle> bvh = FastBVH::DefaultBuilder<float>()(this->triangles, TriangleConverter(&this->vertices, &this->meshes));
 
-    std::vector<glm::vec3> nodes;
-    nodes.reserve(bvh.getNodes().size() * 3);
+    this->bvh.reserve(bvh.getNodes().size() * 3);
     for (const FastBVH::Node<float>& node : bvh.getNodes())
     {
-        nodes.push_back(node.bbox.min);
-        nodes.push_back(node.bbox.max);
-        nodes.push_back(glm::vec3(node.start, node.primitive_count, node.right_offset));
+        this->bvh.push_back(node.bbox.min);
+        this->bvh.push_back(node.bbox.max);
+        this->bvh.push_back(glm::vec3(node.start, node.primitive_count, node.right_offset));
     }
-
-    return nodes;
 }
 
-Scene Scene::loadGLTF(const std::string& folder)
+Scene Scene::loadGLTF(const std::string& folder, bool buildBVH)
 {
     Scene scene;
     scene.name = folder.substr(folder.find_last_of("/\\") + 1);
@@ -93,6 +92,12 @@ Scene Scene::loadGLTF(const std::string& folder)
     scene.GLTFtextures(model.textures, model.images);
     scene.GLTFmaterials(model.materials);
     scene.GLTFnodes(model, glm::mat4(1));
+
+    if (buildBVH)
+    {
+        scene.buildBVH();
+    }
+
     return scene;
 }
 

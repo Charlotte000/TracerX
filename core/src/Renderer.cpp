@@ -78,7 +78,6 @@ void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 si
     for (unsigned int i = 0; i < count; i++)
     {
         this->pathTracer.updateParam("FrameCount", this->frameCount);
-
         this->accumulator.useRect(position, size);
         this->quad.draw();
         this->frameCount++;
@@ -166,19 +165,24 @@ unsigned int Renderer::getFrameCount() const
     return this->frameCount;
 }
 
-void Renderer::loadScene(Scene& scene, bool rebuildBVH)
+void Renderer::loadScene(const Scene& scene)
 {
-    if (rebuildBVH)
-    {
-        std::vector<glm::vec3> bvh = scene.createBVH();
-        this->bvhBuffer.update(bvh);
-    }
-
     this->textureArray.update(glm::uvec2(2048, 2048), scene.textures);
+    this->updateSceneMeshes(scene);
+    this->updateSceneMaterials(scene);
+}
+
+void Renderer::updateSceneMaterials(const Scene& scene)
+{
+    this->materialBuffer.update(scene.materials);
+}
+
+void Renderer::updateSceneMeshes(const Scene& scene)
+{
+    this->bvhBuffer.update(scene.bvh);
     this->vertexBuffer.update(scene.vertices);
     this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
-    this->materialBuffer.update(scene.materials);
 }
 
 void Renderer::initData()

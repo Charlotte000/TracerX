@@ -81,7 +81,7 @@ void Application::init(glm::uvec2 size)
         this->renderer.environment.loadFromFile(Application::environmentFolder + this->environmentFiles[0]);
     }
 
-    this->renderer.loadScene(this->scene, true);
+    this->renderer.loadScene(this->scene);
 }
 
 void Application::shutdown()

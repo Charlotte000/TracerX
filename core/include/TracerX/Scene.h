@@ -28,13 +28,14 @@ public:
     std::vector<core::Mesh> meshes;
     std::vector<std::string> meshNames;
     std::vector<Camera> cameras;
+    std::vector<glm::vec3> bvh;
     std::string name = "Empty";
 
     int loadTexture(const std::string& fileName);
     int loadMaterial(const core::Material& material, const std::string& name);
-    const std::vector<glm::vec3> createBVH();
+    void buildBVH();
 
-    static Scene loadGLTF(const std::string& folder);
+    static Scene loadGLTF(const std::string& folder, bool buildBVH = true);
 private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);

@@ -42,7 +42,9 @@ public:
     Image getImage() const;
     glm::uvec2 getSize() const;
     unsigned int getFrameCount() const;
-    void loadScene(Scene& scene, bool rebuildBVH);
+    void loadScene(const Scene& scene);
+    void updateSceneMaterials(const Scene& scene);
+    void updateSceneMeshes(const Scene& scene);
 private:
     unsigned int frameCount = 0;
     core::Quad quad;
