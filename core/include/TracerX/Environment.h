@@ -39,6 +39,8 @@ public:
 
     /**
      * @brief Resets the environment to its default state.
+     * 
+     * This method sets the name of the environment to "None" and updates the texture with an empty black image.
      */
     void reset();
 

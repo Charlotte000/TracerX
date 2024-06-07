@@ -54,7 +54,7 @@ struct Material
     float Density;
     int AlbedoTextureId;
     int MetalnessTextureId;
-    int EmissionTexureId;
+    int EmissionTextureId;
     int RoughnessTextureId;
     int NormalTextureId;
 };
@@ -109,7 +109,7 @@ layout(binding=5) uniform samplerBuffer Meshes;
 layout(binding=6) uniform samplerBuffer Materials;
 layout(binding=7) uniform samplerBuffer BVH;
 
-uniform uint MaxBouceCount;
+uniform uint MaxBounceCount;
 uniform float MinRenderDistance;
 uniform float MaxRenderDistance;
 uniform uint FrameCount;
@@ -366,9 +366,9 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
     }
 
     material.EmissionColor *= material.EmissionStrength;
-    if (material.EmissionTexureId >= 0)
+    if (material.EmissionTextureId >= 0)
     {
-        material.EmissionColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.EmissionTexureId)).rgb;
+        material.EmissionColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.EmissionTextureId)).rgb;
     }
 
     if (material.NormalTextureId >= 0)
@@ -450,7 +450,7 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (uint i = 0; i <= MaxBouceCount; i++)
+    for (uint i = 0; i <= MaxBounceCount; i++)
     {
         CollisionManifold manifold;
         if (!FindIntersection(ray, i == 0, manifold))

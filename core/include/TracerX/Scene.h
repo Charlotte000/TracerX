@@ -38,6 +38,8 @@ public:
 
     /**
      * @brief The textures used in the scene.
+     * 
+     * The index of the texture in the vector is the texture ID used in the scene.
      */
     std::vector<Image> textures;
 
@@ -48,6 +50,8 @@ public:
 
     /**
      * @brief The materials used in the scene.
+     * 
+     * The index of the material in the vector is the material ID used in the scene.
      */
     std::vector<core::Material> materials;
 
@@ -58,6 +62,8 @@ public:
 
     /**
      * @brief The meshes in the scene.
+     * 
+     * The index of the mesh in the vector is the mesh ID used in the scene.
      */
     std::vector<core::Mesh> meshes;
 
@@ -67,12 +73,21 @@ public:
     std::vector<std::string> meshNames;
 
     /**
-     * @brief The cameras in the scene.
+     * @brief The default cameras in the scene.
      */
     std::vector<Camera> cameras;
 
     /**
      * @brief The bounding volume hierarchy of the scene.
+     * 
+     * The format of each node is as follows:
+     * - The first three values are the minimum bounds of the node.
+     * - The next three values are the maximum bounds of the node.
+     * - The seventh value is the index of the first primitive in the node.
+     * - The eighth value is the number of primitives in the node.
+     * - The ninth value is the padding for alignment.
+     * 
+     * Call Scene::buildBVH() to build the BVH.
      */
     std::vector<glm::vec3> bvh;
 
@@ -85,7 +100,7 @@ public:
      * @brief Loads a texture from a file and adds it to the scene.
      * 
      * @param fileName The name of the file containing the texture.
-     * @return The index of the loaded texture in the textures vector.
+     * @return The index (texture ID) of the loaded texture in the textures vector.
      */
     int loadTexture(const std::string& fileName);
 
@@ -94,7 +109,7 @@ public:
      * 
      * @param material The material to be loaded.
      * @param name The name of the material.
-     * @return The index of the loaded material in the materials vector.
+     * @return The index (material ID) of the loaded material in the materials vector.
      */
     int loadMaterial(const core::Material& material, const std::string& name);
 
@@ -116,7 +131,7 @@ private:
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
     void GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform);
-    void GLTFcamera(const glm::mat4 tranform);
+    void GLTFcamera(const glm::mat4 transform);
     void GLTFnodes(const tinygltf::Model& model, const glm::mat4& world);
     void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform);
 };

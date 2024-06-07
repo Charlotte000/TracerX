@@ -24,6 +24,21 @@ namespace TracerX
 
 /**
  * @brief Renderer class that handles rendering of the scene.
+ * 
+ * The renderer uses a path tracing algorithm to render the scene.
+ * The process consists of two stages:
+ * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors.
+ * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
+ * 
+ * The renderer uses a framebuffer to accumulate the colors and a texture array to store the scene data.
+ * The scene data consists of the vertices, triangles, materials, and meshes of the scene.
+ * 
+ * The renderer can render a full frame or a rectangular region of the frame.
+ * The renderer supports gamma correction and environment settings.
+ * 
+ * The renderer can also apply denoising to the rendered image.
+ * 
+ * The renderer is responsible for initializing OpenGL and GLEW.
  */
 class Renderer
 {
@@ -32,14 +47,15 @@ public:
      * @brief The camera used for rendering.
      */
     Camera camera;
-    
-    /**
-     * @brief The maximum number of bounces for ray.
-     */
-    unsigned int maxBouceCount = 5;
 
     /**
-     * @brief The gamma correction value for the rendered image.
+     * @brief The maximum number of times a ray can bounce in the scene.
+     * 
+     */
+    unsigned int maxBounceCount = 5;
+
+    /**
+     * @brief The gamma correction value used in tone mapping.
      */
     float gamma = 2.2f;
 
@@ -55,11 +71,15 @@ public:
 
     /**
      * @brief The environment settings for the scene.
+     * 
+     * @see Environment::loadFromFile to load an environment from a file.
      */
     Environment environment;
 
     /**
-     * @brief Initializes the renderer with the specified size. 
+     * @brief Initializes the renderer with the specified size.
+     * 
+     * Must be called before any other method. Initializes GLEW and OpenGL.
      * 
      * @param size The size of the renderer.
      * @throws std::runtime_error Thrown if GLEW fails to initialize.
@@ -76,22 +96,33 @@ public:
     /**
      * @brief Shuts down the renderer and releases resources.
      * 
+     * Must be called after all other methods. Releases all resources and shuts down GLEW and OpenGL.
      */
     void shutdown();
 
     /**
      * @brief Renders the scene.
      * 
+     * Renders the scene using accumulation and tone mapping.
+     * The frame count is incremented.
+     * The rendered image can be accessed using Renderer::getImage().
+     * 
      * @param count The number of frames to render.
+     * @see Renderer::renderRect to render only a rectangular region of the image.
      */
     void render(unsigned int count = 1);
 
     /**
      * @brief Renders a rectangular region of the image.
      * 
+     * Renders the specified region of the image using path tracing and tone mapping.
+     * The frame count is incremented.
+     * The rendered image can be accessed using Renderer::getImage().
+     * 
      * @param count The number of frames to render.
      * @param position The position of the top-left corner of the region.
      * @param size The size of the region.
+     * @see Renderer::render to render the entire image.
      */
     void renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size);
 
@@ -103,7 +134,10 @@ public:
 #endif
 
     /**
-     * @brief Clears the renderer's output.
+     * @brief Clears the renderer.
+     * 
+     * Clears the accumulated colors and resets the frame count.
+     * Should be called after any changes to the scene or environment.
      */
     void clear();
 
@@ -115,14 +149,17 @@ public:
     GLuint getTextureHandler() const;
 
     /**
-     * @brief Gets the rendered image.
+     * @brief Loads the rendered texture from the GPU to the CPU.
      * 
      * @return The rendered image.
+     * @see Image::saveToFile to save the image to a file.
      */
     Image getImage() const;
 
     /**
      * @brief Gets the size of the renderer.
+     * 
+     * The size is the size of the rendered image.
      * 
      * @return The size of the renderer.
      */
@@ -131,6 +168,8 @@ public:
     /**
      * @brief Gets the frame count.
      * 
+     * The frame count is the number of accumulated frames.
+     * 
      * @return The frame count.
      */
     unsigned int getFrameCount() const;
@@ -138,21 +177,31 @@ public:
     /**
      * @brief Loads the specified scene into the renderer.
      * 
+     * Use this method to load the entire scene into the renderer.
+     * 
      * @param scene The scene to load.
+     * @see Renderer::updateSceneMaterials to update only the materials.
+     * @see Renderer::updateSceneMeshes to update only the meshes.
      */
     void loadScene(const Scene& scene);
 
     /**
      * @brief Updates the materials in the scene.
      * 
+     * Use this method to update only the materials in the scene.
+     * 
      * @param scene The scene containing the updated materials.
+     * @see Renderer::loadScene to update the entire scene.
      */
     void updateSceneMaterials(const Scene& scene);
 
     /**
      * @brief Updates the meshes in the scene.
      * 
+     * Use this method to update only the meshes, vertices, triangles, and BVH in the scene.
+     * 
      * @param scene The scene containing the updated meshes.
+     * @see Renderer::loadScene to update the entire scene.
      */
     void updateSceneMeshes(const Scene& scene);
 private:

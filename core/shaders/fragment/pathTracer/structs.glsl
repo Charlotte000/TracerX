@@ -38,7 +38,7 @@ struct Material
     float Density;
     int AlbedoTextureId;
     int MetalnessTextureId;
-    int EmissionTexureId;
+    int EmissionTextureId;
     int RoughnessTextureId;
     int NormalTextureId;
 };

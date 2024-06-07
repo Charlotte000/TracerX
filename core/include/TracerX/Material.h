@@ -15,16 +15,22 @@ struct Material
 {
     /**
      * @brief The color of the material's albedo.
+     * 
+     * The albedo is the base color of the material.
      */
     glm::vec3 albedoColor = glm::vec3(1);
 
     /**
      * @brief The roughness of the material's surface.
+     * 
+     * The roughness is a value between 0 and 1, where 0 is a perfectly smooth surface and 1 is a perfectly rough surface.
      */
     float roughness = 0;
 
     /**
      * @brief The color of the material's emission.
+     * 
+     * The emission is the light emitted by the material.
      */
     glm::vec3 emissionColor = glm::vec3(1);
 
@@ -35,51 +41,83 @@ struct Material
 
     /**
      * @brief The color of the material's fresnel effect.
+     * 
+     * The fresnel effect is the reflection of light off of a surface at a shallow angle.
      */
     glm::vec3 fresnelColor = glm::vec3(1);
 
     /**
      * @brief The strength of the material's fresnel effect.
+     * 
+     * The fresnel effect is the reflection of light off of a surface at a shallow angle.
      */
     float fresnelStrength = 0;
 
     /**
      * @brief The metalness of the material.
+     * 
+     * The metalness is a value between 0 and 1, where 0 is a dielectric material and 1 is a metal.
      */
     float metalness = 0;
 
     /**
      * @brief The index of refraction of the material.
+     * 
+     * The index of refraction is a value that describes how light bends as it passes through the material.
+     * If the index of refraction is 0, the material is opaque.
      */
     float ior = 0;
 
     /**
      * @brief The density of the material.
+     * 
+     * The density is a value that describes how light is absorbed as it passes through the material.
+     * If the density is 0, the material is opaque.
      */
     float density = 0;
 
     /**
      * @brief The texture ID for the material's albedo.
+     * 
+     * The texture ID is the index of the texture in the renderer's texture array.
+     * If the texture ID is -1, the material uses the albedo color. Otherwise, the material multiplies the albedo color by the texture color.
+     * Float value to avoid padding issues.
      */
     float albedoTextureId = -1;
 
     /**
      * @brief The texture ID for the material's metalness.
+     * 
+     * The texture ID is the index of the texture in the renderer's texture array.
+     * If the texture ID is -1, the material uses the metalness value. Otherwise, the material multiplies the metalness value by the texture color.
+     * Float value to avoid padding issues.
      */
     float metalnessTextureId = -1;
 
     /**
      * @brief The texture ID for the material's emission.
+     * 
+     * The texture ID is the index of the texture in the renderer's texture array.
+     * If the texture ID is -1, the material uses the emission color. Otherwise, the material multiplies the emission color by the texture color.
+     * Float value to avoid padding issues.
      */
     float emissionTextureId = -1;
 
     /**
      * @brief The texture ID for the material's roughness.
+     * 
+     * The texture ID is the index of the texture in the renderer's texture array.
+     * If the texture ID is -1, the material uses the roughness value. Otherwise, the material multiplies the roughness value by the texture color.
+     * Float value to avoid padding issues.
      */
     float roughnessTextureId = -1;
     
     /**
      * @brief The texture ID for the material's normal map.
+     * 
+     * The texture ID is the index of the texture in the renderer's texture array.
+     * If the texture ID is -1, the material does not use a normal map. Otherwise, the material uses the texture as a normal map.
+     * Float value to avoid padding issues.
      */
     float normalTextureId = -1;
 

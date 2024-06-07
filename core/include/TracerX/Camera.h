@@ -53,6 +53,7 @@ struct Camera
     /**
      * @brief Sets the camera to look at the specified position.
      * 
+     * Sets Camera::focalDistance to the distance between the camera and the position.
      * @param position The position to look at.
      */
     void lookAt(glm::vec3 position);

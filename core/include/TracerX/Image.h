@@ -23,6 +23,9 @@ public:
 
     /**
      * @brief The pixel data of the image.
+     * 
+     * The pixel data is stored in the order red, green, blue, alpha.
+     * The size of the array is size.x * size.y * 4.
      */
     std::vector<float> pixels;
 
@@ -60,6 +63,8 @@ public:
      * 
      * @param size The size of the image.
      * @param pixels The pixel data of the image.
+     * @remark The pixel data is stored in the order red, green, blue, alpha.
+     * The size of the array must be size.x * size.y * 4.
      * @return The loaded image.
      */
     static Image loadFromMemory(glm::uvec2 size, const std::vector<float> pixels);

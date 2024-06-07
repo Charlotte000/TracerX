@@ -289,28 +289,28 @@ void Scene::GLTFnodes(const tinygltf::Model& model, const glm::mat4& world)
 
 void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform)
 {
-    glm::mat4 localTranform(1);
+    glm::mat4 localTransform(1);
     if (!node.matrix.empty())
     {
-        localTranform[0][0] = node.matrix[0];
-        localTranform[0][1] = node.matrix[1];
-        localTranform[0][2] = node.matrix[2];
-        localTranform[0][3] = node.matrix[3];
+        localTransform[0][0] = node.matrix[0];
+        localTransform[0][1] = node.matrix[1];
+        localTransform[0][2] = node.matrix[2];
+        localTransform[0][3] = node.matrix[3];
 
-        localTranform[1][0] = node.matrix[4];
-        localTranform[1][1] = node.matrix[5];
-        localTranform[1][2] = node.matrix[6];
-        localTranform[1][3] = node.matrix[7];
+        localTransform[1][0] = node.matrix[4];
+        localTransform[1][1] = node.matrix[5];
+        localTransform[1][2] = node.matrix[6];
+        localTransform[1][3] = node.matrix[7];
 
-        localTranform[2][0] = node.matrix[8];
-        localTranform[2][1] = node.matrix[9];
-        localTranform[2][2] = node.matrix[10];
-        localTranform[2][3] = node.matrix[11];
+        localTransform[2][0] = node.matrix[8];
+        localTransform[2][1] = node.matrix[9];
+        localTransform[2][2] = node.matrix[10];
+        localTransform[2][3] = node.matrix[11];
 
-        localTranform[3][0] = node.matrix[12];
-        localTranform[3][1] = node.matrix[13];
-        localTranform[3][2] = node.matrix[14];
-        localTranform[3][3] = node.matrix[15];
+        localTransform[3][0] = node.matrix[12];
+        localTransform[3][1] = node.matrix[13];
+        localTransform[3][2] = node.matrix[14];
+        localTransform[3][3] = node.matrix[15];
     }
     else
     {
@@ -330,10 +330,10 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
             translate = glm::translate(glm::mat4(1), glm::vec3(node.translation[0], node.translation[1], node.translation[2]));
         }
 
-        localTranform = translate * rotate * scale;
+        localTransform = translate * rotate * scale;
     }
 
-    glm::mat4 transform = globalTransform * localTranform;
+    glm::mat4 transform = globalTransform * localTransform;
 
     if (node.children.empty() && node.mesh != -1)
     {

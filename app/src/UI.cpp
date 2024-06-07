@@ -770,11 +770,11 @@ void UI::propertySceneMenu()
         renderer.resize(size);
     }
 
-    int maxBouceCount = renderer.maxBouceCount;
+    int maxBounceCount = renderer.maxBounceCount;
     if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f) |
-        ImGui::DragInt("Max bouce count", &maxBouceCount, .01f, 0, 1000))
+        ImGui::DragInt("Max bounce count", &maxBounceCount, .01f, 0, 1000))
     {
-        renderer.maxBouceCount = maxBouceCount;
+        renderer.maxBounceCount = maxBounceCount;
         renderer.clear();
     }
 
