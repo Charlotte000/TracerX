@@ -4,6 +4,11 @@ This path tracing app is a computer graphics program that simulates the behavior
 
 This renderer was inspired by the book series [_Ray Tracing in One Weekend_](https://raytracing.github.io/) and [knightcrawler25/GLSL-PathTracer](https://github.com/knightcrawler25/GLSL-PathTracer)
 
+Additional scenes can be downloaded here and installed in the directory:
+- app/assets/environments: [Poly Haven](https://polyhaven.com/hdris)
+- app/assets/scenes: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com/)
+
+
 # Renders
 ![](img/UI.jpg)
 ![](img/Ajax.jpg)
