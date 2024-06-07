@@ -389,7 +389,7 @@ void UI::sceneMenu()
                 if (ImGui::BeginDragDropSource())
                 {
                     ImGui::SetDragDropPayload("material", &i, sizeof(size_t));
-                    ImGui::Text(scene.materialNames[i].c_str());
+                    ImGui::Text("%s", scene.materialNames[i].c_str());
                     ImGui::EndDragDropSource();
                 }
             }

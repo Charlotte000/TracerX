@@ -15,9 +15,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 string(COMPARE EQUAL "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" GLFW_STANDALONE)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" ${GLFW_STANDALONE})
-option(GLFW_BUILD_TESTS "Build the GLFW test programs" ${GLFW_STANDALONE})
-option(GLFW_BUILD_DOCS "Build the GLFW documentation" ON)
 option(GLFW_INSTALL "Generate installation target" ON)
 
 include(GNUInstallDirs)
@@ -54,11 +51,6 @@ endif()
 list(APPEND CMAKE_MODULE_PATH "${GLFW_SOURCE_DIR}/CMake/modules")
 
 find_package(Threads REQUIRED)
-
-if (GLFW_BUILD_DOCS)
-    set(DOXYGEN_SKIP_DOT TRUE)
-    find_package(Doxygen)
-endif()
 
 #--------------------------------------------------------------------
 # Report backend selection
@@ -122,18 +114,6 @@ write_basic_package_version_file(src/glfw3ConfigVersion.cmake
 #--------------------------------------------------------------------
 add_subdirectory(src)
 
-if (GLFW_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif()
-
-if (GLFW_BUILD_TESTS)
-    add_subdirectory(tests)
-endif()
-
-if (DOXYGEN_FOUND AND GLFW_BUILD_DOCS)
-    add_subdirectory(docs)
-endif()
-
 #--------------------------------------------------------------------
 # Install files other than the library
 # The library is installed by src/CMakeLists.txt
@@ -151,11 +131,6 @@ if (GLFW_INSTALL)
             DESTINATION "${GLFW_CONFIG_PATH}")
     install(FILES "${GLFW_BINARY_DIR}/src/glfw3.pc"
             DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
-
-    if (DOXYGEN_FOUND AND GLFW_BUILD_DOCS)
-        install(DIRECTORY "${GLFW_BINARY_DIR}/docs/html"
-                DESTINATION "${CMAKE_INSTALL_DOCDIR}")
-    endif()
 
     # Only generate this target if no higher-level project already has
     if (NOT TARGET uninstall)
