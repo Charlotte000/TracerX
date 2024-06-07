@@ -87,7 +87,7 @@ public:
      * - The eighth value is the number of primitives in the node.
      * - The ninth value is the padding for alignment.
      * 
-     * Call Scene::buildBVH() to build the BVH.
+     * @see Scene::buildBVH() to build the BVH.
      */
     std::vector<glm::vec3> bvh;
 
@@ -98,7 +98,6 @@ public:
 
     /**
      * @brief Loads a texture from a file and adds it to the scene.
-     * 
      * @param fileName The name of the file containing the texture.
      * @return The index (texture ID) of the loaded texture in the textures vector.
      */
@@ -106,7 +105,6 @@ public:
 
     /**
      * @brief Loads a material and adds it to the scene.
-     * 
      * @param material The material to be loaded.
      * @param name The name of the material.
      * @return The index (material ID) of the loaded material in the materials vector.
@@ -120,7 +118,6 @@ public:
 
     /**
      * @brief Loads a scene from a GLTF file.
-     * 
      * @param fileName The name of the file to load the GLTF scene from.
      * @param buildBVH Flag indicating whether to build the bounding volume hierarchy.
      * @return The loaded scene.

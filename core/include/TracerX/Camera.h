@@ -54,20 +54,19 @@ struct Camera
      * @brief Sets the camera to look at the specified position.
      * 
      * Sets Camera::focalDistance to the distance between the camera and the position.
+     * 
      * @param position The position to look at.
      */
     void lookAt(glm::vec3 position);
 
     /**
      * @brief Creates a view matrix for the camera.
-     * 
      * @return The view matrix.
      */
     glm::mat4 createView() const;
 
     /**
      * @brief Creates a projection matrix for the camera.
-     * 
      * @param width The width of the viewport.
      * @param height The height of the viewport.
      * @param zNear The near clipping plane.

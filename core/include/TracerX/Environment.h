@@ -46,7 +46,6 @@ public:
 
     /**
      * @brief Loads environment data from a file.
-     * 
      * @param fileName The name of the file to load the data from.
      */
     void loadFromFile(const std::string& fileName);

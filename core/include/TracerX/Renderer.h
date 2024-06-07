@@ -39,6 +39,10 @@ namespace TracerX
  * The renderer can also apply denoising to the rendered image.
  * 
  * The renderer is responsible for initializing OpenGL and GLEW.
+ * 
+ * @see Renderer::init
+ * @see Renderer::render
+ * @see Renderer::shutdown
  */
 class Renderer
 {
@@ -50,7 +54,6 @@ public:
 
     /**
      * @brief The maximum number of times a ray can bounce in the scene.
-     * 
      */
     unsigned int maxBounceCount = 5;
 
@@ -71,7 +74,6 @@ public:
 
     /**
      * @brief The environment settings for the scene.
-     * 
      * @see Environment::loadFromFile to load an environment from a file.
      */
     Environment environment;
@@ -88,7 +90,6 @@ public:
 
     /**
      * @brief Resizes the renderer to the specified size.
-     * 
      * @param size The new size of the renderer.
      */
     void resize(glm::uvec2 size);
@@ -143,14 +144,12 @@ public:
 
     /**
      * @brief Gets the OpenGL texture handler for the rendered image.
-     * 
      * @return The texture handler.
      */
     GLuint getTextureHandler() const;
 
     /**
      * @brief Loads the rendered texture from the GPU to the CPU.
-     * 
      * @return The rendered image.
      * @see Image::saveToFile to save the image to a file.
      */

@@ -123,7 +123,6 @@ struct Material
 
     /**
      * @brief Creates a light source material with the given emission color and strength.
-     * 
      * @param emissionColor The color of the emission.
      * @param emissionStrength The strength of the emission.
      * @return The light source material.
@@ -132,7 +131,6 @@ struct Material
 
     /**
      * @brief Creates a transparent material with the given albedo color, index of refraction, fresnel color, and fresnel strength.
-     * 
      * @param albedoColor The color of the albedo.
      * @param ior The index of refraction.
      * @param fresnelColor The color of the fresnel effect.
@@ -143,7 +141,6 @@ struct Material
 
     /**
      * @brief Creates a material with constant density with the given albedo color and density.
-     * 
      * @param albedoColor The color of the albedo.
      * @param density The density.
      * @return The material with constant density.
@@ -152,7 +149,6 @@ struct Material
 
     /**
      * @brief Creates a matte material with the given albedo color and metalness.
-     * 
      * @param albedoColor The color of the albedo.
      * @param metalness The metalness.
      * @return The matte material.
@@ -161,7 +157,6 @@ struct Material
 
     /**
      * @brief Creates a mirror material.
-     * 
      * @return The mirror material.
      */
     static Material mirror();
