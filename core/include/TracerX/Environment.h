@@ -1,3 +1,6 @@
+/**
+ * @file Environment.h
+ */
 #pragma once
 
 #include "Texture.h"
@@ -8,27 +11,42 @@
 namespace TracerX
 {
 
-/// @brief Represents an environment in the TracerX system.
+/**
+ * @brief Represents an environment in the TracerX system.
+ */
 class Environment
 {
 public:
-    /// @brief The name of the environment.
+    /**
+     * @brief The name of the environment.
+     */
     std::string name = "None";
 
-    /// @brief The intensity of the environment.
+    /**
+     * @brief The intensity of the environment.
+     */
     float intensity = 1.f;
 
-    /// @brief The rotation matrix of the environment.
+    /**
+     * @brief The rotation matrix of the environment.
+     */
     glm::mat3 rotation = glm::mat3(1);
 
-    /// @brief Indicates if the environment is transparent.
+    /**
+     * @brief Indicates if the environment is transparent.
+     */
     bool transparent = false;
 
-    /// @brief Resets the environment to its default state.
+    /**
+     * @brief Resets the environment to its default state.
+     */
     void reset();
 
-    /// @brief Loads environment data from a file.
-    /// @param fileName The name of the file to load the data from.
+    /**
+     * @brief Loads environment data from a file.
+     * 
+     * @param fileName The name of the file to load the data from.
+     */
     void loadFromFile(const std::string& fileName);
 private:
     core::Texture texture;

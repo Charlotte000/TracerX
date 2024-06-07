@@ -1,3 +1,6 @@
+/**
+ * @file Shader.h
+ */
 #pragma once
 
 #include <string>

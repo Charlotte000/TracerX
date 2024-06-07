@@ -1,3 +1,6 @@
+/**
+ * @file Buffer.h
+ */
 #pragma once
 
 #include <vector>

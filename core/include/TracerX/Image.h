@@ -1,3 +1,6 @@
+/**
+ * @file Image.h
+ */
 #pragma once
 
 #include <string>
@@ -7,38 +10,58 @@
 namespace TracerX
 {
 
-/// @brief Represents an image with a size and pixel data.
+/**
+ * @brief Represents an image with a size and pixel data.
+ */
 struct Image
 {
 public:
-    /// @brief The size of the image.
+    /**
+     * @brief The size of the image.
+     */
     glm::uvec2 size;
 
-    /// @brief The pixel data of the image.
+    /**
+     * @brief The pixel data of the image.
+     */
     std::vector<float> pixels;
 
-    /// @brief An empty image.
+    /**
+     * @brief An empty image.
+     */
     static Image empty;
 
-    /// @brief Saves the image to a file.
-    /// @param name The name of the file to save the image to.
+    /**
+     * @brief Saves the image to a file.
+     * 
+     * @param name The name of the file to save the image to.
+     */
     void saveToFile(const std::string& name) const;
-
-    /// @brief Resizes the image to the specified size.
-    /// @param size The new size of the image.
-    /// @return The resized image.
+ 
+    /**
+     * @brief Resizes the image to the specified size.
+     * 
+     * @param size The new size of the image.
+     * @return The resized image.
+     */
     Image resize(glm::uvec2 size) const;
 
-    /// @brief Loads an image from a file.
-    /// @param fileName The name of the file to load the image from.
-    /// @return The loaded image.
-    /// @throws std::runtime_error Thrown if the image fails to load.
+    /**
+     * @brief Loads an image from a file.
+     * 
+     * @param fileName The name of the file to load the image from.
+     * @return The loaded image.
+     * @throws std::runtime_error Thrown if the image fails to load.
+     */
     static Image loadFromFile(const std::string& fileName);
 
-    /// @brief Loads an image from memory.
-    /// @param size The size of the image.
-    /// @param pixels The pixel data of the image.
-    /// @return The loaded image.
+    /**
+     * @brief Loads an image from memory.
+     * 
+     * @param size The size of the image.
+     * @param pixels The pixel data of the image.
+     * @return The loaded image.
+     */
     static Image loadFromMemory(glm::uvec2 size, const std::vector<float> pixels);
 private:
     Image();

@@ -1,3 +1,6 @@
+/**
+ * @file FrameBuffer.cpp
+ */
 #include "TracerX/FrameBuffer.h"
 
 using namespace TracerX::core;

@@ -1,3 +1,6 @@
+/**
+ * @file Scene.cpp
+ */
 #define TINYGLTF_IMPLEMENTATION
 
 #include "TracerX/Scene.h"
@@ -65,25 +68,25 @@ void Scene::buildBVH()
     }
 }
 
-Scene Scene::loadGLTF(const std::string& folder, bool buildBVH)
+Scene Scene::loadGLTF(const std::string& fileName, bool buildBVH)
 {
     Scene scene;
-    scene.name = folder.substr(folder.find_last_of("/\\") + 1);
+    scene.name = fileName.substr(fileName.find_last_of("/\\") + 1);
 
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
     std::string err;
 
-    if (folder.substr(folder.find_last_of('.') + 1) == "glb")
+    if (fileName.substr(fileName.find_last_of('.') + 1) == "glb")
     {
-        if (!loader.LoadBinaryFromFile(&model, &err, nullptr, folder))
+        if (!loader.LoadBinaryFromFile(&model, &err, nullptr, fileName))
         {
             throw std::runtime_error(err);
         }
     }
     else
     {
-        if (!loader.LoadASCIIFromFile(&model, &err, nullptr, folder))
+        if (!loader.LoadASCIIFromFile(&model, &err, nullptr, fileName))
         {
             throw std::runtime_error(err);
         }

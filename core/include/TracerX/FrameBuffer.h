@@ -1,3 +1,6 @@
+/**
+ * @file FrameBuffer.h
+ */
 #pragma once
 
 #include "Texture.h"

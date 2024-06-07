@@ -1,3 +1,6 @@
+/**
+ * @file Renderer.cpp
+ */
 #include "TracerX/Renderer.h"
 
 #include <iostream>

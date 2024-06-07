@@ -1,3 +1,6 @@
+/**
+ * @file TextureArray.h
+ */
 #pragma once
 
 #include "Image.h"

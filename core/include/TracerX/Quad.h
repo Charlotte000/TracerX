@@ -1,3 +1,6 @@
+/**
+ * @file Quad.h
+ */
 #pragma once
 
 #include <GL/glew.h>

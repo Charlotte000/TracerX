@@ -1,3 +1,6 @@
+/**
+ * @file Texture.h
+ */
 #pragma once
 
 #include "Image.h"

@@ -1,3 +1,6 @@
+/**
+ * @file Texture.cpp
+ */
 #include "TracerX/Texture.h"
 
 using namespace TracerX;

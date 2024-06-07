@@ -1,3 +1,6 @@
+/**
+ * @file Material.cpp
+ */
 #include "TracerX/Material.h"
 
 using namespace TracerX::core;

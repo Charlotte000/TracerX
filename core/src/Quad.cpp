@@ -1,3 +1,6 @@
+/**
+ * @file Quad.cpp
+ */
 #include "TracerX/Quad.h"
 
 using namespace TracerX::core;

@@ -1,3 +1,6 @@
+/**
+ * @file Shader.cpp
+ */
 #include "TracerX/Shader.h"
 
 #include <fstream>
