@@ -34,7 +34,7 @@ int main()
     // Setting up the renderer
     Renderer renderer;
     renderer.init(glm::uvec2(1000, 1000));
-    renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_4k.hdr");
+    renderer.environment.loadFromFile("../../app/assets/environments/konzerthaus_2k.hdr");
     renderer.loadScene(scene);
 
     // Setting up the camera
