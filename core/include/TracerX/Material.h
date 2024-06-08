@@ -80,7 +80,7 @@ struct Material
      * @brief The texture ID for the material's albedo.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
-     * If the texture ID is -1, the material uses the albedo color. Otherwise, the material multiplies the albedo color by the texture color.
+     * If the texture ID is -1, the material uses the Material::albedoColor value. Otherwise, the material multiplies the albedo color by the texture color.
      * Float value to avoid padding issues.
      */
     float albedoTextureId = -1;
@@ -89,7 +89,7 @@ struct Material
      * @brief The texture ID for the material's metalness.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
-     * If the texture ID is -1, the material uses the metalness value. Otherwise, the material multiplies the metalness value by the texture color.
+     * If the texture ID is -1, the material uses the Material::metalness value. Otherwise, the material multiplies the metalness value by the texture color.
      * Float value to avoid padding issues.
      */
     float metalnessTextureId = -1;
@@ -98,7 +98,7 @@ struct Material
      * @brief The texture ID for the material's emission.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
-     * If the texture ID is -1, the material uses the emission color. Otherwise, the material multiplies the emission color by the texture color.
+     * If the texture ID is -1, the material uses the Material::emissionColor value. Otherwise, the material multiplies the emission color by the texture color.
      * Float value to avoid padding issues.
      */
     float emissionTextureId = -1;
@@ -107,7 +107,7 @@ struct Material
      * @brief The texture ID for the material's roughness.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
-     * If the texture ID is -1, the material uses the roughness value. Otherwise, the material multiplies the roughness value by the texture color.
+     * If the texture ID is -1, the material uses the Material::roughness value. Otherwise, the material multiplies the roughness value by the texture color.
      * Float value to avoid padding issues.
      */
     float roughnessTextureId = -1;

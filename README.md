@@ -54,9 +54,17 @@ Additional scenes can be downloaded here and installed in the directory:
 
 ## Building
 ```bash
+mkdir build
 cd ./build
 cmake ..
-make
+make 
+```
+
+## Build Documentation
+To generate Doxygen documentation for the TracerX project run the following commands:
+```bash
+cd ./docs
+doxygen
 ```
 
 # External

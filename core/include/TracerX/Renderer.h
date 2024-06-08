@@ -23,7 +23,7 @@ namespace TracerX
 {
 
 /**
- * @brief Renderer class that handles rendering of the scene.
+ * @brief Represents a renderer in the TracerX rendering engine.
  * 
  * The renderer uses a path tracing algorithm to render the scene.
  * The process consists of two stages:
@@ -104,7 +104,7 @@ public:
     /**
      * @brief Renders the scene.
      * 
-     * Renders the scene using accumulation and tone mapping.
+     * Renders the scene using Renderer::accumulate and Renderer::toneMap.
      * The frame count is incremented.
      * The rendered image can be accessed using Renderer::getImage().
      * 
@@ -116,7 +116,7 @@ public:
     /**
      * @brief Renders a rectangular region of the image.
      * 
-     * Renders the specified region of the image using path tracing and tone mapping.
+     * Renders the specified region of the image using Renderer::accumulate and Renderer::toneMap.
      * The frame count is incremented.
      * The rendered image can be accessed using Renderer::getImage().
      * 
@@ -126,6 +126,30 @@ public:
      * @see Renderer::render to render the entire image.
      */
     void renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size);
+
+    /**
+     * @brief Accumulates the colors of the rendered image.
+     * 
+     * This method does not update the output image.
+     * The frame count is incremented.
+     * Can be used in motion blur to accumulate colors over a period of time.
+     * 
+     * @param count The number of frames to accumulate.
+     * @param position The position of the top-left corner of the region.
+     * @param size The size of the region. Use Renderer::getSize to accumulate the entire image.
+     * @see Renderer::toneMap to update the output image with the tone-mapped colors.
+     */
+    void accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 size);
+
+    /**
+     * @brief Applies tone mapping to the accumulated colors.
+     * 
+     * This method updates the output image with the tone-mapped colors.
+     * 
+     * @param position The position of the top-left corner of the region.
+     * @param size The size of the region. Use Renderer::getSize to tone map the entire image.
+     */
+    void toneMap(glm::uvec2 position, glm::uvec2 size);
 
 #ifdef TX_DENOISE
     /**

@@ -62,7 +62,12 @@ void Renderer::render(unsigned int count)
 
 void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size)
 {
-    // Update accumulator
+    this->accumulate(count, position, size);
+    this->toneMap(position, size);
+}
+
+void Renderer::accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 size)
+{
     this->pathTracer.use();
     this->pathTracer.updateParam("MaxBounceCount", this->maxBounceCount);
     this->pathTracer.updateParam("MinRenderDistance", this->minRenderDistance);
@@ -87,7 +92,11 @@ void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 si
         FrameBuffer::stopUse();
     }
 
-    // Update output
+    Shader::stopUse();
+}
+
+void Renderer::toneMap(glm::uvec2 position, glm::uvec2 size)
+{
     this->toneMapper.use();
     this->toneMapper.updateParam("FrameCount", this->frameCount);
     this->toneMapper.updateParam("Gamma", this->gamma);
