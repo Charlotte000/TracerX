@@ -177,6 +177,7 @@ void UI::barMenu()
                         this->editMaterial = nullptr;
                         this->editCamera = false;
                         this->editEnvironment = false;
+                        this->currentTextureId = -1;
                     }
                 }
 
@@ -562,7 +563,7 @@ void UI::propertyMaterialMenu()
             renderer.updateSceneMaterials(scene);
         }
 
-        this->materialTextureSelector("albedo", material.albedoTextureId);
+        this->materialTextureSelector("albedo", material.albedoTextureId, material.albedoColor);
         ImGui::EndTabItem();
     }
 
@@ -574,7 +575,7 @@ void UI::propertyMaterialMenu()
             renderer.updateSceneMaterials(scene);
         }
 
-        this->materialTextureSelector("roughness", material.roughnessTextureId);
+        this->materialTextureSelector("roughness", material.roughnessTextureId, glm::vec3(0, material.roughness, 0));
         ImGui::EndTabItem();
     }
 
@@ -586,7 +587,7 @@ void UI::propertyMaterialMenu()
             renderer.updateSceneMaterials(scene);
         }
 
-        this->materialTextureSelector("metalness", material.metalnessTextureId);
+        this->materialTextureSelector("metalness", material.metalnessTextureId, glm::vec3(0, 0, material.metalness));
         ImGui::EndTabItem();
     }
 
@@ -602,7 +603,7 @@ void UI::propertyMaterialMenu()
             renderer.updateSceneMaterials(scene);
         }
 
-        this->materialTextureSelector("emission", material.emissionTextureId);
+        this->materialTextureSelector("emission", material.emissionTextureId, material.emissionColor * material.emissionStrength);
         ImGui::EndTabItem();
     }
 
@@ -623,7 +624,7 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        this->materialTextureSelector("normal", material.normalTextureId);
+        this->materialTextureSelector("normal", material.normalTextureId, glm::vec3(1));
         ImGui::EndTabItem();
     }
 
@@ -801,7 +802,7 @@ void UI::propertySceneMenu()
 #endif
 }
 
-void UI::materialTextureSelector(const std::string& name, float& currentTextureId)
+void UI::materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor)
 {
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
@@ -836,7 +837,17 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
 
     if (currentTextureId != -1)
     {
-        this->textureView.update(scene.textures[(int)currentTextureId]);
-        ImGui::Image((void*)(intptr_t)this->textureView.getHandler(), ImVec2(200, 200));
+        if (this->currentTextureId != currentTextureId)
+        {
+            this->textureView.update(scene.textures[(int)currentTextureId]);
+            this->currentTextureId = currentTextureId;
+        }
+
+        ImGui::Image(
+            (void*)(intptr_t)this->textureView.getHandler(),
+            ImVec2(200, 200),
+            ImVec2(0, 1),
+            ImVec2(1, 0),
+            ImVec4(tintColor.r, tintColor.g, tintColor.b, 1));
     }
 }

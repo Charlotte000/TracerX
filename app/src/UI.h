@@ -24,6 +24,7 @@ private:
     Application* app = nullptr;
     TracerX::core::Mesh* editMesh = nullptr;
     TracerX::core::Material* editMaterial = nullptr;
+    int currentTextureId = -1;
     bool editCamera = false;
     bool editEnvironment = false;
     glm::mat4 editMeshTransform;
@@ -43,5 +44,5 @@ private:
     void propertyCameraMenu();
     void propertyEnvironmentMenu();
     void propertySceneMenu();
-    void materialTextureSelector(const std::string& name, float& currentTextureId);
+    void materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor);
 };
