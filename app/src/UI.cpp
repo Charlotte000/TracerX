@@ -126,7 +126,7 @@ void UI::init(Application* app)
     SetupImGuiStyle();
 
     this->textureView.init();
-    this->textureView.update(Image::loadFromMemory(glm::uvec2(2048, 2048), std::vector<float>()));
+    this->textureView.update(Image::empty);
 }
 
 void UI::render()
@@ -266,8 +266,8 @@ void UI::drawingPanelMenu()
     ImGui::Image(
         (void*)(intptr_t)renderer.getTextureHandler(),
         imageSize,
-        ImVec2(0.0f, 1.0f),
-        ImVec2(1.0f, 0.0f),
+        ImVec2(0, 1),
+        ImVec2(1, 0),
         ImVec4(1, 1, 1, 1),
         borderColor);
 
@@ -499,7 +499,7 @@ void UI::propertyMeshMenu()
     bool modified = false;
     modified |= ImGui::DragFloat3("Translation", translation, .01f);
     modified |= ImGui::DragFloat3("Rotation", rotation, .01f);
-    modified |= ImGui::DragFloat3("Scale", scale, .01f, 0.f, 1000.f);
+    modified |= ImGui::DragFloat3("Scale", scale, .01f, 0, 1000);
 
     ImGuizmo::RecomposeMatrixFromComponents(
         translation,
@@ -569,7 +569,7 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Roughness"))
     {
-        if (ImGui::SliderFloat("Strength##roughness", &material.roughness, 0.f, 1.f))
+        if (ImGui::SliderFloat("Strength##roughness", &material.roughness, 0, 1))
         {
             renderer.clear();
             renderer.updateSceneMaterials(scene);
@@ -581,7 +581,7 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Metalness"))
     {
-        if (ImGui::SliderFloat("Strength##metalness", &material.metalness, 0.f, 1.f))
+        if (ImGui::SliderFloat("Strength##metalness", &material.metalness, 0, 1))
         {
             renderer.clear();
             renderer.updateSceneMaterials(scene);
@@ -597,7 +597,7 @@ void UI::propertyMaterialMenu()
                 "Color##emission",
                 glm::value_ptr(material.emissionColor),
                 ImGuiColorEditFlags_Float) |
-            ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, .0f, 10000.f))
+            ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, 0, 10000))
         {
             renderer.clear();
             renderer.updateSceneMaterials(scene);
@@ -613,7 +613,7 @@ void UI::propertyMaterialMenu()
                 "Color##fresnel",
                 glm::value_ptr(material.fresnelColor),
                 ImGuiColorEditFlags_Float) |
-            ImGui::DragFloat("Strength##fresnel", &material.fresnelStrength, .0001f, 0.f, 100.f))
+            ImGui::DragFloat("Strength##fresnel", &material.fresnelStrength, .0001f, 0, 100))
         {
             renderer.clear();
             renderer.updateSceneMaterials(scene);
@@ -630,8 +630,8 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Misc"))
     {
-        if (ImGui::DragFloat("Density", &material.density, .001f, 0.f, 100.f) |
-            ImGui::DragFloat("IOR", &material.ior, .001f, 0.f, 100.f))
+        if (ImGui::DragFloat("Density", &material.density, .001f, 0, 100) |
+            ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100))
         {
             renderer.clear();
             renderer.updateSceneMaterials(scene);
@@ -659,20 +659,20 @@ void UI::propertyCameraMenu()
     }
 
     ImGui::Separator();
-    if (ImGui::SliderAngle("FOV", &camera.fov, 0.f, 180.f))
+    if (ImGui::SliderAngle("FOV", &camera.fov, 0, 180))
     {
         renderer.clear();
     }
 
     ImGui::Separator();
-    if (ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0.f, 1000.f) |
-        ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0.f, 1000.f))
+    if (ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000) |
+        ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000))
     {
         renderer.clear();
     }
 
     ImGui::Separator();
-    if (ImGui::DragFloat("Blur", &camera.blur, .000001f, 0.f, 1000.f, "%.5f"))
+    if (ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f"))
     {
         renderer.clear();
     }
@@ -681,12 +681,12 @@ void UI::propertyCameraMenu()
     ImGui::DragFloat(
         "Movement speed",
         &this->app->cameraSpeed,
-        1.f,
-        0.f,
-        10000.f,
+        1,
+        0,
+        10000,
         "%.3f",
         ImGuiSliderFlags_Logarithmic);
-    ImGui::SliderFloat("Rotation speed", &this->app->cameraRotationSpeed, .001f, 1.f);
+    ImGui::SliderFloat("Rotation speed", &this->app->cameraRotationSpeed, .001f, 1);
 
     if (!scene.cameras.empty())
     {
@@ -711,7 +711,7 @@ void UI::propertyEnvironmentMenu()
 {
     Renderer& renderer = this->app->renderer;
 
-    if (ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, .0f, 1000000.f))
+    if (ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, 0, 1000000))
     {
         renderer.clear();
     }
@@ -766,13 +766,13 @@ void UI::propertySceneMenu()
     Renderer& renderer = this->app->renderer;
 
     glm::ivec2 size = renderer.getSize();
-    if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10.f, 1, 10000))
+    if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
     {
         renderer.resize(size);
     }
 
     int maxBounceCount = renderer.maxBounceCount;
-    if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0.f, 1000.f) |
+    if (ImGui::DragFloat("Gamma", &renderer.gamma, 0.01f, 0, 1000) |
         ImGui::DragInt("Max bounce count", &maxBounceCount, .01f, 0, 1000))
     {
         renderer.maxBounceCount = maxBounceCount;

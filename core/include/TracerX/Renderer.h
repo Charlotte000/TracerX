@@ -203,10 +203,11 @@ public:
      * Use this method to load the entire scene into the renderer.
      * 
      * @param scene The scene to load.
+     * @param texturesSize The size of textures in the scene.
      * @see Renderer::updateSceneMaterials to update only the materials.
      * @see Renderer::updateSceneMeshes to update only the meshes.
      */
-    void loadScene(const Scene& scene);
+    void loadScene(const Scene& scene, glm::uvec2 texturesSize = glm::uvec2(2048, 2048));
 
     /**
      * @brief Updates the materials in the scene.

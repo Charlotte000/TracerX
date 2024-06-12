@@ -177,9 +177,9 @@ unsigned int Renderer::getFrameCount() const
     return this->frameCount;
 }
 
-void Renderer::loadScene(const Scene& scene)
+void Renderer::loadScene(const Scene& scene, glm::uvec2 texturesSize)
 {
-    this->textureArray.update(glm::uvec2(2048, 2048), scene.textures);
+    this->textureArray.update(texturesSize, scene.textures);
     this->updateSceneMeshes(scene);
     this->updateSceneMaterials(scene);
 }
