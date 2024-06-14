@@ -25,7 +25,6 @@ namespace TracerX
 class Scene
 {
 public:
-
     /**
      * @brief The vertices of the scene.
      */
@@ -53,7 +52,7 @@ public:
      * 
      * The index of the material in the vector is the material ID used in the scene.
      */
-    std::vector<core::Material> materials;
+    std::vector<Material> materials;
 
     /**
      * @brief The names of the materials.
@@ -65,7 +64,7 @@ public:
      * 
      * The index of the mesh in the vector is the mesh ID used in the scene.
      */
-    std::vector<core::Mesh> meshes;
+    std::vector<Mesh> meshes;
 
     /**
      * @brief The names of the meshes.
@@ -76,20 +75,6 @@ public:
      * @brief The default cameras in the scene.
      */
     std::vector<Camera> cameras;
-
-    /**
-     * @brief The bounding volume hierarchy of the scene.
-     * 
-     * The format of each node is as follows:
-     * - The first three values are the minimum bounds of the node.
-     * - The next three values are the maximum bounds of the node.
-     * - The seventh value is the index of the first primitive in the node.
-     * - The eighth value is the number of primitives in the node.
-     * - The ninth value is the padding for alignment.
-     * 
-     * @see Scene::buildBVH() to build the BVH.
-     */
-    std::vector<glm::vec3> bvh;
 
     /**
      * @brief The name of the scene.
@@ -109,28 +94,27 @@ public:
      * @param name The name of the material.
      * @return The index (material ID) of the loaded material in the materials vector.
      */
-    int loadMaterial(const core::Material& material, const std::string& name);
-
-    /**
-     * @brief Builds the bounding volume hierarchy for the scene.
-     */
-    void buildBVH();
+    int loadMaterial(const Material& material, const std::string& name);
 
     /**
      * @brief Loads a scene from a GLTF file.
      * @param fileName The name of the file to load the GLTF scene from.
-     * @param buildBVH Flag indicating whether to build the bounding volume hierarchy.
      * @return The loaded scene.
      * @throws std::runtime_error Thrown if the GLTF file fails to load.
      */
-    static Scene loadGLTF(const std::string& fileName, bool buildBVH = true);
+    static Scene loadGLTF(const std::string& fileName);
 private:
+    std::vector<glm::vec3> bvh;
+
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
     void GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform);
     void GLTFcamera(const glm::mat4 transform);
     void GLTFnodes(const tinygltf::Model& model, const glm::mat4& world);
     void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform);
+    void buildBVH(Mesh& mesh);
+
+    friend class Renderer;
 };
 
 }

@@ -55,13 +55,15 @@ struct Triangle
     int V1;
     int V2;
     int V3;
-    int MeshId;
 };
 
 struct Mesh
 {
     mat4 Transform;
+    mat4 TransformInv;
     int MaterialId;
+    int NodeOffset;
+    int TriangleOffset;
 };
 
 struct CollisionManifold

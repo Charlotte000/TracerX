@@ -25,11 +25,6 @@ struct Triangle
      * @brief The index of the third vertex of the triangle.
      */
     int v3;
-
-    /**
-     * @brief The ID of the mesh to which the triangle belongs.
-     */
-    int meshId;
 };
 
 }

@@ -8,7 +8,6 @@
 #include <glm/gtx/polar_coordinates.hpp>
 
 using namespace TracerX;
-using namespace TracerX::core;
 
 void SetupImGuiStyle()
 {
@@ -173,7 +172,6 @@ void UI::barMenu()
                         renderer.loadScene(scene);
 
                         this->editMesh = nullptr;
-                        this->editMeshTransform = glm::mat4(1);
                         this->editMaterial = nullptr;
                         this->editCamera = false;
                         this->editEnvironment = false;
@@ -290,14 +288,11 @@ void UI::drawingPanelMenu()
             glm::value_ptr(projection),
             this->operation,
             this->mode,
-            glm::value_ptr(this->editMeshTransform)) &&
-        this->autoApply)
+            glm::value_ptr(this->editMesh->transform)))
     {
-            this->editMesh->transform = this->editMeshTransform;
-            scene.buildBVH();
-
-            renderer.clear();
-            renderer.updateSceneMeshes(scene);
+        this->editMesh->transformInv = glm::inverse(this->editMesh->transform);
+        renderer.clear();
+        renderer.updateSceneMeshes(scene);
     }
 
     if (this->editEnvironment)
@@ -362,7 +357,6 @@ void UI::sceneMenu()
                 if (ImGui::Selectable(name.c_str(), &isMesh))
                 {
                     this->editMesh = isMesh ? &mesh : nullptr;
-                    this->editMeshTransform = isMesh ? mesh.transform : glm::mat4(1);
                     this->editMaterial = nullptr;
                     this->editCamera = false;
                     this->editEnvironment = false;
@@ -491,7 +485,7 @@ void UI::propertyMeshMenu()
     static float rotation[3];
     static float scale[3];
     ImGuizmo::DecomposeMatrixToComponents(
-        glm::value_ptr(this->editMeshTransform),
+        glm::value_ptr(this->editMesh->transform),
         translation,
         rotation,
         scale);
@@ -505,7 +499,14 @@ void UI::propertyMeshMenu()
         translation,
         rotation,
         scale,
-        glm::value_ptr(this->editMeshTransform));
+        glm::value_ptr(this->editMesh->transform));
+
+    if (modified)
+    {
+        this->editMesh->transformInv = glm::inverse(this->editMesh->transform);
+        renderer.clear();
+        renderer.updateSceneMeshes(scene);
+    }
 
     ImGui::RadioButton("Translate", (int*)&this->operation, (int)ImGuizmo::OPERATION::TRANSLATE);
     ImGui::SameLine();
@@ -516,29 +517,6 @@ void UI::propertyMeshMenu()
     ImGui::RadioButton("World", (int*)&this->mode, (int)ImGuizmo::MODE::WORLD);
     ImGui::SameLine();
     ImGui::RadioButton("Local", (int*)&this->mode, (int)ImGuizmo::MODE::LOCAL);
-
-    ImGui::Separator();
-    ImGui::Checkbox("Auto apply", &this->autoApply);
-    ImGui::SameLine();
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip())
-    {
-        ImGui::Text("May cause lags due to bvh recalculation");
-        ImGui::EndTooltip();
-    }
-
-    ImGui::SameLine();
-    ImGui::BeginDisabled(this->autoApply);
-    if (ImGui::Button("Apply", ImVec2(-1, 0)) || modified && this->autoApply)
-    {
-        this->editMesh->transform = this->editMeshTransform;
-        scene.buildBVH();
-
-        renderer.clear();
-        renderer.updateSceneMeshes(scene);
-    }
-
-    ImGui::EndDisabled();
 }
 
 void UI::propertyMaterialMenu()

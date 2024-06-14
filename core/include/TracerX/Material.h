@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace TracerX::core
+namespace TracerX
 {
 
 /**

@@ -180,6 +180,10 @@ unsigned int Renderer::getFrameCount() const
 void Renderer::loadScene(const Scene& scene, glm::uvec2 texturesSize)
 {
     this->textureArray.update(texturesSize, scene.textures);
+    this->bvhBuffer.update(scene.bvh);
+    this->vertexBuffer.update(scene.vertices);
+    this->triangleBuffer.update(scene.triangles);
+
     this->updateSceneMeshes(scene);
     this->updateSceneMaterials(scene);
 }
@@ -191,9 +195,6 @@ void Renderer::updateSceneMaterials(const Scene& scene)
 
 void Renderer::updateSceneMeshes(const Scene& scene)
 {
-    this->bvhBuffer.update(scene.bvh);
-    this->vertexBuffer.update(scene.vertices);
-    this->triangleBuffer.update(scene.triangles);
     this->meshBuffer.update(scene.meshes);
 }
 
@@ -211,7 +212,7 @@ void Renderer::initData()
 
     // Buffers
     this->vertexBuffer.init(GL_RGB32F);
-    this->triangleBuffer.init(GL_RGBA32I);
+    this->triangleBuffer.init(GL_RGB32I);
     this->meshBuffer.init(GL_RGBA32F);
     this->materialBuffer.init(GL_RGBA32F);
     this->bvhBuffer.init(GL_RGB32F);

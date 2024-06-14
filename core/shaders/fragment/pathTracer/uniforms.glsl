@@ -17,25 +17,34 @@ uniform Env Environment;
 Triangle GetTriangle(int index)
 {
     ivec4 data = texelFetch(Triangles, index);
-    return Triangle(data.x, data.y, data.z, data.w);
+    return Triangle(data.x, data.y, data.z);
 }
 
-Vertex GetVertex(int index, mat4 transform)
+Vertex GetVertex(int index)
 {
     vec4 data1 = texelFetch(Vertices, index * 3 + 0);
     vec4 data2 = texelFetch(Vertices, index * 3 + 1);
     vec4 data3 = texelFetch(Vertices, index * 3 + 2);
-    return Vertex((transform * vec4(data1.xyz, 1)).xyz, (transform * vec4(data2.xyz, 0)).xyz, data3.xy);
+    return Vertex(data1.xyz, data2.xyz, data3.xy);
 }
 
 Mesh GetMesh(int index)
 {
-    vec4 data1 = texelFetch(Meshes, index * 5 + 0);
-    vec4 data2 = texelFetch(Meshes, index * 5 + 1);
-    vec4 data3 = texelFetch(Meshes, index * 5 + 2);
-    vec4 data4 = texelFetch(Meshes, index * 5 + 3);
-    vec4 data5 = texelFetch(Meshes, index * 5 + 4);
-    return Mesh(mat4(data1, data2, data3, data4), int(data5.x));
+    vec4 data1 = texelFetch(Meshes, index * 9 + 0);
+    vec4 data2 = texelFetch(Meshes, index * 9 + 1);
+    vec4 data3 = texelFetch(Meshes, index * 9 + 2);
+    vec4 data4 = texelFetch(Meshes, index * 9 + 3);
+    vec4 data5 = texelFetch(Meshes, index * 9 + 4);
+    vec4 data6 = texelFetch(Meshes, index * 9 + 5);
+    vec4 data7 = texelFetch(Meshes, index * 9 + 6);
+    vec4 data8 = texelFetch(Meshes, index * 9 + 7);
+    vec4 data9 = texelFetch(Meshes, index * 9 + 8);
+    return Mesh(mat4(data1, data2, data3, data4), mat4(data5, data6, data7, data8), int(data9.x), int(data9.y), int(data9.z));
+}
+
+int GetMeshCount()
+{
+    return textureSize(Meshes) / 9;
 }
 
 Material GetMaterial(int index)

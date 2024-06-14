@@ -22,15 +22,13 @@ public:
     void render();
 private:
     Application* app = nullptr;
-    TracerX::core::Mesh* editMesh = nullptr;
-    TracerX::core::Material* editMaterial = nullptr;
+    TracerX::Mesh* editMesh = nullptr;
+    TracerX::Material* editMaterial = nullptr;
     int currentTextureId = -1;
     bool editCamera = false;
     bool editEnvironment = false;
-    glm::mat4 editMeshTransform;
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
-    bool autoApply = false;
     TracerX::core::Texture textureView;
 
     void barMenu();

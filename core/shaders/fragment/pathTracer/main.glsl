@@ -124,13 +124,13 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (uint i = 0; i <= MaxBounceCount; i++)
+    for (uint bounce = 0; bounce <= MaxBounceCount; bounce++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, i == 0, manifold))
+        if (!FindIntersection(ray, bounce == 0, manifold))
         {
             ray.IncomingLight += GetEnvironment(ray) * ray.Color;
-            if (i == 0)
+            if (bounce == 0)
             {
                 isBackground = true;
             }

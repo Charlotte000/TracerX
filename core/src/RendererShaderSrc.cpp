@@ -71,13 +71,15 @@ struct Triangle
     int V1;
     int V2;
     int V3;
-    int MeshId;
 };
 
 struct Mesh
 {
     mat4 Transform;
+    mat4 TransformInv;
     int MaterialId;
+    int NodeOffset;
+    int TriangleOffset;
 };
 
 struct CollisionManifold
@@ -119,25 +121,34 @@ uniform Env Environment;
 Triangle GetTriangle(int index)
 {
     ivec4 data = texelFetch(Triangles, index);
-    return Triangle(data.x, data.y, data.z, data.w);
+    return Triangle(data.x, data.y, data.z);
 }
 
-Vertex GetVertex(int index, mat4 transform)
+Vertex GetVertex(int index)
 {
     vec4 data1 = texelFetch(Vertices, index * 3 + 0);
     vec4 data2 = texelFetch(Vertices, index * 3 + 1);
     vec4 data3 = texelFetch(Vertices, index * 3 + 2);
-    return Vertex((transform * vec4(data1.xyz, 1)).xyz, (transform * vec4(data2.xyz, 0)).xyz, data3.xy);
+    return Vertex(data1.xyz, data2.xyz, data3.xy);
 }
 
 Mesh GetMesh(int index)
 {
-    vec4 data1 = texelFetch(Meshes, index * 5 + 0);
-    vec4 data2 = texelFetch(Meshes, index * 5 + 1);
-    vec4 data3 = texelFetch(Meshes, index * 5 + 2);
-    vec4 data4 = texelFetch(Meshes, index * 5 + 3);
-    vec4 data5 = texelFetch(Meshes, index * 5 + 4);
-    return Mesh(mat4(data1, data2, data3, data4), int(data5.x));
+    vec4 data1 = texelFetch(Meshes, index * 9 + 0);
+    vec4 data2 = texelFetch(Meshes, index * 9 + 1);
+    vec4 data3 = texelFetch(Meshes, index * 9 + 2);
+    vec4 data4 = texelFetch(Meshes, index * 9 + 3);
+    vec4 data5 = texelFetch(Meshes, index * 9 + 4);
+    vec4 data6 = texelFetch(Meshes, index * 9 + 5);
+    vec4 data7 = texelFetch(Meshes, index * 9 + 6);
+    vec4 data8 = texelFetch(Meshes, index * 9 + 7);
+    vec4 data9 = texelFetch(Meshes, index * 9 + 8);
+    return Mesh(mat4(data1, data2, data3, data4), mat4(data5, data6, data7, data8), int(data9.x), int(data9.y), int(data9.z));
+}
+
+int GetMeshCount()
+{
+    return textureSize(Meshes) / 9;
 }
 
 Material GetMaterial(int index)
@@ -263,16 +274,23 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
     return tNear <= tFar && tFar >= 0;
 }
 
-bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionManifold manifold)
 {
-    manifold.Depth = MaxRenderDistance;
+    vec3 rayOrigin = ray.Origin;
+    ray.Origin = (mesh.TransformInv * vec4(ray.Origin, 1)).xyz;
+    ray.Direction = normalize((mesh.TransformInv * vec4(ray.Direction, 0)).xyz);
+    ray.InvDirection = 1 / ray.Direction;
+
+    float localMinRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MinRenderDistance, 0)).xyz);
+    float localMaxRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MaxRenderDistance, 0)).xyz);
+    manifold.Depth = localMaxRenderDistance;
 
     float bbhits[4];
 
     vec2 todo[64];
     int stackptr = 0;
 
-    todo[stackptr] = vec2(0, -1);
+    todo[stackptr] = vec2(mesh.NodeOffset, -1);
 
     while (stackptr >= 0)
     {
@@ -288,15 +306,14 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
         {
             for (int o = 0; o < node.PrimitiveCount; ++o)
             {
-                Triangle triangle = GetTriangle(node.Start + o);
-                Mesh mesh = GetMesh(triangle.MeshId);
+                Triangle triangle = GetTriangle(node.Start + o + mesh.TriangleOffset);
 
-                Vertex v1 = GetVertex(triangle.V1, mesh.Transform);
-                Vertex v2 = GetVertex(triangle.V2, mesh.Transform);
-                Vertex v3 = GetVertex(triangle.V3, mesh.Transform);
+                Vertex v1 = GetVertex(triangle.V1);
+                Vertex v2 = GetVertex(triangle.V2);
+                Vertex v3 = GetVertex(triangle.V3);
 
                 CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= MinRenderDistance))
+                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= localMinRenderDistance))
                 {
                     manifold = current;
                 }
@@ -333,6 +350,35 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
             {
                 todo[++stackptr] = vec2(ni + node.RightOffset, bbhits[2]);
             }
+        }
+    }
+
+    if (manifold.Depth < localMaxRenderDistance)
+    {
+        manifold.Point = (mesh.Transform * vec4(manifold.Point, 1)).xyz;
+        manifold.Depth = length(manifold.Point - rayOrigin);
+        manifold.Normal = normalize((mesh.Transform * vec4(manifold.Normal, 0)).xyz);
+        manifold.Tangent = normalize((mesh.Transform * vec4(manifold.Tangent, 0)).xyz);
+        manifold.Bitangent = normalize((mesh.Transform * vec4(manifold.Bitangent, 0)).xyz);
+        return true;
+    }
+
+    return false;
+}
+
+bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+{
+    manifold.Depth = MaxRenderDistance;
+
+    int meshCount = GetMeshCount();
+    for (int meshId = 0; meshId < meshCount; meshId++)
+    {
+        Mesh mesh = GetMesh(meshId);
+
+        CollisionManifold current;
+        if (MeshIntersection(ray, mesh, firstHit, current) && current.Depth < manifold.Depth)
+        {
+            manifold = current;
         }
     }
 
@@ -450,13 +496,13 @@ void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (uint i = 0; i <= MaxBounceCount; i++)
+    for (uint bounce = 0; bounce <= MaxBounceCount; bounce++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, i == 0, manifold))
+        if (!FindIntersection(ray, bounce == 0, manifold))
         {
             ray.IncomingLight += GetEnvironment(ray) * ray.Color;
-            if (i == 0)
+            if (bounce == 0)
             {
                 isBackground = true;
             }

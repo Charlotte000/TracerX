@@ -66,16 +66,23 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
     return tNear <= tFar && tFar >= 0;
 }
 
-bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionManifold manifold)
 {
-    manifold.Depth = MaxRenderDistance;
+    vec3 rayOrigin = ray.Origin;
+    ray.Origin = (mesh.TransformInv * vec4(ray.Origin, 1)).xyz;
+    ray.Direction = normalize((mesh.TransformInv * vec4(ray.Direction, 0)).xyz);
+    ray.InvDirection = 1 / ray.Direction;
+
+    float localMinRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MinRenderDistance, 0)).xyz);
+    float localMaxRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MaxRenderDistance, 0)).xyz);
+    manifold.Depth = localMaxRenderDistance;
 
     float bbhits[4];
 
     vec2 todo[64];
     int stackptr = 0;
 
-    todo[stackptr] = vec2(0, -1);
+    todo[stackptr] = vec2(mesh.NodeOffset, -1);
 
     while (stackptr >= 0)
     {
@@ -91,15 +98,14 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
         {
             for (int o = 0; o < node.PrimitiveCount; ++o)
             {
-                Triangle triangle = GetTriangle(node.Start + o);
-                Mesh mesh = GetMesh(triangle.MeshId);
+                Triangle triangle = GetTriangle(node.Start + o + mesh.TriangleOffset);
 
-                Vertex v1 = GetVertex(triangle.V1, mesh.Transform);
-                Vertex v2 = GetVertex(triangle.V2, mesh.Transform);
-                Vertex v3 = GetVertex(triangle.V3, mesh.Transform);
+                Vertex v1 = GetVertex(triangle.V1);
+                Vertex v2 = GetVertex(triangle.V2);
+                Vertex v3 = GetVertex(triangle.V3);
 
                 CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= MinRenderDistance))
+                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= localMinRenderDistance))
                 {
                     manifold = current;
                 }
@@ -136,6 +142,35 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
             {
                 todo[++stackptr] = vec2(ni + node.RightOffset, bbhits[2]);
             }
+        }
+    }
+
+    if (manifold.Depth < localMaxRenderDistance)
+    {
+        manifold.Point = (mesh.Transform * vec4(manifold.Point, 1)).xyz;
+        manifold.Depth = length(manifold.Point - rayOrigin);
+        manifold.Normal = normalize((mesh.Transform * vec4(manifold.Normal, 0)).xyz);
+        manifold.Tangent = normalize((mesh.Transform * vec4(manifold.Tangent, 0)).xyz);
+        manifold.Bitangent = normalize((mesh.Transform * vec4(manifold.Bitangent, 0)).xyz);
+        return true;
+    }
+
+    return false;
+}
+
+bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+{
+    manifold.Depth = MaxRenderDistance;
+
+    int meshCount = GetMeshCount();
+    for (int meshId = 0; meshId < meshCount; meshId++)
+    {
+        Mesh mesh = GetMesh(meshId);
+
+        CollisionManifold current;
+        if (MeshIntersection(ray, mesh, firstHit, current) && current.Depth < manifold.Depth)
+        {
+            manifold = current;
         }
     }
 

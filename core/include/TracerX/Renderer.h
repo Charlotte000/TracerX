@@ -222,7 +222,7 @@ public:
     /**
      * @brief Updates the meshes in the scene.
      * 
-     * Use this method to update only the meshes, vertices, triangles, and BVH in the scene.
+     * Use this method to update only the meshes in the scene.
      * 
      * @param scene The scene containing the updated meshes.
      * @see Renderer::loadScene to update the entire scene.
@@ -238,8 +238,8 @@ private:
     core::TextureArray textureArray;
     core::Buffer<core::Vertex> vertexBuffer;
     core::Buffer<core::Triangle> triangleBuffer;
-    core::Buffer<core::Mesh> meshBuffer;
-    core::Buffer<core::Material> materialBuffer;
+    core::Buffer<Mesh> meshBuffer;
+    core::Buffer<Material> materialBuffer;
     core::Buffer<glm::vec3> bvhBuffer;
 
     static const char* pathTracerShaderSrc;

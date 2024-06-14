@@ -3,7 +3,7 @@
  */
 #include "TracerX/Material.h"
 
-using namespace TracerX::core;
+using namespace TracerX;
 
 Material Material::lightSource(glm::vec3 emissionColor, float emissionStrength)
 {

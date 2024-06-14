@@ -26,49 +26,7 @@ int Scene::loadMaterial(const Material& material, const std::string& name)
     return this->materials.size() - 1;
 }
 
-void Scene::buildBVH()
-{
-    this->bvh.clear();
-
-    if (this->triangles.empty())
-    {
-        return;
-    }
-
-    class TriangleConverter
-    {
-    public:
-        const std::vector<Vertex>* vertices;
-        const std::vector<Mesh>* meshes;
-
-        TriangleConverter(const std::vector<Vertex>* vertices, const std::vector<Mesh>* meshes)
-            : vertices(vertices), meshes(meshes)
-        {
-        }
-
-        FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
-        {
-            const Mesh& mesh = this->meshes->at(triangle.meshId);
-
-            glm::vec3 v1 = mesh.transform * glm::vec4(this->vertices->at(triangle.v1).position, 1);
-            glm::vec3 v2 = mesh.transform * glm::vec4(this->vertices->at(triangle.v2).position, 1);
-            glm::vec3 v3 = mesh.transform * glm::vec4(this->vertices->at(triangle.v3).position, 1);
-            return FastBVH::BBox<float>(glm::min(glm::min(v1, v2), v3), glm::max(glm::max(v1, v2), v3));
-        }
-    };
-
-    FastBVH::BVH<float, Triangle> bvh = FastBVH::DefaultBuilder<float>()(this->triangles, TriangleConverter(&this->vertices, &this->meshes));
-
-    this->bvh.reserve(bvh.getNodes().size() * 3);
-    for (const FastBVH::Node<float>& node : bvh.getNodes())
-    {
-        this->bvh.push_back(node.bbox.min);
-        this->bvh.push_back(node.bbox.max);
-        this->bvh.push_back(glm::vec3(node.start, node.primitive_count, node.right_offset));
-    }
-}
-
-Scene Scene::loadGLTF(const std::string& fileName, bool buildBVH)
+Scene Scene::loadGLTF(const std::string& fileName)
 {
     Scene scene;
     scene.name = fileName.substr(fileName.find_last_of("/\\") + 1);
@@ -96,9 +54,9 @@ Scene Scene::loadGLTF(const std::string& fileName, bool buildBVH)
     scene.GLTFmaterials(model.materials);
     scene.GLTFnodes(model, glm::mat4(1));
 
-    if (buildBVH)
+    for (Mesh& mesh : scene.meshes)
     {
-        scene.buildBVH();
+        scene.buildBVH(mesh);
     }
 
     return scene;
@@ -233,13 +191,12 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
         const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
         const uint8_t* indexBufferAddress = indexBuffer.data.data();
         int indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
+        size_t triangleOffset = this->triangles.size();
         for (size_t i = 0; i < indexAccessor.count; i += 3)
         {
             const uint8_t* data = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset + (i * indexStride);
 
             Triangle triangle;
-            triangle.meshId = this->meshes.size();
-
             if (indexStride == 2)
             {
                 glm::vec<3, uint16_t> index;
@@ -256,6 +213,10 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
                 triangle.v2 = (int)(index.y + vertexOffset);
                 triangle.v3 = (int)(index.z + vertexOffset);
             }
+            else
+            {
+                throw std::runtime_error("Unsupported index stride");
+            }
 
             this->triangles.push_back(triangle);
         }
@@ -263,8 +224,10 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
         // Mesh
         Mesh mesh;
         mesh.materialId = primitive.material;
+        mesh.triangleOffset = triangleOffset;
         mesh.triangleSize = indexAccessor.count / 3;
         mesh.transform = transform;
+        mesh.transformInv = glm::inverse(transform);
         this->meshes.push_back(mesh);
         this->meshNames.push_back(gltfMesh.name);
     }
@@ -348,5 +311,40 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
     for (int child : node.children)
     {
         this->GLTFtraverseNode(model, model.nodes[child], transform);
+    }
+}
+
+void Scene::buildBVH(Mesh& mesh)
+{
+    class TriangleConverter
+    {
+    public:
+        const std::vector<Vertex>* vertices;
+        const Mesh* mesh;
+
+        TriangleConverter(const std::vector<Vertex>* vertices, const Mesh* mesh)
+            : vertices(vertices), mesh(mesh)
+        {
+        }
+
+        FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
+        {
+            glm::vec3 v1 = this->vertices->at(triangle.v1).position;
+            glm::vec3 v2 = this->vertices->at(triangle.v2).position;
+            glm::vec3 v3 = this->vertices->at(triangle.v3).position;
+            return FastBVH::BBox<float>(glm::min(glm::min(v1, v2), v3), glm::max(glm::max(v1, v2), v3));
+        }
+    };
+
+    FastBVH::BVH<float, Triangle> bvh = FastBVH::DefaultBuilder<float>()(
+        FastBVH::Iterable<Triangle>(this->triangles.data() + (size_t)mesh.triangleOffset, (size_t)mesh.triangleSize),
+        TriangleConverter(&this->vertices, &mesh));
+
+    mesh.nodeOffset = (float)(this->bvh.size() / 3);
+    for (const FastBVH::Node<float>& node : bvh.getNodes())
+    {
+        this->bvh.push_back(node.bbox.min);
+        this->bvh.push_back(node.bbox.max);
+        this->bvh.push_back(glm::vec3(node.start, node.primitive_count, node.right_offset));
     }
 }

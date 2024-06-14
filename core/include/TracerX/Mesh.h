@@ -5,7 +5,7 @@
 
 #include <glm/glm.hpp>
 
-namespace TracerX::core
+namespace TracerX
 {
 
 /**
@@ -16,8 +16,16 @@ struct Mesh
 public:
     /**
      * @brief The transformation matrix for the mesh.
+     * @see Mesh::transformInv
      */
     glm::mat4 transform = glm::mat4(1);
+
+    /**
+     * @brief The inverse transformation matrix for the mesh.
+     * 
+     * Must be updated whenever the transform matrix is updated.
+     */
+    glm::mat4 transformInv = glm::mat4(1);
 
     /**
      * @brief The material ID of the mesh.
@@ -26,7 +34,10 @@ public:
      * Float value to avoid padding issues.
      */
     float materialId = -1;
-
+private:
+    float nodeOffset = 0;
+    float triangleOffset = 0;
+public:
     /**
      * @brief The size of the triangles in the mesh.
      * 
@@ -34,9 +45,8 @@ public:
      * Float value to avoid padding issues.
      */
     float triangleSize = 0;
-private:
-    float padding1 = 0;
-    float padding2 = 0;
+
+    friend class Scene;
 };
 
 }
