@@ -24,12 +24,12 @@ int main()
     GLFWwindow* window = createWindow();
 
     // Loading the scene
-    Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb", false);
+    Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb");
 
     // Move the mesh
-    Mesh& ajax = scene.meshes[0];
-    ajax.transform = glm::translate(scene.meshes[0].transform, glm::vec3(0, -.5f, 0));
-    scene.buildBVH();
+    Mesh& ajaxMesh = scene.meshes[0];
+    ajaxMesh.transform = glm::translate(ajaxMesh.transform, glm::vec3(0, -.5f, 0));
+    ajaxMesh.transformInv = glm::inverse(ajaxMesh.transform);
 
     // Setting up the renderer
     Renderer renderer;
@@ -56,10 +56,10 @@ int main()
     renderer.getImage().saveToFile("ajaxWhite.png");
 
     // Setting up the mesh material
-    Material& material = scene.materials[ajax.materialId];
-    material.albedoColor = glm::vec3(.3f, .3f, .001f);
-    material.metalness = 1;
-    material.roughness = .1f;
+    Material& axajMaterial = scene.materials[ajaxMesh.materialId];
+    axajMaterial.albedoColor = glm::vec3(.3f, .3f, .001f);
+    axajMaterial.metalness = 1;
+    axajMaterial.roughness = .1f;
     renderer.updateSceneMaterials(scene);
 
     // Render

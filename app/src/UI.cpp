@@ -766,6 +766,12 @@ void UI::propertySceneMenu()
         ImGui::EndTooltip();
     }
 
+    if (ImGui::DragFloat("Min render distance", &renderer.minRenderDistance, 0.01f, 0, 10000, "%.4f") |
+        ImGui::DragFloat("Max render distance", &renderer.maxRenderDistance, 10, 0, 10000))
+    {
+        renderer.clear();
+    }
+
     ImGui::Separator();
     if (ImGui::Button(this->app->isRendering ? "Stop" : "Start", ImVec2(-1, 0)))
     {
