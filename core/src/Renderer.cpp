@@ -211,7 +211,7 @@ void Renderer::initData()
     this->output.init();
 
     // Buffers
-    this->vertexBuffer.init(GL_RGB32F);
+    this->vertexBuffer.init(GL_RGBA32F);
     this->triangleBuffer.init(GL_RGB32I);
     this->meshBuffer.init(GL_RGBA32F);
     this->materialBuffer.init(GL_RGBA32F);

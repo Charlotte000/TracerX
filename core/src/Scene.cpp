@@ -172,15 +172,18 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
 
             // Position
             const uint8_t* positionData = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset + (i * sizeof(float) * 3);
-            std::memcpy(glm::value_ptr(v.position), positionData, sizeof(float) * 3);
+            std::memcpy(glm::value_ptr(v.positionU), positionData, sizeof(float) * 3);
 
             // Normal
             const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset + (i * sizeof(float) * 3);
-            std::memcpy(glm::value_ptr(v.normal), normalData, sizeof(float) * 3);
+            std::memcpy(glm::value_ptr(v.normalV), normalData, sizeof(float) * 3);
 
             // Texture coordinate
             const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset + (i * sizeof(float) * 2);
-            std::memcpy(glm::value_ptr(v.uv), uvData, sizeof(float) * 2);
+            glm::vec2 uv;
+            std::memcpy(glm::value_ptr(uv), uvData, sizeof(float) * 2);
+            v.positionU.w = uv.x;
+            v.normalV.w = uv.y;
 
             this->vertices.push_back(v);
         }
@@ -329,9 +332,9 @@ void Scene::buildBVH(Mesh& mesh)
 
         FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
         {
-            glm::vec3 v1 = this->vertices->at(triangle.v1).position;
-            glm::vec3 v2 = this->vertices->at(triangle.v2).position;
-            glm::vec3 v3 = this->vertices->at(triangle.v3).position;
+            glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
+            glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
+            glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
             return FastBVH::BBox<float>(glm::min(glm::min(v1, v2), v3), glm::max(glm::max(v1, v2), v3));
         }
     };

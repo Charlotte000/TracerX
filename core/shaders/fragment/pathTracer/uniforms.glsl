@@ -22,10 +22,9 @@ Triangle GetTriangle(int index)
 
 Vertex GetVertex(int index)
 {
-    vec4 data1 = texelFetch(Vertices, index * 3 + 0);
-    vec4 data2 = texelFetch(Vertices, index * 3 + 1);
-    vec4 data3 = texelFetch(Vertices, index * 3 + 2);
-    return Vertex(data1.xyz, data2.xyz, data3.xy);
+    vec4 data1 = texelFetch(Vertices, index * 2 + 0);
+    vec4 data2 = texelFetch(Vertices, index * 2 + 1);
+    return Vertex(data1.xyz, data2.xyz, vec2(data1.w, data2.w));
 }
 
 Mesh GetMesh(int index)

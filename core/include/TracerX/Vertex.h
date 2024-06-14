@@ -15,21 +15,14 @@ struct Vertex
 {
 public:
     /**
-     * @brief The position of the vertex in 3D space.
+     * @brief The position of the vertex in 3D space (xyz) and the U component of the texture coordinates (w).
      */
-    glm::vec3 position;
+    glm::vec4 positionU;
 
     /**
-     * @brief The normal vector of the vertex.
+     * @brief The normal of the vertex in 3D space (xyz) and the V component of the texture coordinates (w).
      */
-    glm::vec3 normal;
-
-    /**
-     * @brief The texture coordinates of the vertex.
-     */
-    glm::vec2 uv;
-private:
-    float padding1 = 0;
+    glm::vec4 normalV;
 };
 
 }
