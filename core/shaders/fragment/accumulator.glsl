@@ -1,18 +1,13 @@
 #version 430 core
 
-const float PI         = 3.14159265358979323;
-const float INV_PI     = 0.31830988618379067;
-const float TWO_PI     = 6.28318530717958648;
-const float INV_TWO_PI = 0.15915494309189533;
-
 in vec2 TexCoords;
 out vec4 FragColor;
 
-#include structs.glsl
-#include uniforms.glsl
-#include random.glsl
-#include transforms.glsl
-#include intersection.glsl
+#include common/structs.glsl
+#include common/uniforms.glsl
+#include common/random.glsl
+#include common/transforms.glsl
+#include common/intersection.glsl
 
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {

@@ -231,10 +231,14 @@ public:
 private:
     unsigned int frameCount = 0;
     core::Quad quad;
-    core::Shader pathTracer;
-    core::Shader toneMapper;
+    core::Shader accumulatorShader;
+    core::Shader toneMapperShader;
+    core::Shader albedoShader;
+    core::Shader normalShader;
     core::FrameBuffer accumulator;
     core::FrameBuffer output;
+    core::FrameBuffer albedo;
+    core::FrameBuffer normal;
     core::TextureArray textureArray;
     core::Buffer<core::Vertex> vertexBuffer;
     core::Buffer<core::Triangle> triangleBuffer;
@@ -242,11 +246,15 @@ private:
     core::Buffer<Material> materialBuffer;
     core::Buffer<glm::vec3> bvhBuffer;
 
-    static const char* pathTracerShaderSrc;
+    static const char* accumulatorShaderSrc;
     static const char* toneMapperShaderSrc;
+    static const char* albedoShaderSrc;
+    static const char* normalShaderSrc;
     static const char* vertexShaderSrc;
 
     void initData();
+    void updateAlbedo();
+    void updateNormal();
 };
 
 }

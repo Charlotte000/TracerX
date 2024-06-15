@@ -1,3 +1,5 @@
+const float TWO_PI     = 6.28318530717958648;
+
 uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + FrameCount * 5458u;
 
 float RandomValue()

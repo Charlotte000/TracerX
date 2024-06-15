@@ -1,3 +1,6 @@
+const float INV_PI     = 0.31830988618379067;
+const float INV_TWO_PI = 0.15915494309189533;
+
 layout(binding=0) uniform sampler2D AccumulatorTexture;
 layout(binding=1) uniform sampler2D EnvironmentTexture;
 layout(binding=2) uniform sampler2DArray Textures;
