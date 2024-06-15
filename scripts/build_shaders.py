@@ -22,17 +22,17 @@ def write_shaders(path: str, pathTracer: str, toneMapper: str, vertex: str) -> N
         file.write("#include <TracerX/Renderer.h>\n\n")
         file.write("using namespace TracerX;\n\n")
 
-        file.write(f'const char* Renderer::pathTracerShaderSrc =\nR"(\n')
+        file.write('const char* Renderer::pathTracerShaderSrc =\nR"(\n')
         file.write(pathTracer)
-        file.write(f'\n)";\n\n')
+        file.write('\n)";\n\n')
 
-        file.write(f'const char* Renderer::toneMapperShaderSrc =\nR"(\n')
+        file.write('const char* Renderer::toneMapperShaderSrc =\nR"(\n')
         file.write(toneMapper)
-        file.write(f'\n)";\n\n')
+        file.write('\n)";\n\n')
 
-        file.write(f'const char* Renderer::vertexShaderSrc =\nR"(\n')
+        file.write('const char* Renderer::vertexShaderSrc =\nR"(\n')
         file.write(vertex)
-        file.write(f'\n)";\n')
+        file.write('\n)";\n')
 
 
 project = join(dirname(__file__), "..")

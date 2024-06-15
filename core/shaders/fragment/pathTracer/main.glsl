@@ -11,14 +11,8 @@ out vec4 FragColor;
 #include structs.glsl
 #include uniforms.glsl
 #include random.glsl
+#include transforms.glsl
 #include intersection.glsl
-
-
-vec3 Slerp(in vec3 a, in vec3 b, float t)
-{
-    float angle = acos(dot(a, b));
-    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
-}
 
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
 {

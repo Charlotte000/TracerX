@@ -205,6 +205,16 @@ vec3 RandomVector3()
     float z = RandomValueNormalDistribution();
     return normalize(vec3(x, y, z));
 }
+vec3 Slerp(in vec3 a, in vec3 b, float t)
+{
+    float angle = acos(dot(a, b));
+    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
+}
+
+vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
+{
+    return (matrix * vec4(v, translate ? 1 : 0)).xyz;
+}
 void swap(inout float a, inout float b)
 {
     float tmp = a;
@@ -276,12 +286,12 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
 bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionManifold manifold)
 {
     vec3 rayOrigin = ray.Origin;
-    ray.Origin = (mesh.TransformInv * vec4(ray.Origin, 1)).xyz;
-    ray.Direction = normalize((mesh.TransformInv * vec4(ray.Direction, 0)).xyz);
+    ray.Origin = Transform(ray.Origin, mesh.TransformInv, true);
+    ray.Direction = normalize(Transform(ray.Direction, mesh.TransformInv, false));
     ray.InvDirection = 1 / ray.Direction;
 
-    float localMinRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MinRenderDistance, 0)).xyz);
-    float localMaxRenderDistance = length((mesh.TransformInv * vec4(ray.Direction * MaxRenderDistance, 0)).xyz);
+    float localMinRenderDistance = length(Transform(ray.Direction * MinRenderDistance, mesh.TransformInv, false));
+    float localMaxRenderDistance = length(Transform(ray.Direction * MaxRenderDistance, mesh.TransformInv, false));
     manifold.Depth = localMaxRenderDistance;
 
     float bbhits[4];
@@ -354,11 +364,11 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionM
 
     if (manifold.Depth < localMaxRenderDistance)
     {
-        manifold.Point = (mesh.Transform * vec4(manifold.Point, 1)).xyz;
+        manifold.Point = Transform(manifold.Point, mesh.Transform, true);
         manifold.Depth = length(manifold.Point - rayOrigin);
-        manifold.Normal = normalize((mesh.Transform * vec4(manifold.Normal, 0)).xyz);
-        manifold.Tangent = normalize((mesh.Transform * vec4(manifold.Tangent, 0)).xyz);
-        manifold.Bitangent = normalize((mesh.Transform * vec4(manifold.Bitangent, 0)).xyz);
+        manifold.Normal = normalize(Transform(manifold.Normal, mesh.Transform, false));
+        manifold.Tangent = normalize(Transform(manifold.Tangent, mesh.Transform, false));
+        manifold.Bitangent = normalize(Transform(manifold.Bitangent, mesh.Transform, false));
         return true;
     }
 
@@ -382,13 +392,6 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
     }
 
     return manifold.Depth < MaxRenderDistance;
-}
-
-
-vec3 Slerp(in vec3 a, in vec3 b, float t)
-{
-    float angle = acos(dot(a, b));
-    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
 }
 
 void CollisionReact(inout Ray ray, in CollisionManifold manifold)
