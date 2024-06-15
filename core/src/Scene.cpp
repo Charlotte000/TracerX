@@ -200,7 +200,15 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
             const uint8_t* data = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset + (i * indexStride);
 
             Triangle triangle;
-            if (indexStride == 2)
+            if (indexStride == 1)
+            {
+                glm::vec<3, uint8_t> index;
+                std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
+                triangle.v1 = (int)(index.x + vertexOffset);
+                triangle.v2 = (int)(index.y + vertexOffset);
+                triangle.v3 = (int)(index.z + vertexOffset);
+            }
+            else if (indexStride == 2)
             {
                 glm::vec<3, uint16_t> index;
                 std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
@@ -212,6 +220,14 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
             {
                 glm::vec<3, uint32_t> index;
                 std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
+                triangle.v1 = (int)(index.x + vertexOffset);
+                triangle.v2 = (int)(index.y + vertexOffset);
+                triangle.v3 = (int)(index.z + vertexOffset);
+            }
+            else if (indexStride == 8)
+            {
+                glm::vec<3, uint64_t> index;
+                std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
                 triangle.v1 = (int)(index.x + vertexOffset);
                 triangle.v2 = (int)(index.y + vertexOffset);
                 triangle.v3 = (int)(index.z + vertexOffset);

@@ -830,8 +830,8 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
         ImGui::Image(
             (void*)(intptr_t)this->textureView.getHandler(),
             ImVec2(200, 200),
-            ImVec2(0, 1),
-            ImVec2(1, 0),
+            ImVec2(0, 0),
+            ImVec2(1, 1),
             ImVec4(tintColor.r, tintColor.g, tintColor.b, 1));
     }
 }
