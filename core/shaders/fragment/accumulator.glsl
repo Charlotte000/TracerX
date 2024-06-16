@@ -1,7 +1,9 @@
 #version 430 core
 
 in vec2 TexCoords;
-out vec4 FragColor;
+out vec4 AccumulatorColor;
+out vec4 AlbedoColor;
+out vec4 NormalColor;
 
 #include common/structs.glsl
 #include common/uniforms.glsl
@@ -118,17 +120,26 @@ vec4 SendRay(in Ray ray)
         CollisionManifold manifold;
         if (!FindIntersection(ray, bounce == 0, manifold))
         {
-            ray.IncomingLight += GetEnvironment(ray) * ray.Color;
+            vec3 envLight = GetEnvironment(ray);
+            ray.IncomingLight += envLight * ray.Color;
             if (bounce == 0)
             {
                 isBackground = true;
+                AlbedoColor = vec4(envLight, 1);
+                NormalColor = vec4((1 - ray.Direction) / 2, 1);
             }
 
             break;
         }
 
+
         CollisionReact(ray, manifold);
         ray.InvDirection = 1 / ray.Direction;
+        if (bounce == 0)
+        {
+            AlbedoColor = vec4(ray.Color, 1);
+            NormalColor = vec4((manifold.Normal + 1) / 2, 1);
+        }
     }
 
     return vec4(ray.IncomingLight, Environment.Transparent && isBackground ? 0 : 1);
@@ -164,5 +175,5 @@ void main()
 
     // Accumulate
     vec4 accumColor = texture(AccumulatorTexture, TexCoords);
-    FragColor = pixelColor + accumColor;
+    AccumulatorColor = pixelColor + accumColor;
 }

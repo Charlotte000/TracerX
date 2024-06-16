@@ -233,12 +233,8 @@ private:
     core::Quad quad;
     core::Shader accumulatorShader;
     core::Shader toneMapperShader;
-    core::Shader albedoShader;
-    core::Shader normalShader;
     core::FrameBuffer accumulator;
     core::FrameBuffer output;
-    core::FrameBuffer albedo;
-    core::FrameBuffer normal;
     core::TextureArray textureArray;
     core::Buffer<core::Vertex> vertexBuffer;
     core::Buffer<core::Triangle> triangleBuffer;
@@ -248,13 +244,9 @@ private:
 
     static const char* accumulatorShaderSrc;
     static const char* toneMapperShaderSrc;
-    static const char* albedoShaderSrc;
-    static const char* normalShaderSrc;
     static const char* vertexShaderSrc;
 
     void initData();
-    void updateAlbedo();
-    void updateNormal();
 };
 
 }
