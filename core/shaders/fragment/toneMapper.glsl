@@ -6,7 +6,7 @@ uniform uint FrameCount;
 uniform float Gamma;
 
 in vec2 TexCoords;
-out vec4 FragColor;
+layout(location=3) out vec4 ToneMapColor;
 
 void main()
 {
@@ -19,5 +19,5 @@ void main()
     // Gamma correction
     mapped = pow(mapped, vec3(1 / Gamma));
 
-    FragColor = vec4(mapped, pixel.a);
+    ToneMapColor = vec4(mapped, pixel.a);
 }

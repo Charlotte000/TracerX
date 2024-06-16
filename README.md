@@ -8,7 +8,6 @@ Additional scenes can be downloaded here and installed in the directory:
 - app/assets/environments: [Poly Haven](https://polyhaven.com/hdris)
 - app/assets/scenes: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com/)
 
-
 # Renders
 ![](img/UI.jpg)
 ![](img/Ajax.jpg)

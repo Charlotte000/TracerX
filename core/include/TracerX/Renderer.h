@@ -233,8 +233,7 @@ private:
     core::Quad quad;
     core::Shader accumulatorShader;
     core::Shader toneMapperShader;
-    core::FrameBuffer accumulator;
-    core::FrameBuffer output;
+    core::FrameBuffer frameBuffer;
     core::TextureArray textureArray;
     core::Buffer<core::Vertex> vertexBuffer;
     core::Buffer<core::Triangle> triangleBuffer;

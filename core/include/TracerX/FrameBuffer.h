@@ -16,9 +16,12 @@ class FrameBuffer
 {
 public:
     glm::uvec2 size;
-    std::vector<Texture> textures;
+    Texture accumulation;
+    Texture albedo;
+    Texture normal;
+    Texture toneMap;
 
-    void init(const std::vector<GLenum>& attachments);
+    void init();
     void resize(glm::uvec2 size);
     void shutdown();
     void use();
@@ -28,7 +31,6 @@ public:
     static void stopUse(); 
 private:
     GLuint handler;
-    std::vector<GLenum> attachments;
 };
 
 }

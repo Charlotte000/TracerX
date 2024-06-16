@@ -30,8 +30,7 @@ void Renderer::init(glm::uvec2 size)
 
 void Renderer::resize(glm::uvec2 size)
 {
-    this->accumulator.resize(size);
-    this->output.resize(size);
+    this->frameBuffer.resize(size);
     this->clear();
 }
 
@@ -39,8 +38,7 @@ void Renderer::shutdown()
 {
     this->quad.shutdown();
 
-    this->accumulator.shutdown();
-    this->output.shutdown();
+    this->frameBuffer.shutdown();
 
     this->environment.texture.shutdown();
     this->textureArray.shutdown();
@@ -57,7 +55,7 @@ void Renderer::shutdown()
 
 void Renderer::render(unsigned int count)
 {
-    this->renderRect(count, glm::uvec2(0, 0), this->accumulator.size);
+    this->renderRect(count, glm::uvec2(0, 0), this->frameBuffer.size);
 }
 
 void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size)
@@ -86,7 +84,7 @@ void Renderer::accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 si
     for (unsigned int i = 0; i < count; i++)
     {
         this->accumulatorShader.updateParam("FrameCount", this->frameCount);
-        this->accumulator.useRect(position, size);
+        this->frameBuffer.useRect(position, size);
         this->quad.draw();
         this->frameCount++;
         FrameBuffer::stopUse();
@@ -101,7 +99,7 @@ void Renderer::toneMap(glm::uvec2 position, glm::uvec2 size)
     this->toneMapperShader.updateParam("FrameCount", this->frameCount);
     this->toneMapperShader.updateParam("Gamma", this->gamma);
 
-    this->output.useRect(position, size);
+    this->frameBuffer.useRect(position, size);
     this->quad.draw();
 
     Shader::stopUse();
@@ -115,20 +113,20 @@ void Renderer::denoise()
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    glm::uvec2 size = this->accumulator.size;
+    glm::uvec2 size = this->frameBuffer.size;
 
     // Create color buffer
-    Image colorImage = this->accumulator.textures[0].upload();
+    Image colorImage = this->frameBuffer.accumulation.upload();
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create albedo buffer
-    Image albedoImage = this->accumulator.textures[1].upload();
+    Image albedoImage = this->frameBuffer.albedo.upload();
     oidn::BufferRef albedoBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(float), albedoImage.pixels.data());
 
     // Create normal buffer
-    Image normalImage = this->accumulator.textures[2].upload();
+    Image normalImage = this->frameBuffer.normal.upload();
     oidn::BufferRef normalBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(float), normalImage.pixels.data());
 
@@ -153,11 +151,11 @@ void Renderer::denoise()
     // Update accumulator
     float* data = (float*)colorBuf.getData();
     std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->accumulator.textures[0].update(Image::loadFromMemory(size, pixels));
+    this->frameBuffer.accumulation.update(Image::loadFromMemory(size, pixels));
 
     // Update output
     this->toneMapperShader.use();
-    this->output.use();
+    this->frameBuffer.use();
     this->quad.draw();
     Shader::stopUse();
     FrameBuffer::stopUse();
@@ -171,23 +169,23 @@ void Renderer::denoise()
 
 void Renderer::clear()
 {
-    this->accumulator.clear();
+    this->frameBuffer.clear();
     this->frameCount = 0;
 }
 
 GLuint Renderer::getTextureHandler() const
 {
-    return this->output.textures[0].getHandler();
+    return this->frameBuffer.toneMap.getHandler();
 }
 
 Image Renderer::getImage() const
 {
-    return this->output.textures[0].upload();
+    return this->frameBuffer.toneMap.upload();
 }
 
 glm::uvec2 Renderer::getSize() const
 {
-    return this->output.textures[0].size;
+    return this->frameBuffer.size;
 }
 
 unsigned int Renderer::getFrameCount() const
@@ -224,9 +222,7 @@ void Renderer::initData()
     this->environment.texture.init();
     this->textureArray.init();
 
-    // Frame buffers
-    this->accumulator.init({ GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 });
-    this->output.init({ GL_COLOR_ATTACHMENT0 });
+    this->frameBuffer.init();
 
     // Buffers
     this->vertexBuffer.init(GL_RGBA32F);
@@ -236,7 +232,7 @@ void Renderer::initData()
     this->bvhBuffer.init(GL_RGB32F);
 
     // Bind textures
-    this->accumulator.textures[0].bind(0);
+    this->frameBuffer.accumulation.bind(0);
     this->environment.texture.bind(1);
     this->textureArray.bind(2);
     this->vertexBuffer.bind(3);

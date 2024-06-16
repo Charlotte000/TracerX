@@ -7,9 +7,9 @@ R"(
 #version 430 core
 
 in vec2 TexCoords;
-out vec4 AccumulatorColor;
-out vec4 AlbedoColor;
-out vec4 NormalColor;
+layout(location=0) out vec4 AccumulatorColor;
+layout(location=1) out vec4 AlbedoColor;
+layout(location=2) out vec4 NormalColor;
 
 struct Ray
 {
@@ -396,7 +396,7 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
     return manifold.Depth < MaxRenderDistance;
 }
 
-void CollisionReact(inout Ray ray, in CollisionManifold manifold)
+void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold.MaterialId);
 
@@ -517,7 +517,6 @@ vec4 SendRay(in Ray ray)
             break;
         }
 
-
         CollisionReact(ray, manifold);
         ray.InvDirection = 1 / ray.Direction;
         if (bounce == 0)
@@ -575,7 +574,7 @@ uniform uint FrameCount;
 uniform float Gamma;
 
 in vec2 TexCoords;
-out vec4 FragColor;
+layout(location=3) out vec4 ToneMapColor;
 
 void main()
 {
@@ -588,7 +587,7 @@ void main()
     // Gamma correction
     mapped = pow(mapped, vec3(1 / Gamma));
 
-    FragColor = vec4(mapped, pixel.a);
+    ToneMapColor = vec4(mapped, pixel.a);
 }
 
 )";

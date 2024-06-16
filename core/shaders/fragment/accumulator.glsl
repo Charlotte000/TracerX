@@ -1,9 +1,9 @@
 #version 430 core
 
 in vec2 TexCoords;
-out vec4 AccumulatorColor;
-out vec4 AlbedoColor;
-out vec4 NormalColor;
+layout(location=0) out vec4 AccumulatorColor;
+layout(location=1) out vec4 AlbedoColor;
+layout(location=2) out vec4 NormalColor;
 
 #include common/structs.glsl
 #include common/uniforms.glsl
@@ -11,7 +11,7 @@ out vec4 NormalColor;
 #include common/transforms.glsl
 #include common/intersection.glsl
 
-void CollisionReact(inout Ray ray, in CollisionManifold manifold)
+void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold.MaterialId);
 
@@ -131,7 +131,6 @@ vec4 SendRay(in Ray ray)
 
             break;
         }
-
 
         CollisionReact(ray, manifold);
         ray.InvDirection = 1 / ray.Direction;

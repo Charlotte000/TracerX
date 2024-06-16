@@ -6,43 +6,49 @@
 
 using namespace TracerX::core;
 
-void FrameBuffer::init(const std::vector<GLenum>& attachments)
+void FrameBuffer::init()
 {
-    this->attachments = attachments;
-
     // Create framebuffer
     glGenFramebuffers(1, &this->handler);
     glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
 
-    // Attach textures
-    for (const GLenum attachment : this->attachments)
-    {
-        Texture texture;
-        texture.init();
-        glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, GL_TEXTURE_2D, texture.getHandler(), 0);
-        this->textures.push_back(texture);
-    }
+    // Attach accumulation texture
+    this->accumulation.init();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->accumulation.getHandler(), 0);
 
-    glDrawBuffers(this->attachments.size(), this->attachments.data());
+    // Attach albedo texture
+    this->albedo.init();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, this->albedo.getHandler(), 0);
+
+    // Attach normal texture
+    this->normal.init();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, this->normal.getHandler(), 0);
+
+    // Attach tone map texture
+    this->toneMap.init();
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, this->toneMap.getHandler(), 0);
+
+    GLenum attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+    glDrawBuffers(4, attachments);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void FrameBuffer::resize(glm::uvec2 size)
 {
     this->size = size;
-    for (Texture& texture : this->textures)
-    {
-        texture.update(Image::loadFromMemory(size, std::vector<float>()));
-    }
+    this->accumulation.update(Image::loadFromMemory(size, std::vector<float>()));
+    this->albedo.update(Image::loadFromMemory(size, std::vector<float>()));
+    this->normal.update(Image::loadFromMemory(size, std::vector<float>()));
+    this->toneMap.update(Image::loadFromMemory(size, std::vector<float>()));
 }
 
 void FrameBuffer::shutdown()
 {
-    for (Texture& texture : this->textures)
-    {
-        texture.shutdown();
-    }
-
+    this->accumulation.shutdown();
+    this->albedo.shutdown();
+    this->normal.shutdown();
+    this->toneMap.shutdown();
     glDeleteFramebuffers(1, &this->handler);
 }
 
@@ -62,11 +68,7 @@ void FrameBuffer::useRect(glm::uvec2 position, glm::uvec2 size)
 
 void FrameBuffer::clear()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, this->handler);
-    glViewport(0, 0, this->size.x, this->size.y);
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearTexImage(this->accumulation.getHandler(), 0, GL_RGBA, GL_FLOAT, 0);
 }
 
 void FrameBuffer::stopUse()
