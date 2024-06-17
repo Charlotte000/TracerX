@@ -81,15 +81,16 @@ void Renderer::accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 si
     this->accumulatorShader.updateParam("Environment.Intensity", this->environment.intensity);
     this->accumulatorShader.updateParam("Environment.Rotation", this->environment.rotation);
 
+    this->frameBuffer.useRect(position, size);
     for (unsigned int i = 0; i < count; i++)
     {
         this->accumulatorShader.updateParam("FrameCount", this->frameCount);
-        this->frameBuffer.useRect(position, size);
         this->quad.draw();
         this->frameCount++;
-        FrameBuffer::stopUse();
+        glFinish();
     }
 
+    FrameBuffer::stopUse();
     Shader::stopUse();
 }
 
@@ -102,8 +103,8 @@ void Renderer::toneMap(glm::uvec2 position, glm::uvec2 size)
     this->frameBuffer.useRect(position, size);
     this->quad.draw();
 
-    Shader::stopUse();
     FrameBuffer::stopUse();
+    Shader::stopUse();
 }
 
 #ifdef TX_DENOISE
@@ -147,18 +148,20 @@ void Renderer::denoise()
     {
         std::cerr << "Failed to denoise: " << errorMessage << std::endl;
     }
+    else
+    {
+        // Update accumulator
+        float* data = (float*)colorBuf.getData();
+        std::vector<float> pixels(data, data + colorImage.pixels.size());
+        this->frameBuffer.accumulation.update(Image::loadFromMemory(size, pixels));
 
-    // Update accumulator
-    float* data = (float*)colorBuf.getData();
-    std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->frameBuffer.accumulation.update(Image::loadFromMemory(size, pixels));
-
-    // Update output
-    this->toneMapperShader.use();
-    this->frameBuffer.use();
-    this->quad.draw();
-    Shader::stopUse();
-    FrameBuffer::stopUse();
+        // Update output
+        this->toneMapperShader.use();
+        this->frameBuffer.use();
+        this->quad.draw();
+        Shader::stopUse();
+        FrameBuffer::stopUse();
+    }
 
     // Release buffers
     colorBuf.release();
