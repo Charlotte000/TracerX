@@ -262,7 +262,7 @@ void UI::drawingPanelMenu()
         ImVec4(0, 0, 0, 0);
     ImGui::SetCursorPos(imagePos);
     ImGui::Image(
-        (void*)(intptr_t)renderer.getTextureHandler(),
+        (void*)(intptr_t)(this->app->isRendering || renderer.getFrameCount() > 1 ? renderer.getTextureHandler() : renderer.getTextureAlbedoHandler()),
         imageSize,
         ImVec2(0, 1),
         ImVec2(1, 0),
@@ -637,7 +637,7 @@ void UI::propertyCameraMenu()
     }
 
     ImGui::Separator();
-    if (ImGui::SliderAngle("FOV", &camera.fov, 0, 180))
+    if (ImGui::SliderAngle("FOV", &camera.fov, 1, 180))
     {
         renderer.clear();
     }
@@ -757,7 +757,12 @@ void UI::propertySceneMenu()
         renderer.clear();
     }
 
-    ImGui::DragInt("Render per frame", &this->app->perFrameCount, .1f, 1, 10000);
+    int perFrameCount = this->app->perFrameCount;
+    if (ImGui::DragInt("Render per frame", &perFrameCount, .1f, 1, 10000))
+    {
+        this->app->perFrameCount = perFrameCount;
+    }
+
     ImGui::SameLine();
     ImGui::TextDisabled("(?)");
     if (ImGui::BeginItemTooltip())

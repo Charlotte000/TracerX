@@ -39,7 +39,7 @@ int main()
 
     // Setting up the camera
     renderer.camera.fov = glm::radians(45.f);
-    renderer.camera.position = glm::normalize(glm::vec3(-.5f, 0, -1)) * 1.5f;
+    renderer.camera.position = glm::normalize(glm::vec3(.5f, 0, 1)) * 1.5f;
     renderer.camera.forward = -glm::normalize(renderer.camera.position);
     renderer.camera.blur = 0.001f;
 

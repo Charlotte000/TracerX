@@ -16,6 +16,7 @@ uniform float MaxRenderDistance;
 uniform uint FrameCount;
 uniform Cam Camera;
 uniform Env Environment;
+uniform float Gamma;
 
 Triangle GetTriangle(int index)
 {

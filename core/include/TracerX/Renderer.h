@@ -173,6 +173,16 @@ public:
     GLuint getTextureHandler() const;
 
     /**
+     * @brief Gets the OpenGL texture handler for the albedo image.
+     * 
+     * The albedo image contains the color information of the first hit of the rays.
+     * The color information does not include lighting or shadows and does not depend on the viewing angle.
+     * 
+     * @return The texture handler.
+     */
+    GLuint getTextureAlbedoHandler() const;
+
+    /**
      * @brief Loads the rendered texture from the GPU to the CPU.
      * @return The rendered image.
      * @see Image::saveToFile to save the image to a file.

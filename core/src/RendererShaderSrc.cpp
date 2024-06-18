@@ -117,6 +117,7 @@ uniform float MaxRenderDistance;
 uniform uint FrameCount;
 uniform Cam Camera;
 uniform Env Environment;
+uniform float Gamma;
 
 Triangle GetTriangle(int index)
 {
@@ -216,6 +217,17 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
 vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
 {
     return (matrix * vec4(v, translate ? 1 : 0)).xyz;
+}
+
+vec4 ToneMap(in vec4 pixel, in float gamma)
+{
+    // Reinhard tone mapping
+    pixel.rgb = pixel.rgb / (pixel.rgb + vec3(1));
+
+    // Gamma correction
+    pixel.rgb = pow(pixel.rgb, vec3(1 / gamma));
+
+    return pixel;
 }
 void swap(inout float a, inout float b)
 {
@@ -396,9 +408,21 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
     return manifold.Depth < MaxRenderDistance;
 }
 
-void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
+bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold.MaterialId);
+
+    if (material.AlbedoTextureId >= 0)
+    {
+        vec4 texAlbedo = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
+        material.AlbedoColor *= texAlbedo.rgb;
+
+        // Alpha blend
+        if (texAlbedo.a < RandomValue())
+        {
+            return false;
+        }
+    }
 
     if (material.MetalnessTextureId >= 0)
     {
@@ -408,11 +432,6 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
     if (material.RoughnessTextureId >= 0)
     {
         material.Roughness *= texture(Textures, vec3(manifold.TextureCoordinate, material.RoughnessTextureId)).g;
-    }
-
-    if (material.AlbedoTextureId >= 0)
-    {
-        material.AlbedoColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId)).rgb;
     }
 
     material.EmissionColor *= material.EmissionStrength;
@@ -451,7 +470,7 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 
         ray.IncomingLight += material.EmissionColor * ray.Color;
         ray.Color *= material.FresnelColor;
-        return;
+        return true;
     }
 
     // Density
@@ -460,8 +479,7 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
         float depth = -log(RandomValue()) / material.Density;
         if (manifold.IsFrontFace || depth >= manifold.Depth)
         {
-            ray.Origin = manifold.Point;
-            return;
+            return false;
         }
 
         ray.Origin += ray.Direction * depth;
@@ -469,7 +487,7 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 
         ray.IncomingLight += material.EmissionColor * ray.Color;
         ray.Color *= material.AlbedoColor;
-        return;
+        return true;
     }
 
     // Refract
@@ -486,7 +504,7 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 
         ray.IncomingLight += material.EmissionColor * ray.Color;
         ray.Color *= material.AlbedoColor;
-        return;
+        return true;
     }
 
     // Scatter
@@ -495,34 +513,44 @@ void CollisionReact(inout Ray ray, inout CollisionManifold manifold)
 
     ray.IncomingLight += material.EmissionColor * ray.Color;
     ray.Color *= material.AlbedoColor;
+    return true;
 }
 
 vec4 SendRay(in Ray ray)
 {
     bool isBackground = false;
-    for (uint bounce = 0; bounce <= MaxBounceCount; bounce++)
+
+    uint bounce = 0;
+    while (bounce <= MaxBounceCount)
     {
         CollisionManifold manifold;
         if (!FindIntersection(ray, bounce == 0, manifold))
         {
-            vec3 envLight = GetEnvironment(ray);
-            ray.IncomingLight += envLight * ray.Color;
+            ray.IncomingLight += GetEnvironment(ray) * ray.Color;
             if (bounce == 0)
             {
                 isBackground = true;
-                AlbedoColor = vec4(envLight, 1);
+                AlbedoColor = ToneMap(vec4(ray.IncomingLight, 1), Gamma);
                 NormalColor = vec4((1 - ray.Direction) / 2, 1);
             }
 
             break;
         }
 
-        CollisionReact(ray, manifold);
-        ray.InvDirection = 1 / ray.Direction;
-        if (bounce == 0)
+        if (CollisionReact(ray, manifold))
         {
-            AlbedoColor = vec4(ray.Color, 1);
-            NormalColor = vec4((manifold.Normal + 1) / 2, 1);
+            ray.InvDirection = 1 / ray.Direction;
+            if (bounce == 0)
+            {
+                AlbedoColor = ToneMap(vec4(ray.Color, 1), Gamma);
+                NormalColor = vec4((manifold.Normal + 1) / 2, 1);
+            }
+
+            bounce++;
+        }
+        else
+        {
+            ray.Origin = manifold.Point;
         }
     }
 
@@ -576,18 +604,32 @@ uniform float Gamma;
 in vec2 TexCoords;
 layout(location=3) out vec4 ToneMapColor;
 
+vec3 Slerp(in vec3 a, in vec3 b, float t)
+{
+    float angle = acos(dot(a, b));
+    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
+}
+
+vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
+{
+    return (matrix * vec4(v, translate ? 1 : 0)).xyz;
+}
+
+vec4 ToneMap(in vec4 pixel, in float gamma)
+{
+    // Reinhard tone mapping
+    pixel.rgb = pixel.rgb / (pixel.rgb + vec3(1));
+
+    // Gamma correction
+    pixel.rgb = pow(pixel.rgb, vec3(1 / gamma));
+
+    return pixel;
+}
+
 void main()
 {
     vec4 pixel = texture(Accumulator, TexCoords) / FrameCount;
-    vec3 color = pixel.rgb;
-    
-    // Reinhard tone mapping
-    vec3 mapped = color / (color + vec3(1));
-
-    // Gamma correction
-    mapped = pow(mapped, vec3(1 / Gamma));
-
-    ToneMapColor = vec4(mapped, pixel.a);
+    ToneMapColor = ToneMap(pixel, Gamma);
 }
 
 )";

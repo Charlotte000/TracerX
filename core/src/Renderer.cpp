@@ -67,6 +67,7 @@ void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 si
 void Renderer::accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 size)
 {
     this->accumulatorShader.use();
+    this->accumulatorShader.updateParam("Gamma", this->gamma);
     this->accumulatorShader.updateParam("MaxBounceCount", this->maxBounceCount);
     this->accumulatorShader.updateParam("MinRenderDistance", this->minRenderDistance);
     this->accumulatorShader.updateParam("MaxRenderDistance", this->maxRenderDistance);
@@ -179,6 +180,11 @@ void Renderer::clear()
 GLuint Renderer::getTextureHandler() const
 {
     return this->frameBuffer.toneMap.getHandler();
+}
+
+GLuint Renderer::getTextureAlbedoHandler() const
+{
+    return this->frameBuffer.albedo.getHandler();
 }
 
 Image Renderer::getImage() const

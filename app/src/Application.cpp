@@ -103,7 +103,10 @@ void Application::run()
         // Render
         if (this->isRendering || this->renderer.getFrameCount() == 0)
         {
-            this->renderer.render(this->perFrameCount);
+            unsigned int maxBounceCount = this->renderer.maxBounceCount;
+            this->renderer.maxBounceCount = this->isRendering ? maxBounceCount : 0;
+            this->renderer.render(this->isRendering ? this->perFrameCount : 1);
+            this->renderer.maxBounceCount = maxBounceCount;
         }
 
         // UI

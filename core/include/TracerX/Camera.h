@@ -17,7 +17,7 @@ struct Camera
     /**
      * @brief The position of the camera.
      */
-    glm::vec3 position = glm::vec3(0, 0, -10);
+    glm::vec3 position = glm::vec3(0, 0, 10);
 
     /**
      * @brief The up direction of the camera.
@@ -27,7 +27,7 @@ struct Camera
     /**
      * @brief The forward direction of the camera.
      */
-    glm::vec3 forward = glm::vec3(0, 0, 1);
+    glm::vec3 forward = glm::vec3(0, 0, -1);
 
     /**
      * @brief The field of view of the camera.
