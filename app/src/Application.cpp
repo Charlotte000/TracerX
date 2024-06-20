@@ -103,10 +103,17 @@ void Application::run()
         // Render
         if (this->isRendering || this->renderer.getFrameCount() == 0)
         {
-            unsigned int maxBounceCount = this->renderer.maxBounceCount;
-            this->renderer.maxBounceCount = this->isRendering ? maxBounceCount : 0;
-            this->renderer.render(this->isRendering ? this->perFrameCount : 1);
-            this->renderer.maxBounceCount = maxBounceCount;
+            if (this->enablePreview)
+            {
+                unsigned int maxBounceCount = this->renderer.maxBounceCount;
+                this->renderer.maxBounceCount = this->isRendering ? maxBounceCount : 0;
+                this->renderer.render(this->isRendering ? this->perFrameCount : 1);
+                this->renderer.maxBounceCount = maxBounceCount;
+            }
+            else
+            {
+                this->renderer.render(this->perFrameCount);
+            }
         }
 
         // UI
@@ -117,6 +124,19 @@ void Application::run()
     }
 
     this->shutdown();
+}
+
+void Application::loadScene(const std::string& name)
+{
+    this->scene = Scene::loadGLTF(Application::sceneFolder + name);
+    this->renderer.clear();
+    this->renderer.loadScene(this->scene);
+}
+
+GLint Application::getViewHandler() const
+{
+    return !this->enablePreview ||this->isRendering || this->renderer.getFrameCount() > 1 ?
+        this->renderer.getTextureHandler() : this->renderer.getTextureAlbedoHandler();
 }
 
 void Application::save() const

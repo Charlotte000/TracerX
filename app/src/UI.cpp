@@ -167,10 +167,7 @@ void UI::barMenu()
                 {
                     if (ImGui::Selectable(name.c_str(), scene.name == name))
                     {
-                        scene = Scene::loadGLTF(Application::sceneFolder + name);
-                        renderer.clear();
-                        renderer.loadScene(scene);
-
+                        this->app->loadScene(name);
                         this->editMesh = nullptr;
                         this->editMaterial = nullptr;
                         this->editCamera = false;
@@ -262,7 +259,7 @@ void UI::drawingPanelMenu()
         ImVec4(0, 0, 0, 0);
     ImGui::SetCursorPos(imagePos);
     ImGui::Image(
-        (void*)(intptr_t)(this->app->isRendering || renderer.getFrameCount() > 1 ? renderer.getTextureHandler() : renderer.getTextureAlbedoHandler()),
+        (void*)(intptr_t)(this->app->getViewHandler()),
         imageSize,
         ImVec2(0, 1),
         ImVec2(1, 0),
@@ -778,6 +775,11 @@ void UI::propertySceneMenu()
     }
 
     ImGui::Separator();
+    if (ImGui::Checkbox("Enable preview", &this->app->enablePreview) & renderer.getFrameCount() == 1)
+    {
+        renderer.clear();
+    }
+
     if (ImGui::Button(this->app->isRendering ? "Stop" : "Start", ImVec2(-1, 0)))
     {
         this->app->isRendering = !this->app->isRendering;

@@ -23,6 +23,7 @@ public:
     std::vector<std::string> environmentFiles;
     std::vector<std::string> sceneFiles;
     bool isRendering = false;
+    bool enablePreview = true;
 
     static inline const std::string assetsFolder = ASSETS_PATH;
     static inline const std::string environmentFolder =  Application::assetsFolder + "/environments/";
@@ -32,6 +33,8 @@ public:
     void init(glm::uvec2 size);
     void shutdown();
     void run();
+    void loadScene(const std::string& name);
+    GLint getViewHandler() const;
     void save() const;
 private:
     void control();
