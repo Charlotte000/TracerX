@@ -20,8 +20,6 @@ public:
     float cameraSpeed = 5.f;
     float cameraRotationSpeed = 1.f;
     unsigned int perFrameCount = 1;
-    std::vector<std::string> environmentFiles;
-    std::vector<std::string> sceneFiles;
     bool isRendering = false;
     bool enablePreview = true;
 
@@ -29,13 +27,11 @@ public:
     static inline const std::string environmentFolder =  Application::assetsFolder + "/environments/";
     static inline const std::string sceneFolder = Application::assetsFolder + "/scenes/";
 
-    Application();
     void init(glm::uvec2 size);
     void shutdown();
     void run();
-    void loadScene(const std::string& name);
+    void loadScene(const std::string& fileName);
     GLint getViewHandler() const;
-    void save() const;
 private:
     void control();
 };

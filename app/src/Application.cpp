@@ -1,34 +1,10 @@
 #include "Application.h"
 
-#include <iomanip>
+#include <stdexcept>
 #include <tinydir.h>
 #include <glm/gtx/rotate_vector.hpp>
 
 using namespace TracerX;
-
-Application::Application()
-{
-    tinydir_dir envDir;
-    tinydir_open_sorted(&envDir, Application::environmentFolder.c_str());
-    for (size_t i = 2; i < envDir.n_files; i++)
-    {
-        tinydir_file envFile;
-        tinydir_readfile_n(&envDir, &envFile, i);
-        this->environmentFiles.push_back(envFile.name);
-    }
-
-    tinydir_dir sceneDir;
-    tinydir_open_sorted(&sceneDir, Application::sceneFolder.c_str());
-    for (size_t i = 2; i < sceneDir.n_files; i++)
-    {
-        tinydir_file sceneFile;
-        tinydir_readfile_n(&sceneDir, &sceneFile, i);
-        if (std::strcmp(sceneFile.extension, "glb") == 0 || std::strcmp(sceneFile.extension, "gltf") == 0)
-        {
-            this->sceneFiles.push_back(sceneFile.name);
-        }
-    }
-}
 
 void Application::init(glm::uvec2 size)
 {
@@ -76,9 +52,17 @@ void Application::init(glm::uvec2 size)
     // Init components
     this->renderer.init(size);
     this->ui.init(this);
-    if (this->renderer.environment.name == "None" && !this->environmentFiles.empty())
+
+    if (this->renderer.environment.name == "None")
     {
-        this->renderer.environment.loadFromFile(Application::environmentFolder + this->environmentFiles[0]);
+        tinydir_dir envDir;
+        tinydir_open_sorted(&envDir, Application::environmentFolder.c_str());
+        if (envDir.n_files > 1)
+        {
+            tinydir_file envFile;
+            tinydir_readfile_n(&envDir, &envFile, 2);
+            this->renderer.environment.loadFromFile(envFile.path);
+        }
     }
 
     this->renderer.loadScene(this->scene);
@@ -126,9 +110,9 @@ void Application::run()
     this->shutdown();
 }
 
-void Application::loadScene(const std::string& name)
+void Application::loadScene(const std::string& fileName)
 {
-    this->scene = Scene::loadGLTF(Application::sceneFolder + name);
+    this->scene = Scene::loadGLTF(fileName);
     this->renderer.clear();
     this->renderer.loadScene(this->scene);
 }
@@ -137,14 +121,6 @@ GLint Application::getViewHandler() const
 {
     return !this->enablePreview ||this->isRendering || this->renderer.getFrameCount() > 1 ?
         this->renderer.getTextureHandler() : this->renderer.getTextureAlbedoHandler();
-}
-
-void Application::save() const
-{
-    auto t = std::time(nullptr);
-    std::stringstream name;
-    name << "img" << this->renderer.getFrameCount() << '(' << std::put_time(std::localtime(&t), "%Y%m%dT%H%M%S") << ')' << ".png";
-    this->renderer.getImage().saveToFile(name.str());
 }
 
 void Application::control()

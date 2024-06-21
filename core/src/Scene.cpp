@@ -6,7 +6,6 @@
 #include "TracerX/Scene.h"
 
 #include <stdexcept>
-#include <tinydir.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 

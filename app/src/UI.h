@@ -42,5 +42,5 @@ private:
     void propertyCameraMenu();
     void propertyEnvironmentMenu();
     void propertySceneMenu();
-    void materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor);
+    bool materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor);
 };

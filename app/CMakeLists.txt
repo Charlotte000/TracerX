@@ -17,6 +17,8 @@ add_executable(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_impl_opengl3.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo/ImGuizmo.cpp
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.cpp
 )
 
 add_compile_definitions(ASSETS_PATH="${TX_ASSETS_PATH}")
@@ -26,6 +28,8 @@ target_include_directories(
     ${PROJECT_NAME}
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyfiledialogs
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinydir
 )
 
 if (TX_DENOISE AND WIN32)

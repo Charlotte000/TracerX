@@ -1,6 +1,8 @@
 #include "UI.h"
 #include "Application.h"
 
+#include <stdexcept>
+#include <tinyfiledialogs.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <glm/gtc/type_ptr.hpp>
@@ -159,32 +161,54 @@ void UI::barMenu()
 
     if (ImGui::BeginMenu("File"))
     {
-        if (ImGui::BeginMenu("Open"))
+        if (ImGui::MenuItem("Open scene"))
         {
-            if (ImGui::BeginCombo("##fileOpen", scene.name.c_str()))
+            const char* patterns[] = { "*.glb", "*.gltf" };
+            const char* path = tinyfd_openFileDialog("Open scene file", Application::sceneFolder.c_str(), 2, patterns, nullptr, 0);
+            if (path != nullptr)
             {
-                for (const std::string& name : this->app->sceneFiles)
+                try
                 {
-                    if (ImGui::Selectable(name.c_str(), scene.name == name))
-                    {
-                        this->app->loadScene(name);
-                        this->editMesh = nullptr;
-                        this->editMaterial = nullptr;
-                        this->editCamera = false;
-                        this->editEnvironment = false;
-                        this->currentTextureId = -1;
-                    }
+                    this->app->loadScene(path);
+                    this->editMesh = nullptr;
+                    this->editMaterial = nullptr;
+                    this->editCamera = false;
+                    this->editEnvironment = false;
+                    this->currentTextureId = -1;
                 }
-
-                ImGui::EndCombo();
+                catch (const std::runtime_error&)
+                {
+                    tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
+                }
             }
+        }
 
-            ImGui::EndMenu();
+        if (ImGui::MenuItem("Open environment"))
+        {
+            const char* patterns[] = { "*.png", "*.hdr", ".jpg" };
+            const char* fileName = tinyfd_openFileDialog("Open environment image", Application::environmentFolder.c_str(), 3, patterns, nullptr, 0);
+            if (fileName != nullptr)
+            {
+                try
+                {
+                    renderer.environment.loadFromFile(fileName);
+                    renderer.clear();
+                }
+                catch (const std::runtime_error&)
+                {
+                    tinyfd_messageBox("Error", "Invalid environment file", "ok", "warning", 0);
+                }
+            }
         }
 
         if (ImGui::MenuItem("Save (as png)"))
         {
-            this->app->save();
+            const char* patterns[] = { "*.png" };
+            const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
+            if (fileName != nullptr)
+            {
+                renderer.getImage().saveToFile(fileName);
+            }
         }
 
         ImGui::EndMenu();
@@ -428,9 +452,9 @@ void UI::propertyMeshMenu()
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
     Mesh& mesh = *this->editMesh;
+    bool changed = false;
 
     ImGui::Text("%d triangles", (int)mesh.triangleSize);
-
     if (ImGui::BeginCombo(
         "Material",
         (int)mesh.materialId == -1 ? "None" : scene.materialNames[(int)mesh.materialId].c_str()))
@@ -442,8 +466,7 @@ void UI::propertyMeshMenu()
                 index == (int)mesh.materialId))
             {
                 mesh.materialId = (float)index;
-                renderer.clear();
-                renderer.updateSceneMeshes(scene);
+                changed = true;
             }
         }
 
@@ -457,8 +480,7 @@ void UI::propertyMeshMenu()
         {
             size_t index = *(size_t*)payload->Data;
             mesh.materialId = (float)index;
-            renderer.clear();
-            renderer.updateSceneMeshes(scene);
+            changed = true;
         }
 
         ImGui::EndDragDropTarget();
@@ -466,15 +488,7 @@ void UI::propertyMeshMenu()
 
     if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
     {
-        static glm::vec3 translation;
-        static glm::vec3 rotation;
-        static glm::vec3 scale;
-        ImGuizmo::DecomposeMatrixToComponents(
-            glm::value_ptr(mesh.transform),
-            glm::value_ptr(translation),
-            glm::value_ptr(rotation),
-            glm::value_ptr(scale));
-        renderer.camera.lookAt(translation);
+        renderer.camera.lookAt(mesh.transform[3]);
         renderer.clear();
     }
 
@@ -487,22 +501,17 @@ void UI::propertyMeshMenu()
         rotation,
         scale);
 
-    bool modified = false;
-    modified |= ImGui::DragFloat3("Translation", translation, .01f);
-    modified |= ImGui::DragFloat3("Rotation", rotation, .01f);
-    modified |= ImGui::DragFloat3("Scale", scale, .01f, 0, 1000);
-
-    ImGuizmo::RecomposeMatrixFromComponents(
-        translation,
-        rotation,
-        scale,
-        glm::value_ptr(this->editMesh->transform));
-
-    if (modified)
+    if (ImGui::DragFloat3("Translation", translation, .01f) |
+        ImGui::DragFloat3("Rotation", rotation, .01f) |
+        ImGui::DragFloat3("Scale", scale, .01f, 0, 1000))
     {
+        ImGuizmo::RecomposeMatrixFromComponents(
+            translation,
+            rotation,
+            scale,
+            glm::value_ptr(this->editMesh->transform));
         this->editMesh->transformInv = glm::inverse(this->editMesh->transform);
-        renderer.clear();
-        renderer.updateSceneMeshes(scene);
+        changed = true;
     }
 
     ImGui::RadioButton("Translate", (int*)&this->operation, (int)ImGuizmo::OPERATION::TRANSLATE);
@@ -514,6 +523,12 @@ void UI::propertyMeshMenu()
     ImGui::RadioButton("World", (int*)&this->mode, (int)ImGuizmo::MODE::WORLD);
     ImGui::SameLine();
     ImGui::RadioButton("Local", (int*)&this->mode, (int)ImGuizmo::MODE::LOCAL);
+
+    if (changed)
+    {
+        renderer.clear();
+        renderer.updateSceneMeshes(scene);
+    }
 }
 
 void UI::propertyMaterialMenu()
@@ -521,6 +536,7 @@ void UI::propertyMaterialMenu()
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
     Material& material = *this->editMaterial;
+    bool changed = false;
 
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
     {
@@ -529,93 +545,60 @@ void UI::propertyMaterialMenu()
 
     if (ImGui::BeginTabItem("Albedo"))
     {
-        if (ImGui::ColorEdit3(
-            "Color##albedo",
-            glm::value_ptr(material.albedoColor),
-            ImGuiColorEditFlags_Float))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
-        this->materialTextureSelector("albedo", material.albedoTextureId, material.albedoColor);
+        changed |= ImGui::ColorEdit3("Color##albedo", glm::value_ptr(material.albedoColor), ImGuiColorEditFlags_Float);
+        changed |= this->materialTextureSelector("albedo", material.albedoTextureId, material.albedoColor);
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Roughness"))
     {
-        if (ImGui::SliderFloat("Strength##roughness", &material.roughness, 0, 1))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
-        this->materialTextureSelector("roughness", material.roughnessTextureId, glm::vec3(0, material.roughness, 0));
+        changed |= ImGui::SliderFloat("Strength##roughness", &material.roughness, 0, 1);
+        changed |= this->materialTextureSelector("roughness", material.roughnessTextureId, glm::vec3(0, material.roughness, 0));
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Metalness"))
     {
-        if (ImGui::SliderFloat("Strength##metalness", &material.metalness, 0, 1))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
-        this->materialTextureSelector("metalness", material.metalnessTextureId, glm::vec3(0, 0, material.metalness));
+        changed |= ImGui::SliderFloat("Strength##metalness", &material.metalness, 0, 1);
+        changed |= this->materialTextureSelector("metalness", material.metalnessTextureId, glm::vec3(0, 0, material.metalness));
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Emission"))
     {
-        if (ImGui::ColorEdit3(
-                "Color##emission",
-                glm::value_ptr(material.emissionColor),
-                ImGuiColorEditFlags_Float) |
-            ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, 0, 10000))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
-        this->materialTextureSelector("emission", material.emissionTextureId, material.emissionColor * material.emissionStrength);
+        changed |= ImGui::ColorEdit3("Color##emission", glm::value_ptr(material.emissionColor), ImGuiColorEditFlags_Float);
+        changed |= ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, 0, 10000);
+        changed |= this->materialTextureSelector("emission", material.emissionTextureId, material.emissionColor * material.emissionStrength);
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Fresnel"))
     {
-        if (ImGui::ColorEdit3(
-                "Color##fresnel",
-                glm::value_ptr(material.fresnelColor),
-                ImGuiColorEditFlags_Float) |
-            ImGui::DragFloat("Strength##fresnel", &material.fresnelStrength, .0001f, 0, 100))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
+        changed |= ImGui::ColorEdit3("Color##fresnel", glm::value_ptr(material.fresnelColor), ImGuiColorEditFlags_Float);
+        changed |= ImGui::DragFloat("Strength##fresnel", &material.fresnelStrength, .0001f, 0, 100);
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        this->materialTextureSelector("normal", material.normalTextureId, glm::vec3(1));
+        changed |= this->materialTextureSelector("normal", material.normalTextureId, glm::vec3(1));
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Misc"))
     {
-        if (ImGui::DragFloat("Density", &material.density, .001f, 0, 100) |
-            ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100))
-        {
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
-        }
-
+        changed |= ImGui::DragFloat("Density", &material.density, .001f, 0, 100);
+        changed |= ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100);
         ImGui::EndTabItem();
     }
 
     ImGui::EndTabBar();
+
+    if (changed)
+    {
+        renderer.clear();
+        renderer.updateSceneMaterials(scene);
+    }
 }
 
 void UI::propertyCameraMenu()
@@ -623,36 +606,23 @@ void UI::propertyCameraMenu()
     Renderer& renderer = this->app->renderer;
     const Scene& scene = this->app->scene;
     Camera& camera = renderer.camera;
+    bool changed = false;
 
-    if (ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f) |
-        ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f) |
-        ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f))
-    {
-        camera.forward = glm::normalize(camera.forward);
-        camera.up = glm::normalize(camera.up);
-        renderer.clear();
-    }
-
+    changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
+    changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
+    changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
     ImGui::Separator();
-    if (ImGui::SliderAngle("FOV", &camera.fov, 1, 180))
-    {
-        renderer.clear();
-    }
 
+    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 180);
     ImGui::Separator();
-    if (ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000) |
-        ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000))
-    {
-        renderer.clear();
-    }
 
+    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000);
+    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000);
     ImGui::Separator();
-    if (ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f"))
-    {
-        renderer.clear();
-    }
 
+    changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
     ImGui::Separator();
+
     ImGui::DragFloat(
         "Movement speed",
         &this->app->cameraSpeed,
@@ -673,46 +643,28 @@ void UI::propertyCameraMenu()
                 if (ImGui::Selectable(("Camera " + std::to_string(i)).c_str()))
                 {
                     camera = scene.cameras[i];
-                    renderer.clear();
+                    changed = true;
                 }
             }
 
             ImGui::TreePop();
         }
     }
+
+    if (changed)
+    {
+        camera.forward = glm::normalize(camera.forward);
+        camera.up = glm::normalize(camera.up);
+        renderer.clear();
+    }
 }
 
 void UI::propertyEnvironmentMenu()
 {
     Renderer& renderer = this->app->renderer;
+    bool changed = true;
 
-    if (ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, 0, 1000000))
-    {
-        renderer.clear();
-    }
-
-    if (ImGui::BeginCombo("##environment", renderer.environment.name.c_str()))
-    {
-        if (ImGui::Selectable("None", renderer.environment.name == "None"))
-        {
-            renderer.environment.reset();
-            renderer.clear();
-        }
-
-        for (size_t i = 0; i < this->app->environmentFiles.size(); i++)
-        {
-            const std::string& environmentName = this->app->environmentFiles[i];
-            if (ImGui::Selectable(
-                (environmentName + "##environmentTexture" + std::to_string(i)).c_str(),
-                environmentName == renderer.environment.name))
-            {
-                renderer.environment.loadFromFile(Application::environmentFolder + environmentName);
-                renderer.clear();
-            }
-        }
-
-        ImGui::EndCombo();
-    }
+    changed |= ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, 0, 1000000);
 
     static float translation[3];
     static float rotation[3];
@@ -727,10 +679,12 @@ void UI::propertyEnvironmentMenu()
             scale,
             glm::value_ptr(rotationMat));
         renderer.environment.rotation = rotationMat;
-        renderer.clear();
+        changed = true;
     }
 
-    if (ImGui::Checkbox("Transparent background", &renderer.environment.transparent))
+    changed |= ImGui::Checkbox("Transparent background", &renderer.environment.transparent);
+
+    if (changed)
     {
         renderer.clear();
     }
@@ -793,10 +747,11 @@ void UI::propertySceneMenu()
 #endif
 }
 
-void UI::materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor)
+bool UI::materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor)
 {
     Renderer& renderer = this->app->renderer;
     Scene& scene = this->app->scene;
+    bool changed = false;
 
     if (ImGui::BeginCombo(
         ("Texture##" + name).c_str(),
@@ -805,8 +760,7 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
         if (ImGui::Selectable("None", (int)currentTextureId == -1))
         {
             currentTextureId = -1.f;
-            renderer.clear();
-            renderer.updateSceneMaterials(scene);
+            changed = true;
         }
 
         for (size_t textureId = 0; textureId < scene.textures.size(); textureId++)
@@ -818,8 +772,7 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
                 (int)currentTextureId == textureId))
             {
                 currentTextureId = (float)textureId;
-                renderer.clear();
-                renderer.updateSceneMaterials(scene);
+                changed = true;
             }
         }
 
@@ -841,4 +794,6 @@ void UI::materialTextureSelector(const std::string& name, float& currentTextureI
             ImVec2(1, 1),
             ImVec4(tintColor.r, tintColor.g, tintColor.b, 1));
     }
+
+    return changed;
 }
