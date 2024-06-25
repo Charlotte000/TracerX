@@ -164,7 +164,13 @@ void UI::barMenu()
         if (ImGui::MenuItem("Open scene"))
         {
             const char* patterns[] = { "*.glb", "*.gltf" };
-            const char* path = tinyfd_openFileDialog("Open scene file", Application::sceneFolder.c_str(), 2, patterns, nullptr, 0);
+            const char* path = tinyfd_openFileDialog(
+                "Open scene file",
+                Application::sceneFolder.string().c_str(),
+                2,
+                patterns,
+                nullptr,
+                0);
             if (path != nullptr)
             {
                 try
@@ -186,7 +192,13 @@ void UI::barMenu()
         if (ImGui::MenuItem("Open environment"))
         {
             const char* patterns[] = { "*.png", "*.hdr", ".jpg" };
-            const char* fileName = tinyfd_openFileDialog("Open environment image", Application::environmentFolder.c_str(), 3, patterns, nullptr, 0);
+            const char* fileName = tinyfd_openFileDialog(
+                "Open environment image",
+                Application::environmentFolder.string().c_str(),
+                3,
+                patterns,
+                nullptr,
+                0);
             if (fileName != nullptr)
             {
                 try
@@ -662,7 +674,7 @@ void UI::propertyCameraMenu()
 void UI::propertyEnvironmentMenu()
 {
     Renderer& renderer = this->app->renderer;
-    bool changed = true;
+    bool changed = false;
 
     changed |= ImGui::DragFloat("Intensity", &renderer.environment.intensity, .001f, 0, 1000000);
 

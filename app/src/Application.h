@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef ASSETS_PATH
+#define ASSETS_PATH std::filesystem::current_path()
+#endif
+
 #include "UI.h"
 
 #include <TracerX/Scene.h>
@@ -7,6 +11,7 @@
 
 #include <vector>
 #include <string>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
@@ -23,9 +28,9 @@ public:
     bool isRendering = false;
     bool enablePreview = true;
 
-    static inline const std::string assetsFolder = ASSETS_PATH;
-    static inline const std::string environmentFolder =  Application::assetsFolder + "/environments/";
-    static inline const std::string sceneFolder = Application::assetsFolder + "/scenes/";
+    static inline const std::filesystem::path assetsFolder = std::filesystem::canonical(ASSETS_PATH).string();
+    static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
+    static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 
     void init(glm::uvec2 size);
     void shutdown();

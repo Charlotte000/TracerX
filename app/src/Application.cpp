@@ -56,7 +56,7 @@ void Application::init(glm::uvec2 size)
     if (this->renderer.environment.name == "None")
     {
         tinydir_dir envDir;
-        tinydir_open_sorted(&envDir, Application::environmentFolder.c_str());
+        tinydir_open_sorted(&envDir, Application::environmentFolder.string().c_str());
         if (envDir.n_files > 1)
         {
             tinydir_file envFile;
