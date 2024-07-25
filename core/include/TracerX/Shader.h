@@ -5,6 +5,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -14,7 +15,7 @@ namespace TracerX::core
 class Shader
 {
 public:
-    void init(const std::string& shaderSrc);
+    void init(const std::vector<unsigned char>& shaderBin);
     void shutdown();
     void use();
 
@@ -29,7 +30,7 @@ private:
 
     GLint getLocation(const std::string& name);
 
-    static GLuint initShader(const std::string& src, GLenum shaderType);
+    static GLuint initShader(const std::vector<unsigned char>& bin, GLenum shaderType);
     static GLuint initProgram(GLuint shaderHandler);
 };
 

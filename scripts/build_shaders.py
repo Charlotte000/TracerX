@@ -1,42 +1,43 @@
-from os.path import dirname, exists, join, relpath
+import subprocess
+from os import remove
+from os.path import dirname, join
 
 
-def link_shader(shader: str) -> str:
-    if not exists(shader):
-        raise ValueError(f"Shader not found ({relpath(shader)})")
+def compile_shader(mainPath: str) -> bytes:
+    temp = join(dirname(mainPath), "out.spv")
+    proc = subprocess.run(
+        ["glslc", join(shaders, "main.comp"), "-o", temp], stderr=subprocess.PIPE
+    )
+    if proc.returncode != 0:
+        raise ValueError(f"Compilation error:\n{proc.stderr.decode()}")
 
-    result = ""
-    with open(shader, "r") as file:
-        for line in file.readlines():
-            if line.startswith("#include"):
-                include = line.removeprefix("#include ").strip()
-                result += link_shader(join(dirname(shader), include))
-            else:
-                result += line
+    with open(temp, "rb") as file:
+        data = file.read()
 
-    return result
+    remove(temp)
+    return data
 
 
-def write_shaders(path: str, shader: str) -> None:
+def write_shader(path: str, shaderBin: bytes) -> None:
     with open(path, "w") as file:
         file.write("#include <TracerX/Renderer.h>\n\n")
         file.write("using namespace TracerX;\n\n")
 
-        file.write('const char* Renderer::shaderSrc =\nR"(\n')
-        file.write(shader)
-        file.write('\n)";\n')
+        file.write("const std::vector<unsigned char> Renderer::shaderSrc =\n{\n    ")
+        file.write(",\n    ".join(list(map(str, shaderBin))))
+        file.write("\n};\n")
 
 
 project = join(dirname(__file__), "..")
 shaders = join(project, "shaders")
 
 try:
-    shader = link_shader(join(shaders, "main.comp"))
-    print("[Info] Link completed")
+    shaderBin = compile_shader(join(shaders, "main.comp"))
+    print("[Info] Compilation completed")
 
-    write_shaders(
+    write_shader(
         join(project, "core", "src", "RendererShaderSrc.cpp"),
-        shader,
+        shaderBin,
     )
 
     print("[Info] Write completed")

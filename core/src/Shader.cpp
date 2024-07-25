@@ -8,10 +8,10 @@
 
 using namespace TracerX::core;
 
-void Shader::init(const std::string& shaderSrc)
+void Shader::init(const std::vector<unsigned char>& shaderBin)
 {
     // Create OpenGL shader
-    GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
+    GLuint shaderHandler = this->initShader(shaderBin, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -59,12 +59,11 @@ GLint Shader::getLocation(const std::string& name)
     return location;
 }
 
-GLuint Shader::initShader(const std::string& src, GLenum shaderType)
+GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderType)
 {
-    const GLchar* code = (const GLchar*)src.c_str();
     GLuint handler = glCreateShader(shaderType);
-    glShaderSource(handler, 1, &code, 0);
-    glCompileShader(handler);
+    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), bin.size());
+    glSpecializeShader(handler, "main", 0, nullptr, nullptr);
 
     GLint status = 0;
     glGetShaderiv(handler, GL_COMPILE_STATUS, &status);

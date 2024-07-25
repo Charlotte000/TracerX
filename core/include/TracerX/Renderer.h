@@ -236,7 +236,7 @@ private:
     core::UniformBuffer environmentBuffer;
     core::UniformBuffer paramBuffer;
 
-    static const char* shaderSrc;
+    static const std::vector<unsigned char> shaderSrc;
 
     void initData();
     void bindData();

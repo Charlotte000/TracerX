@@ -83,15 +83,15 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in float minDistance, out Collis
 
     float bbhits[4];
 
-    vec2 todo[64];
+    vec2 stack[64];
     int stackptr = 0;
 
-    todo[stackptr] = vec2(mesh.NodeOffset, -1);
+    stack[stackptr] = vec2(mesh.NodeOffset, -1);
 
     while (stackptr >= 0)
     {
-        int ni = int(todo[stackptr].x);
-        float near = todo[stackptr].y;
+        int ni = int(stack[stackptr].x);
+        float near = stack[stackptr].y;
         stackptr--;
 
         Node node = BVH[ni];
@@ -135,16 +135,16 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in float minDistance, out Collis
                     swap(closer, other);
                 }
 
-                todo[++stackptr] = vec2(other, bbhits[2]);
-                todo[++stackptr] = vec2(closer, bbhits[0]);
+                stack[++stackptr] = vec2(other, bbhits[2]);
+                stack[++stackptr] = vec2(closer, bbhits[0]);
             }
             else if (hitc0)
             {
-                todo[++stackptr] = vec2(ni + 1, bbhits[0]);
+                stack[++stackptr] = vec2(ni + 1, bbhits[0]);
             }
             else if (hitc1)
             {
-                todo[++stackptr] = vec2(ni + node.RightOffset, bbhits[2]);
+                stack[++stackptr] = vec2(ni + node.RightOffset, bbhits[2]);
             }
         }
     }
