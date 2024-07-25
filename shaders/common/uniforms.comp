@@ -1,0 +1,57 @@
+layout(rgba32f, binding=0)           uniform image2D AccumulatorImage;
+layout(rgba32f, binding=1) writeonly uniform image2D AlbedoImage;
+layout(rgba32f, binding=2) writeonly uniform image2D NormalImage;
+layout(r32f,    binding=3) writeonly uniform image2D DepthImage;
+layout(rgba32f, binding=4) writeonly uniform image2D ToneMapImage;
+
+layout(binding=0) uniform sampler2D EnvironmentTexture;
+layout(binding=1) uniform sampler2DArray Textures;
+
+layout(std430, binding=0) readonly buffer VertexSSBO
+{
+    Vertex Vertices[];
+};
+
+layout(std430, binding=1) readonly buffer TriangleSSBO
+{
+    Triangle Triangles[];
+};
+
+layout(std430, binding=2) readonly buffer MeshSSBO
+{
+    Mesh Meshes[];
+};
+
+layout(std430, binding=3) readonly buffer MaterialSSBO
+{
+    Material Materials[];
+};
+
+layout(std430, binding=4) readonly buffer BvhSSBO
+{
+    Node BVH[];
+};
+
+uniform uint MaxBounceCount;
+uniform float MinRenderDistance;
+uniform float MaxRenderDistance;
+uniform uint SampleCount;
+uniform Cam Camera;
+uniform Env Environment;
+uniform float Gamma;
+uniform ivec2 UVlow;
+uniform ivec2 UVup;
+uniform bool OnlyToneMapping;
+
+ivec2 Size = imageSize(AccumulatorImage);
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy);
+vec2 UV = vec2(TexelCoord) / Size;
+vec3 CameraRight = cross(Camera.Forward, Camera.Up);
+
+vec3 GetEnvironment(in Ray ray)
+{
+    vec3 direction = Environment.Rotation * ray.Direction;
+    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
+    float v = acos(direction.y) * INV_PI;
+    return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
+}

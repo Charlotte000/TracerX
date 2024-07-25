@@ -1,7 +1,6 @@
 #include "Application.h"
 
 #include <stdexcept>
-#include <tinydir.h>
 #include <glm/gtx/rotate_vector.hpp>
 
 using namespace TracerX;
@@ -30,7 +29,7 @@ void Application::init(glm::uvec2 size)
     glfwSetWindowUserPointer(this->window, this);
     glfwMaximizeWindow(this->window);
     glfwSwapInterval(0);
-    
+
     // Key listener
     glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int scancode, int action, int mode)
     {
@@ -43,7 +42,7 @@ void Application::init(glm::uvec2 size)
                     glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
                     break;
                 case GLFW_KEY_SPACE:
-                    app->isRendering = !app->isRendering;
+                    app->enableRendering = !app->enableRendering;
                     break;
             }
         }
@@ -55,14 +54,7 @@ void Application::init(glm::uvec2 size)
 
     if (this->renderer.environment.name == "None")
     {
-        tinydir_dir envDir;
-        tinydir_open_sorted(&envDir, Application::environmentFolder.string().c_str());
-        if (envDir.n_files > 1)
-        {
-            tinydir_file envFile;
-            tinydir_readfile_n(&envDir, &envFile, 2);
-            this->renderer.environment.loadFromFile(envFile.path);
-        }
+        this->loadAnyEnvironment();
     }
 
     this->renderer.loadScene(this->scene);
@@ -85,18 +77,18 @@ void Application::run()
         this->control();
 
         // Render
-        if (this->isRendering || this->renderer.getFrameCount() == 0)
+        if (this->enableRendering || this->renderer.getSampleCount() == 0)
         {
             if (this->enablePreview)
             {
                 unsigned int maxBounceCount = this->renderer.maxBounceCount;
-                this->renderer.maxBounceCount = this->isRendering ? maxBounceCount : 0;
-                this->renderer.render(this->isRendering ? this->perFrameCount : 1);
+                this->renderer.maxBounceCount = this->enableRendering ? maxBounceCount : 0;
+                this->renderer.render(this->enableRendering ? this->samplesPerFrame : 1);
                 this->renderer.maxBounceCount = maxBounceCount;
             }
             else
             {
-                this->renderer.render(this->perFrameCount);
+                this->renderer.render(this->samplesPerFrame);
             }
         }
 
@@ -117,10 +109,23 @@ void Application::loadScene(const std::string& fileName)
     this->renderer.loadScene(this->scene);
 }
 
-GLint Application::getViewHandler() const
+void Application::loadAnyEnvironment()
 {
-    return !this->enablePreview ||this->isRendering || this->renderer.getFrameCount() > 1 ?
-        this->renderer.getTextureHandler() : this->renderer.getTextureAlbedoHandler();
+    for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(Application::environmentFolder))
+    {
+        if (!entry.is_regular_file())
+        {
+            continue;
+        }
+
+        std::filesystem::path path = entry.path();
+        std::filesystem::path ext = path.extension();
+        if (ext == ".hdr" || ext == ".png" || ext == ".jpg")
+        {
+            this->renderer.environment.loadFromFile(path.string());
+            return;
+        }
+    }
 }
 
 void Application::control()

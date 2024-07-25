@@ -1,9 +1,6 @@
 #pragma once
 
 #include <TracerX/Mesh.h>
-#include <TracerX/Scene.h>
-#include <TracerX/Image.h>
-#include <TracerX/Camera.h>
 #include <TracerX/Texture.h>
 #include <TracerX/Material.h>
 
@@ -42,5 +39,6 @@ private:
     void propertyCameraMenu();
     void propertyEnvironmentMenu();
     void propertySceneMenu();
-    bool materialTextureSelector(const std::string& name, float& currentTextureId, glm::vec3 tintColor);
+    bool materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor);
+    void viewTexture(GLint textureHandler);
 };

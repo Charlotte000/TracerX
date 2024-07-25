@@ -29,7 +29,6 @@ target_include_directories(
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/imguizmo
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyfiledialogs
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinydir
 )
 
 if (TX_DENOISE AND WIN32)

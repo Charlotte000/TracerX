@@ -5,8 +5,9 @@
 
 using namespace TracerX::core;
 
-void TextureArray::init()
+void TextureArray::init(GLint internalFormat)
 {
+    this->internalFormat = internalFormat;
     glGenTextures(1, &this->handler);
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -37,7 +38,7 @@ void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
     if (this->size != size3)
     {
         this->size = size3;
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA32F, this->size.x, this->size.y, this->size.z, 0, GL_RGBA, GL_FLOAT, data.data());
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, this->internalFormat, this->size.x, this->size.y, this->size.z, 0, GL_RGBA, GL_FLOAT, data.data());
     }
     else
     {

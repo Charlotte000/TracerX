@@ -3,7 +3,6 @@ project(TracerX)
 
 add_library(
     ${PROJECT_NAME}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Quad.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Scene.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Shader.cpp
@@ -12,8 +11,8 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/FrameBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureArray.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/StorageBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/glew/src/glew.c

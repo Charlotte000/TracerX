@@ -70,14 +70,13 @@ doxygen
 ## Libraries
 - [brandonpelfrey/Fast-BVH](https://github.com/brandonpelfrey/Fast-BVH) (Modified version): A Simple, Optimized Bounding Volume Hierarchy for Ray/Object Intersection Testing
 - [nigels-com/glew](https://github.com/nigels-com/glew): The OpenGL Extension Wrangler Library
-- [glfw/glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 - [g-truc/glm](https://github.com/g-truc/glm): OpenGL Mathematics (GLM)
-- [ocornut/imgui](https://github.com/ocornut/imgui): Bloat-free Graphical User interface for C++ with minimal dependencies
-- [CedricGuillemet/ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo): Immediate mode 3D gizmo for scene editing and other controls based on Dear Imgui
 - [OpenImageDenoise/oidn](https://github.com/OpenImageDenoise/oidn): Intel® Open Image Denoise library
 - [nothings/stb](https://github.com/nothings/stb): stb single-file public domain libraries for C/C++
-- [cxong/tinydir](https://github.com/cxong/tinydir): Lightweight, portable and easy to integrate C directory and file reader
 - [syoyo/tinygltf](https://github.com/syoyo/tinygltf): Header only C++11 tiny glTF 2.0 library
+- [glfw/glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
+- [ocornut/imgui](https://github.com/ocornut/imgui): Bloat-free Graphical User interface for C++ with minimal dependencies
+- [CedricGuillemet/ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo): Immediate mode 3D gizmo for scene editing and other controls based on Dear Imgui
 - [vareille/tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/): Tiny file dialogs ( cross-platform C C++ )
 
 ## Assets

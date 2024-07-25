@@ -3,8 +3,6 @@ struct Ray
     vec3 Origin;
     vec3 Direction;
     vec3 InvDirection;
-    vec3 Color;
-    vec3 IncomingLight;
 };
 
 struct Env
@@ -45,9 +43,8 @@ struct Material
 
 struct Vertex
 {
-    vec3 Position;
-    vec3 Normal;
-    vec2 TextureCoordinate;
+    vec4 PositionU;
+    vec4 NormalV;
 };
 
 struct Triangle
@@ -64,6 +61,7 @@ struct Mesh
     int MaterialId;
     int NodeOffset;
     int TriangleOffset;
+    int TriangleSize;
 };
 
 struct CollisionManifold
@@ -80,9 +78,11 @@ struct CollisionManifold
 
 struct Node
 {
-    vec3 BboxMin;
-    vec3 BboxMax;
+    vec4 BboxMin;
+    vec4 BboxMax;
     int Start;
     int PrimitiveCount;
     int RightOffset;
+
+    int Padding;
 };

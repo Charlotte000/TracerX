@@ -338,10 +338,9 @@ void Scene::buildBVH(Mesh& mesh)
     {
     public:
         const std::vector<Vertex>* vertices;
-        const Mesh* mesh;
 
-        TriangleConverter(const std::vector<Vertex>* vertices, const Mesh* mesh)
-            : vertices(vertices), mesh(mesh)
+        TriangleConverter(const std::vector<Vertex>* vertices)
+            : vertices(vertices)
         {
         }
 
@@ -355,14 +354,18 @@ void Scene::buildBVH(Mesh& mesh)
     };
 
     FastBVH::BVH<float, Triangle> bvh = FastBVH::DefaultBuilder<float>()(
-        FastBVH::Iterable<Triangle>(this->triangles.data() + (size_t)mesh.triangleOffset, (size_t)mesh.triangleSize),
-        TriangleConverter(&this->vertices, &mesh));
+        FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
+        TriangleConverter(&this->vertices));
 
-    mesh.nodeOffset = (float)(this->bvh.size() / 3);
+    mesh.nodeOffset = this->bvh.size();
     for (const FastBVH::Node<float>& node : bvh.getNodes())
     {
-        this->bvh.push_back(node.bbox.min);
-        this->bvh.push_back(node.bbox.max);
-        this->bvh.push_back(glm::vec3(node.start, node.primitive_count, node.right_offset));
+        Node myNode;
+        myNode.bboxMin = glm::vec4(node.bbox.min, 0);
+        myNode.bboxMax = glm::vec4(node.bbox.max, 0);
+        myNode.start = node.start;
+        myNode.primitiveCount = node.primitive_count;
+        myNode.rightOffset = node.right_offset;
+        this->bvh.push_back(myNode);
     }
 }

@@ -81,45 +81,40 @@ struct Material
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
      * If the texture ID is -1, the material uses the Material::albedoColor value. Otherwise, the material multiplies the albedo color by the texture color.
-     * Float value to avoid padding issues.
      */
-    float albedoTextureId = -1;
+    int albedoTextureId = -1;
 
     /**
      * @brief The texture ID for the material's metalness.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
      * If the texture ID is -1, the material uses the Material::metalness value. Otherwise, the material multiplies the metalness value by the texture color.
-     * Float value to avoid padding issues.
      */
-    float metalnessTextureId = -1;
+    int metalnessTextureId = -1;
 
     /**
      * @brief The texture ID for the material's emission.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
      * If the texture ID is -1, the material uses the Material::emissionColor value. Otherwise, the material multiplies the emission color by the texture color.
-     * Float value to avoid padding issues.
      */
-    float emissionTextureId = -1;
+    int emissionTextureId = -1;
 
     /**
      * @brief The texture ID for the material's roughness.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
      * If the texture ID is -1, the material uses the Material::roughness value. Otherwise, the material multiplies the roughness value by the texture color.
-     * Float value to avoid padding issues.
      */
-    float roughnessTextureId = -1;
-    
+    int roughnessTextureId = -1;
+
     /**
      * @brief The texture ID for the material's normal map.
      * 
      * The texture ID is the index of the texture in the renderer's texture array.
      * If the texture ID is -1, the material does not use a normal map. Otherwise, the material uses the texture as a normal map.
-     * Float value to avoid padding issues.
      */
-    float normalTextureId = -1;
+    int normalTextureId = -1;
 
     /**
      * @brief Creates a light source material with the given emission color and strength.

@@ -31,20 +31,18 @@ public:
      * @brief The material ID of the mesh.
      * 
      * The material ID is the index of the material in the scene's material list.
-     * Float value to avoid padding issues.
      */
-    float materialId = -1;
+    int materialId = -1;
 private:
-    float nodeOffset = 0;
-    float triangleOffset = 0;
+    int nodeOffset = 0;
+    int triangleOffset = 0;
 public:
     /**
      * @brief The size of the triangles in the mesh.
      * 
      * Optional, does not affect the rendering of the mesh.
-     * Float value to avoid padding issues.
      */
-    float triangleSize = 0;
+    int triangleSize = 0;
 
     friend class Scene;
 };

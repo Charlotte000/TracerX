@@ -1,0 +1,1 @@
+- compatible with SpirV (uniform block)

@@ -8,18 +8,16 @@
 
 using namespace TracerX::core;
 
-void Shader::init(const std::string& vertexSrc, const std::string& fragmentSrc)
+void Shader::init(const std::string& shaderSrc)
 {
-    // Create OpenGL shaders
-    GLuint vertexHandler = this->initShader(vertexSrc, GL_VERTEX_SHADER);
-    GLuint fragmentHandler = this->initShader(fragmentSrc, GL_FRAGMENT_SHADER);
+    // Create OpenGL shader
+    GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
-    this->handler = this->initProgram(vertexHandler, fragmentHandler);
+    this->handler = this->initProgram(shaderHandler);
 
-    // Clean OpenGL shaders
-    glDeleteShader(vertexHandler);
-    glDeleteShader(fragmentHandler);
+    // Clean OpenGL shader
+    glDeleteShader(shaderHandler);
 }
 
 void Shader::shutdown()
@@ -34,32 +32,61 @@ void Shader::use()
 
 void Shader::updateParam(const std::string& name, unsigned int value)
 {
-    glUniform1ui(glGetUniformLocation(this->handler, name.c_str()), value);
+    glUniform1ui(this->getLocation(name), value);
 }
 
 void Shader::updateParam(const std::string& name, float value)
 {
-    glUniform1f(glGetUniformLocation(this->handler, name.c_str()), value);
+    glUniform1f(this->getLocation(name), value);
+}
+
+void Shader::updateParam(const std::string& name, glm::ivec2 value)
+{
+    glUniform2i(this->getLocation(name), value.x, value.y);
 }
 
 void Shader::updateParam(const std::string& name, glm::vec3 value)
 {
-    glUniform3f(glGetUniformLocation(this->handler, name.c_str()), value.x, value.y, value.z);
+    glUniform3f(this->getLocation(name), value.x, value.y, value.z);
 }
 
 void Shader::updateParam(const std::string& name, glm::mat3 value)
 {
-    glUniformMatrix3fv(glGetUniformLocation(this->handler, name.c_str()), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix3fv(this->getLocation(name), 1, GL_FALSE, glm::value_ptr(value));
 }
 
 void Shader::updateParam(const std::string& name, bool value)
 {
-    glUniform1i(glGetUniformLocation(this->handler, name.c_str()), value);
+    glUniform1i(this->getLocation(name), value);
+}
+
+glm::uvec3 Shader::getGroups(glm::uvec2 size)
+{
+    return glm::uvec3(glm::ceil(glm::vec3(size, 1) / glm::vec3(Shader::groupSize)));
+}
+
+void Shader::dispatchCompute(glm::uvec3 groups)
+{
+    glDispatchCompute(groups.x, groups.y, groups.z);
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 }
 
 void Shader::stopUse()
 {
     glUseProgram(0);
+}
+
+GLint Shader::getLocation(const std::string& name)
+{
+    std::map<std::string, GLint>::iterator it = this->locations.find(name);
+    if (it != this->locations.end())
+    {
+        return it->second;
+    }
+
+    GLint location = glGetUniformLocation(this->handler, name.c_str());
+    this->locations[name] = location;
+    return location;
 }
 
 GLuint Shader::initShader(const std::string& src, GLenum shaderType)
@@ -87,11 +114,10 @@ GLuint Shader::initShader(const std::string& src, GLenum shaderType)
     return handler;
 }
 
-GLuint Shader::initProgram(GLuint vertexHandler, GLuint fragmentHandler)
+GLuint Shader::initProgram(GLuint shaderHandler)
 {
     GLuint handler = glCreateProgram();
-    glAttachShader(handler, vertexHandler);
-    glAttachShader(handler, fragmentHandler);
+    glAttachShader(handler, shaderHandler);
     glLinkProgram(handler);
 
     GLint success = 0;

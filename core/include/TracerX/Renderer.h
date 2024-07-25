@@ -3,18 +3,12 @@
  */
 #pragma once
 
-#include "Quad.h"
-#include "Mesh.h"
 #include "Scene.h"
 #include "Shader.h"
 #include "Camera.h"
-#include "Buffer.h"
-#include "Vertex.h"
-#include "Material.h"
-#include "Triangle.h"
 #include "Environment.h"
-#include "FrameBuffer.h"
 #include "TextureArray.h"
+#include "StorageBuffer.h"
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -104,52 +98,28 @@ public:
     /**
      * @brief Renders the scene.
      * 
-     * Renders the scene using Renderer::accumulate and Renderer::toneMap.
-     * The frame count is incremented.
+     * Renders the scene using accumulation and tone mapping.
+     * The sample count is incremented.
      * The rendered image can be accessed using Renderer::getImage().
      * 
-     * @param count The number of frames to render.
+     * @param samples The number of samples to render.
      * @see Renderer::renderRect to render only a rectangular region of the image.
      */
-    void render(unsigned int count = 1);
+    void render(unsigned int samples = 1);
 
     /**
      * @brief Renders a rectangular region of the image.
      * 
-     * Renders the specified region of the image using Renderer::accumulate and Renderer::toneMap.
-     * The frame count is incremented.
+     * Renders the specified region of the image using accumulation and tone mapping.
+     * The sample count is incremented.
      * The rendered image can be accessed using Renderer::getImage().
      * 
-     * @param count The number of frames to render.
+     * @param samples The number of samples to render.
      * @param position The position of the top-left corner of the region.
      * @param size The size of the region.
      * @see Renderer::render to render the entire image.
      */
-    void renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size);
-
-    /**
-     * @brief Accumulates the colors of the rendered image.
-     * 
-     * This method does not update the output image.
-     * The frame count is incremented.
-     * Can be used in motion blur to accumulate colors over a period of time.
-     * 
-     * @param count The number of frames to accumulate.
-     * @param position The position of the top-left corner of the region.
-     * @param size The size of the region. Use Renderer::getSize to accumulate the entire image.
-     * @see Renderer::toneMap to update the output image with the tone-mapped colors.
-     */
-    void accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 size);
-
-    /**
-     * @brief Applies tone mapping to the accumulated colors.
-     * 
-     * This method updates the output image with the tone-mapped colors.
-     * 
-     * @param position The position of the top-left corner of the region.
-     * @param size The size of the region. Use Renderer::getSize to tone map the entire image.
-     */
-    void toneMap(glm::uvec2 position, glm::uvec2 size);
+    void renderRect(unsigned int samples, glm::uvec2 position, glm::uvec2 size);
 
 #ifdef TX_DENOISE
     /**
@@ -161,7 +131,7 @@ public:
     /**
      * @brief Clears the renderer.
      * 
-     * Clears the accumulated colors and resets the frame count.
+     * Clears the accumulated colors and resets the sample count.
      * Should be called after any changes to the scene or environment.
      */
     void clear();
@@ -180,7 +150,16 @@ public:
      * 
      * @return The texture handler.
      */
-    GLuint getTextureAlbedoHandler() const;
+    GLuint getAlbedoTextureHandler() const;
+
+    // ToDo: documentation
+    GLuint getNormalTextureHandler() const;
+
+    // ToDo: documentation
+    GLuint getDepthTextureHandler() const;
+
+    // ToDo: documentation
+    GLuint getAccumulatorTextureHandler() const;
 
     /**
      * @brief Loads the rendered texture from the GPU to the CPU.
@@ -199,13 +178,13 @@ public:
     glm::uvec2 getSize() const;
 
     /**
-     * @brief Gets the frame count.
+     * @brief Gets the sample count.
      * 
-     * The frame count is the number of accumulated frames.
+     * The sample count is the number of accumulated frames.
      * 
-     * @return The frame count.
+     * @return The sample count.
      */
-    unsigned int getFrameCount() const;
+    unsigned int getSampleCount() const;
 
     /**
      * @brief Loads the specified scene into the renderer.
@@ -239,23 +218,24 @@ public:
      */
     void updateSceneMeshes(const Scene& scene);
 private:
-    unsigned int frameCount = 0;
-    core::Quad quad;
-    core::Shader accumulatorShader;
-    core::Shader toneMapperShader;
-    core::FrameBuffer frameBuffer;
+    unsigned int sampleCount = 0;
+    core::Shader shader;
+    core::Texture accumulationTexture;
+    core::Texture albedoTexture;
+    core::Texture normalTexture;
+    core::Texture depthTexture;
+    core::Texture toneMapTexture;
     core::TextureArray textureArray;
-    core::Buffer<core::Vertex> vertexBuffer;
-    core::Buffer<core::Triangle> triangleBuffer;
-    core::Buffer<Mesh> meshBuffer;
-    core::Buffer<Material> materialBuffer;
-    core::Buffer<glm::vec3> bvhBuffer;
+    core::StorageBuffer vertexBuffer;
+    core::StorageBuffer triangleBuffer;
+    core::StorageBuffer meshBuffer;
+    core::StorageBuffer materialBuffer;
+    core::StorageBuffer bvhBuffer;
 
-    static const char* accumulatorShaderSrc;
-    static const char* toneMapperShaderSrc;
-    static const char* vertexShaderSrc;
+    static const char* shaderSrc;
 
     void initData();
+    void bindData();
 };
 
 }

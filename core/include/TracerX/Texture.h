@@ -15,14 +15,18 @@ class Texture
 public:
     glm::uvec2 size;
 
-    void init();
+    void init(GLint internalFormat);
     void bind(int binding);
+    void bindImage(int binding, GLenum access = GL_READ_WRITE);
     void update(const Image& image);
     Image upload() const;
+    void clear();
+    void resize(glm::uvec2 size);
     void shutdown();
     GLuint getHandler() const;
 private:
     GLuint handler;
+    GLint internalFormat;
 };
 
 }

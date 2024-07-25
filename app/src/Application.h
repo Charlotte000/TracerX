@@ -9,7 +9,6 @@
 #include <TracerX/Scene.h>
 #include <TracerX/Renderer.h>
 
-#include <vector>
 #include <string>
 #include <filesystem>
 #include <glm/glm.hpp>
@@ -24,11 +23,11 @@ public:
     GLFWwindow* window = nullptr;
     float cameraSpeed = 5.f;
     float cameraRotationSpeed = 1.f;
-    unsigned int perFrameCount = 1;
-    bool isRendering = false;
+    unsigned int samplesPerFrame = 1;
+    bool enableRendering = false;
     bool enablePreview = true;
 
-    static inline const std::filesystem::path assetsFolder = std::filesystem::canonical(ASSETS_PATH).string();
+    static inline const std::filesystem::path assetsFolder = std::filesystem::relative(ASSETS_PATH).string();
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
     static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 
@@ -36,7 +35,7 @@ public:
     void shutdown();
     void run();
     void loadScene(const std::string& fileName);
-    GLint getViewHandler() const;
 private:
+    void loadAnyEnvironment();
     void control();
 };

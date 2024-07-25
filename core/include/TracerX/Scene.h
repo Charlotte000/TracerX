@@ -3,6 +3,7 @@
  */
 #pragma once
 
+#include "BVH.h"
 #include "Mesh.h"
 #include "Image.h"
 #include "Camera.h"
@@ -104,7 +105,7 @@ public:
      */
     static Scene loadGLTF(const std::string& fileName);
 private:
-    std::vector<glm::vec3> bvh;
+    std::vector<core::Node> bvh;
 
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);

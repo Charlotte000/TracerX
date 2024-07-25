@@ -4,7 +4,6 @@
 #pragma once
 
 #include "Image.h"
-#include "Texture.h"
 
 #include <vector>
 #include <GL/glew.h>
@@ -18,12 +17,13 @@ class TextureArray
 public:
     glm::uvec3 size;
 
-    void init();
+    void init(GLint internalFormat);
     void bind(int binding);
     void update(glm::uvec2 size, const std::vector<Image>& images);
     void shutdown();
 private:
     GLuint handler;
+    GLint internalFormat;
 };
 
 }

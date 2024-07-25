@@ -3,6 +3,7 @@
  */
 #pragma once
 
+#include <map>
 #include <string>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -13,21 +14,29 @@ namespace TracerX::core
 class Shader
 {
 public:
-    void init(const std::string& vertexSrc, const std::string& fragmentSrc);
+    void init(const std::string& shaderSrc);
     void shutdown();
     void use();
     void updateParam(const std::string& name, unsigned int value);
     void updateParam(const std::string& name, float value);
+    void updateParam(const std::string& name, glm::ivec2 value);
     void updateParam(const std::string& name, glm::vec3 value);
     void updateParam(const std::string& name, glm::mat3 value);
     void updateParam(const std::string& name, bool value);
 
+    static glm::uvec3 getGroups(glm::uvec2 size);
+    static void dispatchCompute(glm::uvec3 groups);
     static void stopUse();
 private:
     GLuint handler;
+    std::map<std::string, GLint> locations;
+
+    static inline const glm::uvec3 groupSize = glm::uvec3(16, 16, 1);
+
+    GLint getLocation(const std::string& name);
 
     static GLuint initShader(const std::string& src, GLenum shaderType);
-    static GLuint initProgram(GLuint vertexHandler, GLuint fragmentHandler);
+    static GLuint initProgram(GLuint shaderHandler);
 };
 
 }

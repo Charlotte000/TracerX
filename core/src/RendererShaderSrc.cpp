@@ -2,22 +2,21 @@
 
 using namespace TracerX;
 
-const char* Renderer::accumulatorShaderSrc =
+const char* Renderer::shaderSrc =
 R"(
 #version 430 core
 
-in vec2 TexCoords;
-layout(location=0) out vec4 AccumulatorColor;
-layout(location=1) out vec4 AlbedoColor;
-layout(location=2) out vec4 NormalColor;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+const float INV_PI     = 0.31830988618379067;
+const float INV_TWO_PI = 0.15915494309189533;
+const float TWO_PI     = 6.28318530717958648;
 
 struct Ray
 {
     vec3 Origin;
     vec3 Direction;
     vec3 InvDirection;
-    vec3 Color;
-    vec3 IncomingLight;
 };
 
 struct Env
@@ -58,9 +57,8 @@ struct Material
 
 struct Vertex
 {
-    vec3 Position;
-    vec3 Normal;
-    vec2 TextureCoordinate;
+    vec4 PositionU;
+    vec4 NormalV;
 };
 
 struct Triangle
@@ -77,6 +75,7 @@ struct Mesh
     int MaterialId;
     int NodeOffset;
     int TriangleOffset;
+    int TriangleSize;
 };
 
 struct CollisionManifold
@@ -93,81 +92,63 @@ struct CollisionManifold
 
 struct Node
 {
-    vec3 BboxMin;
-    vec3 BboxMax;
+    vec4 BboxMin;
+    vec4 BboxMax;
     int Start;
     int PrimitiveCount;
     int RightOffset;
-};
-const float INV_PI     = 0.31830988618379067;
-const float INV_TWO_PI = 0.15915494309189533;
 
-layout(binding=0) uniform sampler2D AccumulatorTexture;
-layout(binding=1) uniform sampler2D EnvironmentTexture;
-layout(binding=2) uniform sampler2DArray Textures;
-layout(binding=3) uniform samplerBuffer Vertices;
-layout(binding=4) uniform isamplerBuffer Triangles;
-layout(binding=5) uniform samplerBuffer Meshes;
-layout(binding=6) uniform samplerBuffer Materials;
-layout(binding=7) uniform samplerBuffer BVH;
+    int Padding;
+};
+layout(rgba32f, binding=0)           uniform image2D AccumulatorImage;
+layout(rgba32f, binding=1) writeonly uniform image2D AlbedoImage;
+layout(rgba32f, binding=2) writeonly uniform image2D NormalImage;
+layout(r32f,    binding=3) writeonly uniform image2D DepthImage;
+layout(rgba32f, binding=4) writeonly uniform image2D ToneMapImage;
+
+layout(binding=0) uniform sampler2D EnvironmentTexture;
+layout(binding=1) uniform sampler2DArray Textures;
+
+layout(std430, binding=0) readonly buffer VertexSSBO
+{
+    Vertex Vertices[];
+};
+
+layout(std430, binding=1) readonly buffer TriangleSSBO
+{
+    Triangle Triangles[];
+};
+
+layout(std430, binding=2) readonly buffer MeshSSBO
+{
+    Mesh Meshes[];
+};
+
+layout(std430, binding=3) readonly buffer MaterialSSBO
+{
+    Material Materials[];
+};
+
+layout(std430, binding=4) readonly buffer BvhSSBO
+{
+    Node BVH[];
+};
 
 uniform uint MaxBounceCount;
 uniform float MinRenderDistance;
 uniform float MaxRenderDistance;
-uniform uint FrameCount;
+uniform uint SampleCount;
 uniform Cam Camera;
 uniform Env Environment;
 uniform float Gamma;
+uniform ivec2 UVlow;
+uniform ivec2 UVup;
+uniform bool OnlyToneMapping;
 
-Triangle GetTriangle(int index)
-{
-    ivec4 data = texelFetch(Triangles, index);
-    return Triangle(data.x, data.y, data.z);
-}
-
-Vertex GetVertex(int index)
-{
-    vec4 data1 = texelFetch(Vertices, index * 2 + 0);
-    vec4 data2 = texelFetch(Vertices, index * 2 + 1);
-    return Vertex(data1.xyz, data2.xyz, vec2(data1.w, data2.w));
-}
-
-Mesh GetMesh(int index)
-{
-    vec4 data1 = texelFetch(Meshes, index * 9 + 0);
-    vec4 data2 = texelFetch(Meshes, index * 9 + 1);
-    vec4 data3 = texelFetch(Meshes, index * 9 + 2);
-    vec4 data4 = texelFetch(Meshes, index * 9 + 3);
-    vec4 data5 = texelFetch(Meshes, index * 9 + 4);
-    vec4 data6 = texelFetch(Meshes, index * 9 + 5);
-    vec4 data7 = texelFetch(Meshes, index * 9 + 6);
-    vec4 data8 = texelFetch(Meshes, index * 9 + 7);
-    vec4 data9 = texelFetch(Meshes, index * 9 + 8);
-    return Mesh(mat4(data1, data2, data3, data4), mat4(data5, data6, data7, data8), int(data9.x), int(data9.y), int(data9.z));
-}
-
-int GetMeshCount()
-{
-    return textureSize(Meshes) / 9;
-}
-
-Material GetMaterial(int index)
-{
-    vec4 data1 = texelFetch(Materials, index * 5 + 0);
-    vec4 data2 = texelFetch(Materials, index * 5 + 1);
-    vec4 data3 = texelFetch(Materials, index * 5 + 2);
-    vec4 data4 = texelFetch(Materials, index * 5 + 3);
-    vec4 data5 = texelFetch(Materials, index * 5 + 4);
-    return Material(data1.rgb, data1.a, data2.rgb, data2.a, data3.rgb, data3.a, data4.x, data4.y, data4.z, int(data4.w), int(data5.x), int(data5.y), int(data5.z), int(data5.w));
-}
-
-Node GetNode(int index)
-{
-    vec4 data1 = texelFetch(BVH, index * 3 + 0);
-    vec4 data2 = texelFetch(BVH, index * 3 + 1);
-    vec4 data3 = texelFetch(BVH, index * 3 + 2);
-    return Node(data1.xyz, data2.xyz, int(data3.x), int(data3.y), int(data3.z));
-}
+ivec2 Size = imageSize(AccumulatorImage);
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy);
+vec2 UV = vec2(TexelCoord) / Size;
+vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
 vec3 GetEnvironment(in Ray ray)
 {
@@ -176,9 +157,7 @@ vec3 GetEnvironment(in Ray ray)
     float v = acos(direction.y) * INV_PI;
     return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
 }
-const float TWO_PI     = 6.28318530717958648;
-
-uint Seed = uint((TexCoords.x + TexCoords.y * TexCoords.x) * 549856.0) + FrameCount * 5458u;
+uint Seed = uint((UV.x + UV.y * UV.x) * 549856.0) + SampleCount * 5458u;
 
 float RandomValue()
 {
@@ -229,6 +208,32 @@ vec4 ToneMap(in vec4 pixel, in float gamma)
 
     return pixel;
 }
+
+void JitterRay(inout Ray ray)
+{
+    // Focal
+    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
+    vec2 focal = RandomVector2() * Camera.Aperture;
+    ray.Origin += focal.x * CameraRight + focal.y * Camera.Up;
+    ray.Direction = normalize(focalPoint - ray.Origin);
+
+    // Blur
+    vec2 blur = RandomVector2() * Camera.Blur;
+    ray.Origin += blur.x * CameraRight + blur.y * Camera.Up;
+
+    ray.InvDirection = 1 / ray.Direction;
+}
+
+vec4 NormalToColor(in vec3 normal)
+{
+    return vec4((normal + 1) / 2, 1);
+}
+
+vec4 DepthToColor(in float depth)
+{
+    float nonLinear = (1 / depth - 1 / MinRenderDistance) / (1 / MaxRenderDistance - 1 / MinRenderDistance);
+    return vec4(vec3(nonLinear), 1);
+}
 void swap(inout float a, inout float b)
 {
     float tmp = a;
@@ -245,8 +250,8 @@ void swap(inout int a, inout int b)
 
 bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, out CollisionManifold manifold)
 {
-    vec3 edge12 = v2.Position - v1.Position;
-    vec3 edge13 = v3.Position - v1.Position;
+    vec3 edge12 = v2.PositionU.xyz - v1.PositionU.xyz;
+    vec3 edge13 = v3.PositionU.xyz - v1.PositionU.xyz;
     vec3 normal = cross(edge12, edge13);
     float det = -dot(ray.Direction, normal);
 
@@ -255,7 +260,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
         return false;
     }
 
-    vec3 ao = ray.Origin - v1.Position;
+    vec3 ao = ray.Origin - v1.PositionU.xyz;
     vec3 dao = cross(ao, ray.Direction);
 
     float invDet = 1.0 / det;
@@ -270,15 +275,19 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
         return false;
     }
 
-    vec2 edgeUV12 = v2.TextureCoordinate - v1.TextureCoordinate;
-    vec2 edgeUV13 = v3.TextureCoordinate - v1.TextureCoordinate;
+    vec2 uv1 = vec2(v1.PositionU.w, v1.NormalV.w);
+    vec2 uv2 = vec2(v2.PositionU.w, v2.NormalV.w);
+    vec2 uv3 = vec2(v3.PositionU.w, v3.NormalV.w);
+    
+    vec2 edgeUV12 = uv2 - uv1;
+    vec2 edgeUV13 = uv3 - uv1;
     float invDetUV = 1.0 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
 
     manifold = CollisionManifold(
         dst,
         ray.Origin + ray.Direction * dst,
-        v1.TextureCoordinate * w + v2.TextureCoordinate * u + v3.TextureCoordinate * v,
-        normalize(v1.Normal * w + v2.Normal * u + v3.Normal * v),
+        uv1 * w + uv2 * u + uv3 * v,
+        normalize(v1.NormalV.xyz * w + v2.NormalV.xyz * u + v3.NormalV.xyz * v),
         normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV),
         normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV),
         materialId,
@@ -297,14 +306,14 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
     return tNear <= tFar && tFar >= 0;
 }
 
-bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionManifold manifold)
+bool MeshIntersection(in Ray ray, in Mesh mesh, in float minDistance, out CollisionManifold manifold)
 {
     vec3 rayOrigin = ray.Origin;
     ray.Origin = Transform(ray.Origin, mesh.TransformInv, true);
     ray.Direction = normalize(Transform(ray.Direction, mesh.TransformInv, false));
     ray.InvDirection = 1 / ray.Direction;
 
-    float localMinRenderDistance = length(Transform(ray.Direction * MinRenderDistance, mesh.TransformInv, false));
+    float localMinRenderDistance = length(Transform(ray.Direction * minDistance, mesh.TransformInv, false));
     float localMaxRenderDistance = length(Transform(ray.Direction * MaxRenderDistance, mesh.TransformInv, false));
     manifold.Depth = localMaxRenderDistance;
 
@@ -321,7 +330,7 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionM
         float near = todo[stackptr].y;
         stackptr--;
 
-        Node node = GetNode(ni);
+        Node node = BVH[ni];
 
         if (near > manifold.Depth) continue;
 
@@ -329,14 +338,14 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionM
         {
             for (int o = 0; o < node.PrimitiveCount; ++o)
             {
-                Triangle triangle = GetTriangle(node.Start + o + mesh.TriangleOffset);
+                Triangle triangle = Triangles[node.Start + o + mesh.TriangleOffset];
 
-                Vertex v1 = GetVertex(triangle.V1);
-                Vertex v2 = GetVertex(triangle.V2);
-                Vertex v3 = GetVertex(triangle.V3);
+                Vertex v1 = Vertices[triangle.V1];
+                Vertex v2 = Vertices[triangle.V2];
+                Vertex v3 = Vertices[triangle.V3];
 
                 CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= localMinRenderDistance))
+                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && current.Depth >= localMinRenderDistance)
                 {
                     manifold = current;
                 }
@@ -344,11 +353,11 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionM
         }
         else
         {
-            Node c0 = GetNode(ni + 1);
-            Node c1 = GetNode(ni + node.RightOffset);
+            Node c0 = BVH[ni + 1];
+            Node c1 = BVH[ni + node.RightOffset];
 
-            bool hitc0 = AABBIntersection(ray, c0.BboxMin, c0.BboxMax, bbhits[0], bbhits[1]);
-            bool hitc1 = AABBIntersection(ray, c1.BboxMin, c1.BboxMax, bbhits[2], bbhits[3]);
+            bool hitc0 = AABBIntersection(ray, c0.BboxMin.xyz, c0.BboxMax.xyz, bbhits[0], bbhits[1]);
+            bool hitc1 = AABBIntersection(ray, c1.BboxMin.xyz, c1.BboxMax.xyz, bbhits[2], bbhits[3]);
 
             if (hitc0 && hitc1)
             {
@@ -389,17 +398,17 @@ bool MeshIntersection(in Ray ray, in Mesh mesh, in bool firstHit, out CollisionM
     return false;
 }
 
-bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+bool FindIntersection(in Ray ray, in float minDistance, out CollisionManifold manifold)
 {
     manifold.Depth = MaxRenderDistance;
 
-    int meshCount = GetMeshCount();
+    int meshCount = Meshes.length();
     for (int meshId = 0; meshId < meshCount; meshId++)
     {
-        Mesh mesh = GetMesh(meshId);
+        Mesh mesh = Meshes[meshId];
 
         CollisionManifold current;
-        if (MeshIntersection(ray, mesh, firstHit, current) && current.Depth < manifold.Depth)
+        if (MeshIntersection(ray, mesh, minDistance, current) && current.Depth < manifold.Depth)
         {
             manifold = current;
         }
@@ -408,9 +417,9 @@ bool FindIntersection(in Ray ray, in bool firstHit, out CollisionManifold manifo
     return manifold.Depth < MaxRenderDistance;
 }
 
-bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
+bool CollisionReact(inout Ray ray, inout vec3 throughput, inout vec3 radiance, inout CollisionManifold manifold)
 {
-    Material material = GetMaterial(manifold.MaterialId);
+    Material material = Materials[manifold.MaterialId];
 
     if (material.AlbedoTextureId >= 0)
     {
@@ -468,8 +477,8 @@ bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
         ray.Origin = manifold.Point;
         ray.Direction = specularDir;
 
-        ray.IncomingLight += material.EmissionColor * ray.Color;
-        ray.Color *= material.FresnelColor;
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.FresnelColor;
         return true;
     }
 
@@ -485,8 +494,8 @@ bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
         ray.Origin += ray.Direction * depth;
         ray.Direction = RandomVector3();
 
-        ray.IncomingLight += material.EmissionColor * ray.Color;
-        ray.Color *= material.AlbedoColor;
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.AlbedoColor;
         return true;
     }
 
@@ -502,8 +511,8 @@ bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
         ray.Origin = manifold.Point;
         ray.Direction = refractedDir;
 
-        ray.IncomingLight += material.EmissionColor * ray.Color;
-        ray.Color *= material.AlbedoColor;
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.AlbedoColor;
         return true;
     }
 
@@ -511,39 +520,45 @@ bool CollisionReact(inout Ray ray, inout CollisionManifold manifold)
     ray.Origin = manifold.Point;
     ray.Direction = Slerp(specularDir, diffuseDir, material.Roughness);
 
-    ray.IncomingLight += material.EmissionColor * ray.Color;
-    ray.Color *= material.AlbedoColor;
+    radiance += material.EmissionColor * throughput;
+    throughput *= material.AlbedoColor;
     return true;
 }
 
-vec4 SendRay(in Ray ray)
+vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
 {
-    bool isBackground = false;
+    albedo = normal = vec3(0);
+    depth = 0;
 
+    vec3 throughput = vec3(1);
+    vec3 radiance = vec3(0);
+
+    bool isFirstHit = true;
     uint bounce = 0;
     while (bounce <= MaxBounceCount)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, bounce == 0, manifold))
+        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : 0, manifold))
         {
-            ray.IncomingLight += GetEnvironment(ray) * ray.Color;
+            radiance += GetEnvironment(ray) * throughput;
             if (bounce == 0)
             {
-                isBackground = true;
-                AlbedoColor = ToneMap(vec4(ray.IncomingLight, 1), Gamma);
-                NormalColor = vec4((1 - ray.Direction) / 2, 1);
+                albedo = radiance;
+                normal = -ray.Direction;
+                depth = MaxRenderDistance;
             }
 
-            break;
+            return vec4(radiance, Environment.Transparent ? 0 : 1);
         }
 
-        if (CollisionReact(ray, manifold))
+        if (CollisionReact(ray, throughput, radiance, manifold))
         {
             ray.InvDirection = 1 / ray.Direction;
             if (bounce == 0)
             {
-                AlbedoColor = ToneMap(vec4(ray.Color, 1), Gamma);
-                NormalColor = vec4((manifold.Normal + 1) / 2, 1);
+                albedo = throughput;
+                normal = manifold.Normal;
+                depth += manifold.Depth;
             }
 
             bounce++;
@@ -551,102 +566,45 @@ vec4 SendRay(in Ray ray)
         else
         {
             ray.Origin = manifold.Point;
+            if (bounce == 0)
+            {
+                depth += manifold.Depth;
+            }
         }
+
+        isFirstHit = false;
     }
 
-    return vec4(ray.IncomingLight, Environment.Transparent && isBackground ? 0 : 1);
-}
-
-vec3 CameraRight = cross(Camera.Forward, Camera.Up);
-
-vec4 PathTrace(in Ray ray)
-{
-    vec3 rayOrigin = ray.Origin;
-    vec3 rayDirection = ray.Direction;
-
-    // Focal
-    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
-    vec2 focal = RandomVector2() * Camera.Aperture;
-    rayOrigin += focal.x * CameraRight + focal.y * Camera.Up;
-    rayDirection = normalize(focalPoint - rayOrigin);
-
-    // Blur
-    vec2 blur = RandomVector2() * Camera.Blur;
-    rayOrigin += blur.x * CameraRight + blur.y * Camera.Up;
-
-    return SendRay(Ray(rayOrigin, rayDirection, 1 / rayDirection, ray.Color, ray.IncomingLight));
+    return vec4(radiance, 1);
 }
 
 void main()
 {
-    vec2 size = textureSize(AccumulatorTexture, 0);
-    vec2 coord = (TexCoords - vec2(.5)) * vec2(1, size.y / size.x) * 2 * tan(Camera.FOV / 2);
-    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0), vec3(1), vec3(0));
+    if (any(lessThan(TexelCoord, UVlow)) || any(lessThanEqual(UVup, TexelCoord)))
+    {
+        return;
+    }
 
-    vec4 pixelColor = PathTrace(ray);
+    if (OnlyToneMapping)
+    {
+        vec4 accumColor = imageLoad(AccumulatorImage, TexelCoord);
+        imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount), Gamma));
+        return;
+    }
 
-    // Accumulate
-    vec4 accumColor = texture(AccumulatorTexture, TexCoords);
-    AccumulatorColor = pixelColor + accumColor;
-}
+    vec2 coord = (UV - vec2(.5)) * vec2(1, float(Size.y) / Size.x) * 2 * tan(Camera.FOV / 2);
+    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0));
+    JitterRay(ray);
 
-)";
+    vec3 albedo, normal;
+    float depth;
+    vec4 accumColor = PathTrace(ray, albedo, normal, depth) + imageLoad(AccumulatorImage, TexelCoord);
 
-const char* Renderer::toneMapperShaderSrc =
-R"(
-#version 430 core
-
-layout(binding=0) uniform sampler2D Accumulator;
-
-uniform uint FrameCount;
-uniform float Gamma;
-
-in vec2 TexCoords;
-layout(location=3) out vec4 ToneMapColor;
-
-vec3 Slerp(in vec3 a, in vec3 b, float t)
-{
-    float angle = acos(dot(a, b));
-    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
-}
-
-vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
-{
-    return (matrix * vec4(v, translate ? 1 : 0)).xyz;
-}
-
-vec4 ToneMap(in vec4 pixel, in float gamma)
-{
-    // Reinhard tone mapping
-    pixel.rgb = pixel.rgb / (pixel.rgb + vec3(1));
-
-    // Gamma correction
-    pixel.rgb = pow(pixel.rgb, vec3(1 / gamma));
-
-    return pixel;
-}
-
-void main()
-{
-    vec4 pixel = texture(Accumulator, TexCoords) / FrameCount;
-    ToneMapColor = ToneMap(pixel, Gamma);
-}
-
-)";
-
-const char* Renderer::vertexShaderSrc =
-R"(
-#version 430 core
-
-layout (location = 0) in vec2 position;
-layout (location = 1) in vec2 texCoords;
-
-out vec2 TexCoords;
-
-void main()
-{
-    gl_Position = vec4(position.x, position.y, 0, 1);
-    TexCoords = texCoords;
+    imageStore(AccumulatorImage, TexelCoord, accumColor);
+    imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1), Gamma));
+    imageStore(NormalImage, TexelCoord, NormalToColor(normal));
+    imageStore(DepthImage, TexelCoord, DepthToColor(depth));
+    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1), Gamma));
 }
 
 )";

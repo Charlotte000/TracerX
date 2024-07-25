@@ -20,8 +20,7 @@ void Renderer::init(glm::uvec2 size)
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-    this->accumulatorShader.init(Renderer::vertexShaderSrc, Renderer::accumulatorShaderSrc);
-    this->toneMapperShader.init(Renderer::vertexShaderSrc, Renderer::toneMapperShaderSrc);
+    this->shader.init(Renderer::shaderSrc);
 
     this->initData();
 
@@ -30,16 +29,21 @@ void Renderer::init(glm::uvec2 size)
 
 void Renderer::resize(glm::uvec2 size)
 {
-    this->frameBuffer.resize(size);
+    this->accumulationTexture.resize(size);
+    this->albedoTexture.resize(size);
+    this->normalTexture.resize(size);
+    this->depthTexture.resize(size);
+    this->toneMapTexture.resize(size);
     this->clear();
 }
 
 void Renderer::shutdown()
 {
-    this->quad.shutdown();
-
-    this->frameBuffer.shutdown();
-
+    this->accumulationTexture.shutdown();
+    this->albedoTexture.shutdown();
+    this->normalTexture.shutdown();
+    this->depthTexture.shutdown();
+    this->toneMapTexture.shutdown();
     this->environment.texture.shutdown();
     this->textureArray.shutdown();
 
@@ -49,62 +53,44 @@ void Renderer::shutdown()
     this->materialBuffer.shutdown();
     this->bvhBuffer.shutdown();
 
-    this->accumulatorShader.shutdown();
-    this->toneMapperShader.shutdown();
+    this->shader.shutdown();
 }
 
-void Renderer::render(unsigned int count)
+void Renderer::render(unsigned int samples)
 {
-    this->renderRect(count, glm::uvec2(0, 0), this->frameBuffer.size);
+    this->renderRect(samples, glm::uvec2(0, 0), this->accumulationTexture.size);
 }
 
-void Renderer::renderRect(unsigned int count, glm::uvec2 position, glm::uvec2 size)
+void Renderer::renderRect(unsigned int samples, glm::uvec2 position, glm::uvec2 size)
 {
-    this->accumulate(count, position, size);
-    this->toneMap(position, size);
-}
+    this->bindData();
 
-void Renderer::accumulate(unsigned int count, glm::uvec2 position, glm::uvec2 size)
-{
-    this->accumulatorShader.use();
-    this->accumulatorShader.updateParam("Gamma", this->gamma);
-    this->accumulatorShader.updateParam("MaxBounceCount", this->maxBounceCount);
-    this->accumulatorShader.updateParam("MinRenderDistance", this->minRenderDistance);
-    this->accumulatorShader.updateParam("MaxRenderDistance", this->maxRenderDistance);
-    this->accumulatorShader.updateParam("Camera.Position", this->camera.position);
-    this->accumulatorShader.updateParam("Camera.Forward", this->camera.forward);
-    this->accumulatorShader.updateParam("Camera.Up", this->camera.up);
-    this->accumulatorShader.updateParam("Camera.FOV", this->camera.fov);
-    this->accumulatorShader.updateParam("Camera.FocalDistance", this->camera.focalDistance);
-    this->accumulatorShader.updateParam("Camera.Aperture", this->camera.aperture);
-    this->accumulatorShader.updateParam("Camera.Blur", this->camera.blur);
-    this->accumulatorShader.updateParam("Environment.Transparent", this->environment.transparent);
-    this->accumulatorShader.updateParam("Environment.Intensity", this->environment.intensity);
-    this->accumulatorShader.updateParam("Environment.Rotation", this->environment.rotation);
+    this->shader.use();
+    this->shader.updateParam("Gamma", this->gamma);
+    this->shader.updateParam("MaxBounceCount", this->maxBounceCount);
+    this->shader.updateParam("MinRenderDistance", this->minRenderDistance);
+    this->shader.updateParam("MaxRenderDistance", this->maxRenderDistance);
+    this->shader.updateParam("UVlow", position);
+    this->shader.updateParam("UVup", position + size);
+    this->shader.updateParam("OnlyToneMapping", false);
+    this->shader.updateParam("Camera.Position", this->camera.position);
+    this->shader.updateParam("Camera.Forward", this->camera.forward);
+    this->shader.updateParam("Camera.Up", this->camera.up);
+    this->shader.updateParam("Camera.FOV", this->camera.fov);
+    this->shader.updateParam("Camera.FocalDistance", this->camera.focalDistance);
+    this->shader.updateParam("Camera.Aperture", this->camera.aperture);
+    this->shader.updateParam("Camera.Blur", this->camera.blur);
+    this->shader.updateParam("Environment.Transparent", this->environment.transparent);
+    this->shader.updateParam("Environment.Intensity", this->environment.intensity);
+    this->shader.updateParam("Environment.Rotation", this->environment.rotation);
 
-    this->frameBuffer.useRect(position, size);
-    for (unsigned int i = 0; i < count; i++)
+    for (unsigned int i = 0; i < samples; i++)
     {
-        this->accumulatorShader.updateParam("FrameCount", this->frameCount);
-        this->quad.draw();
-        this->frameCount++;
-        glFinish();
+        this->shader.updateParam("SampleCount", this->sampleCount);
+        Shader::dispatchCompute(Shader::getGroups(size));
+        this->sampleCount++;
     }
 
-    FrameBuffer::stopUse();
-    Shader::stopUse();
-}
-
-void Renderer::toneMap(glm::uvec2 position, glm::uvec2 size)
-{
-    this->toneMapperShader.use();
-    this->toneMapperShader.updateParam("FrameCount", this->frameCount);
-    this->toneMapperShader.updateParam("Gamma", this->gamma);
-
-    this->frameBuffer.useRect(position, size);
-    this->quad.draw();
-
-    FrameBuffer::stopUse();
     Shader::stopUse();
 }
 
@@ -115,20 +101,20 @@ void Renderer::denoise()
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    glm::uvec2 size = this->frameBuffer.size;
+    glm::uvec2 size = this->accumulationTexture.size;
 
     // Create color buffer
-    Image colorImage = this->frameBuffer.accumulation.upload();
+    Image colorImage = this->accumulationTexture.upload();
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create albedo buffer
-    Image albedoImage = this->frameBuffer.albedo.upload();
+    Image albedoImage = this->albedoTexture.upload();
     oidn::BufferRef albedoBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(float), albedoImage.pixels.data());
 
     // Create normal buffer
-    Image normalImage = this->frameBuffer.normal.upload();
+    Image normalImage = this->normalTexture.upload();
     oidn::BufferRef normalBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(float), normalImage.pixels.data());
 
@@ -154,14 +140,31 @@ void Renderer::denoise()
         // Update accumulator
         float* data = (float*)colorBuf.getData();
         std::vector<float> pixels(data, data + colorImage.pixels.size());
-        this->frameBuffer.accumulation.update(Image::loadFromMemory(size, pixels));
+        this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
 
         // Update output
-        this->toneMapperShader.use();
-        this->frameBuffer.use();
-        this->quad.draw();
+        this->bindData();
+        this->shader.use();
+        this->shader.updateParam("Gamma", this->gamma);
+        this->shader.updateParam("MaxBounceCount", this->maxBounceCount);
+        this->shader.updateParam("MinRenderDistance", this->minRenderDistance);
+        this->shader.updateParam("MaxRenderDistance", this->maxRenderDistance);
+        this->shader.updateParam("UVlow", glm::uvec2(0, 0));
+        this->shader.updateParam("UVup", size);
+        this->shader.updateParam("SampleCount", this->sampleCount);
+        this->shader.updateParam("OnlyToneMapping", true);
+        this->shader.updateParam("Camera.Position", this->camera.position);
+        this->shader.updateParam("Camera.Forward", this->camera.forward);
+        this->shader.updateParam("Camera.Up", this->camera.up);
+        this->shader.updateParam("Camera.FOV", this->camera.fov);
+        this->shader.updateParam("Camera.FocalDistance", this->camera.focalDistance);
+        this->shader.updateParam("Camera.Aperture", this->camera.aperture);
+        this->shader.updateParam("Camera.Blur", this->camera.blur);
+        this->shader.updateParam("Environment.Transparent", this->environment.transparent);
+        this->shader.updateParam("Environment.Intensity", this->environment.intensity);
+        this->shader.updateParam("Environment.Rotation", this->environment.rotation);
+        Shader::dispatchCompute(Shader::getGroups(size));
         Shader::stopUse();
-        FrameBuffer::stopUse();
     }
 
     // Release buffers
@@ -173,33 +176,48 @@ void Renderer::denoise()
 
 void Renderer::clear()
 {
-    this->frameBuffer.clear();
-    this->frameCount = 0;
+    this->accumulationTexture.clear();
+    this->sampleCount = 0;
 }
 
 GLuint Renderer::getTextureHandler() const
 {
-    return this->frameBuffer.toneMap.getHandler();
+    return this->toneMapTexture.getHandler();
 }
 
-GLuint Renderer::getTextureAlbedoHandler() const
+GLuint Renderer::getAlbedoTextureHandler() const
 {
-    return this->frameBuffer.albedo.getHandler();
+    return this->albedoTexture.getHandler();
+}
+
+GLuint Renderer::getNormalTextureHandler() const
+{
+    return this->normalTexture.getHandler();
+}
+
+GLuint Renderer::getDepthTextureHandler() const
+{
+    return this->depthTexture.getHandler();
+}
+
+GLuint Renderer::getAccumulatorTextureHandler() const
+{
+    return this->accumulationTexture.getHandler();
 }
 
 Image Renderer::getImage() const
 {
-    return this->frameBuffer.toneMap.upload();
+    return this->toneMapTexture.upload();
 }
 
 glm::uvec2 Renderer::getSize() const
 {
-    return this->frameBuffer.size;
+    return this->accumulationTexture.size;
 }
 
-unsigned int Renderer::getFrameCount() const
+unsigned int Renderer::getSampleCount() const
 {
-    return this->frameCount;
+    return this->sampleCount;
 }
 
 void Renderer::loadScene(const Scene& scene, glm::uvec2 texturesSize)
@@ -225,28 +243,40 @@ void Renderer::updateSceneMeshes(const Scene& scene)
 
 void Renderer::initData()
 {
-    this->quad.init();
-
     // Textures
-    this->environment.texture.init();
-    this->textureArray.init();
-
-    this->frameBuffer.init();
+    this->accumulationTexture.init(GL_RGBA32F);
+    this->albedoTexture.init(GL_RGBA32F);
+    this->normalTexture.init(GL_RGBA32F);
+    this->depthTexture.init(GL_R32F);
+    this->toneMapTexture.init(GL_RGBA32F);
+    this->environment.texture.init(GL_RGBA32F);
+    this->textureArray.init(GL_RGBA32F);
 
     // Buffers
-    this->vertexBuffer.init(GL_RGBA32F);
-    this->triangleBuffer.init(GL_RGB32I);
-    this->meshBuffer.init(GL_RGBA32F);
-    this->materialBuffer.init(GL_RGBA32F);
-    this->bvhBuffer.init(GL_RGB32F);
+    this->vertexBuffer.init();
+    this->triangleBuffer.init();
+    this->meshBuffer.init();
+    this->materialBuffer.init();
+    this->bvhBuffer.init();
+}
 
-    // Bind textures
-    this->frameBuffer.accumulation.bind(0);
-    this->environment.texture.bind(1);
-    this->textureArray.bind(2);
-    this->vertexBuffer.bind(3);
-    this->triangleBuffer.bind(4);
-    this->meshBuffer.bind(5);
-    this->materialBuffer.bind(6);
-    this->bvhBuffer.bind(7);
+void Renderer::bindData()
+{
+    // Images
+    this->accumulationTexture.bindImage(0, GL_READ_WRITE);
+    this->albedoTexture.bindImage(1, GL_WRITE_ONLY);
+    this->normalTexture.bindImage(2, GL_WRITE_ONLY);
+    this->depthTexture.bindImage(3, GL_WRITE_ONLY);
+    this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
+
+    // Textures
+    this->environment.texture.bind(0);
+    this->textureArray.bind(1);
+
+    // Buffers
+    this->vertexBuffer.bind(0);
+    this->triangleBuffer.bind(1);
+    this->meshBuffer.bind(2);
+    this->materialBuffer.bind(3);
+    this->bvhBuffer.bind(4);
 }
