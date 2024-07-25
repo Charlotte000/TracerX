@@ -32,16 +32,27 @@ layout(std430, binding=4) readonly buffer BvhSSBO
     Node BVH[];
 };
 
-uniform uint MaxBounceCount;
-uniform float MinRenderDistance;
-uniform float MaxRenderDistance;
-uniform uint SampleCount;
-uniform Cam Camera;
-uniform Env Environment;
-uniform float Gamma;
-uniform ivec2 UVlow;
-uniform ivec2 UVup;
-uniform bool OnlyToneMapping;
+layout(std140, binding=0) uniform CameraUBO
+{
+    Cam Camera;
+};
+
+layout(std140, binding=1) uniform EnvironmentUBO
+{
+    Env Environment;
+};
+
+layout(std140, binding=2) uniform ParamsUBO
+{
+    ivec2 UVlow;
+    ivec2 UVup;
+    uint SampleCount;
+    uint MaxBounceCount;
+    float MinRenderDistance;
+    float MaxRenderDistance;
+    float Gamma;
+    bool OnlyToneMapping;
+};
 
 ivec2 Size = imageSize(AccumulatorImage);
 ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy);

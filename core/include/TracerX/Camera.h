@@ -14,20 +14,11 @@ namespace TracerX
  */
 struct Camera
 {
+public:
     /**
      * @brief The position of the camera.
      */
     glm::vec3 position = glm::vec3(0, 0, 10);
-
-    /**
-     * @brief The up direction of the camera.
-     */
-    glm::vec3 up = glm::vec3(0, 1, 0);
-
-    /**
-     * @brief The forward direction of the camera.
-     */
-    glm::vec3 forward = glm::vec3(0, 0, -1);
 
     /**
      * @brief The field of view of the camera.
@@ -35,9 +26,19 @@ struct Camera
     float fov = glm::half_pi<float>();
 
     /**
+     * @brief The forward direction of the camera.
+     */
+    glm::vec3 forward = glm::vec3(0, 0, -1);
+
+    /**
      * @brief The focal distance of the camera.
      */
     float focalDistance = 1;
+
+    /**
+     * @brief The up direction of the camera.
+     */
+    glm::vec3 up = glm::vec3(0, 1, 0);
 
     /**
      * @brief The aperture of the camera.
@@ -74,6 +75,10 @@ struct Camera
      * @return The projection matrix.
      */
     glm::mat4 createProjection(float width, float height, float zNear, float zFar) const;
+private:
+    int padding1;
+    int padding2;
+    int padding3;
 };
 
 }

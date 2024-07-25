@@ -53,6 +53,10 @@ void Renderer::shutdown()
     this->materialBuffer.shutdown();
     this->bvhBuffer.shutdown();
 
+    this->cameraBuffer.shutdown();
+    this->environmentBuffer.shutdown();
+    this->paramBuffer.shutdown();
+
     this->shader.shutdown();
 }
 
@@ -64,29 +68,12 @@ void Renderer::render(unsigned int samples)
 void Renderer::renderRect(unsigned int samples, glm::uvec2 position, glm::uvec2 size)
 {
     this->bindData();
+    this->updateUniform(position, position + size, false);
 
     this->shader.use();
-    this->shader.updateParam("Gamma", this->gamma);
-    this->shader.updateParam("MaxBounceCount", this->maxBounceCount);
-    this->shader.updateParam("MinRenderDistance", this->minRenderDistance);
-    this->shader.updateParam("MaxRenderDistance", this->maxRenderDistance);
-    this->shader.updateParam("UVlow", position);
-    this->shader.updateParam("UVup", position + size);
-    this->shader.updateParam("OnlyToneMapping", false);
-    this->shader.updateParam("Camera.Position", this->camera.position);
-    this->shader.updateParam("Camera.Forward", this->camera.forward);
-    this->shader.updateParam("Camera.Up", this->camera.up);
-    this->shader.updateParam("Camera.FOV", this->camera.fov);
-    this->shader.updateParam("Camera.FocalDistance", this->camera.focalDistance);
-    this->shader.updateParam("Camera.Aperture", this->camera.aperture);
-    this->shader.updateParam("Camera.Blur", this->camera.blur);
-    this->shader.updateParam("Environment.Transparent", this->environment.transparent);
-    this->shader.updateParam("Environment.Intensity", this->environment.intensity);
-    this->shader.updateParam("Environment.Rotation", this->environment.rotation);
-
     for (unsigned int i = 0; i < samples; i++)
     {
-        this->shader.updateParam("SampleCount", this->sampleCount);
+        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), sizeof(int) * 4);
         Shader::dispatchCompute(Shader::getGroups(size));
         this->sampleCount++;
     }
@@ -144,25 +131,9 @@ void Renderer::denoise()
 
         // Update output
         this->bindData();
+        this->updateUniform(glm::ivec2(0, 0), size, true);
+
         this->shader.use();
-        this->shader.updateParam("Gamma", this->gamma);
-        this->shader.updateParam("MaxBounceCount", this->maxBounceCount);
-        this->shader.updateParam("MinRenderDistance", this->minRenderDistance);
-        this->shader.updateParam("MaxRenderDistance", this->maxRenderDistance);
-        this->shader.updateParam("UVlow", glm::uvec2(0, 0));
-        this->shader.updateParam("UVup", size);
-        this->shader.updateParam("SampleCount", this->sampleCount);
-        this->shader.updateParam("OnlyToneMapping", true);
-        this->shader.updateParam("Camera.Position", this->camera.position);
-        this->shader.updateParam("Camera.Forward", this->camera.forward);
-        this->shader.updateParam("Camera.Up", this->camera.up);
-        this->shader.updateParam("Camera.FOV", this->camera.fov);
-        this->shader.updateParam("Camera.FocalDistance", this->camera.focalDistance);
-        this->shader.updateParam("Camera.Aperture", this->camera.aperture);
-        this->shader.updateParam("Camera.Blur", this->camera.blur);
-        this->shader.updateParam("Environment.Transparent", this->environment.transparent);
-        this->shader.updateParam("Environment.Intensity", this->environment.intensity);
-        this->shader.updateParam("Environment.Rotation", this->environment.rotation);
         Shader::dispatchCompute(Shader::getGroups(size));
         Shader::stopUse();
     }
@@ -252,12 +223,17 @@ void Renderer::initData()
     this->environment.texture.init(GL_RGBA32F);
     this->textureArray.init(GL_RGBA32F);
 
-    // Buffers
+    // Storage buffers
     this->vertexBuffer.init();
     this->triangleBuffer.init();
     this->meshBuffer.init();
     this->materialBuffer.init();
     this->bvhBuffer.init();
+
+    // Uniform buffers
+    this->cameraBuffer.init();
+    this->environmentBuffer.init();
+    this->paramBuffer.init();
 }
 
 void Renderer::bindData()
@@ -273,10 +249,47 @@ void Renderer::bindData()
     this->environment.texture.bind(0);
     this->textureArray.bind(1);
 
-    // Buffers
+    // Storage buffers
     this->vertexBuffer.bind(0);
     this->triangleBuffer.bind(1);
     this->meshBuffer.bind(2);
     this->materialBuffer.bind(3);
     this->bvhBuffer.bind(4);
+
+    // Uniform buffers
+    this->cameraBuffer.bind(0);
+    this->environmentBuffer.bind(1);
+    this->paramBuffer.bind(2);
+}
+
+void Renderer::updateUniform(glm::ivec2 uvLow, glm::ivec2 uvUp, bool onlyToneMapping)
+{
+    this->cameraBuffer.update(&this->camera, sizeof(this->camera));
+
+    struct
+    {
+        glm::vec4 rotation1;
+        glm::vec4 rotation2;
+        glm::vec4 rotation3;
+        bool transparent;
+        float intensity;
+        int padding1;
+        int padding2;
+    } environment = { glm::vec4(this->environment.rotation[0], 0), glm::vec4(this->environment.rotation[1], 0), glm::vec4(this->environment.rotation[2], 0), this->environment.transparent, this->environment.intensity, 0, 0 };
+    this->environmentBuffer.update(&environment, sizeof(environment));
+
+    struct
+    {
+        glm::ivec2 uvLow;
+        glm::ivec2 uvUp;
+        unsigned int sampleCount;
+        unsigned int maxBounceCount;
+        float minRenderDistance;
+        float maxRenderDistance;
+        float gamma;
+        bool onlyToneMapping;
+        int padding1;
+        int padding2;
+    } params { uvLow, uvUp, this->sampleCount, this->maxBounceCount, this->minRenderDistance, this->maxRenderDistance, this->gamma, onlyToneMapping, 0, 0 };
+    this->paramBuffer.update(&params, sizeof(params));
 }

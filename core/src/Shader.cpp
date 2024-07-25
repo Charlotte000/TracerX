@@ -30,36 +30,6 @@ void Shader::use()
     glUseProgram(this->handler);
 }
 
-void Shader::updateParam(const std::string& name, unsigned int value)
-{
-    glUniform1ui(this->getLocation(name), value);
-}
-
-void Shader::updateParam(const std::string& name, float value)
-{
-    glUniform1f(this->getLocation(name), value);
-}
-
-void Shader::updateParam(const std::string& name, glm::ivec2 value)
-{
-    glUniform2i(this->getLocation(name), value.x, value.y);
-}
-
-void Shader::updateParam(const std::string& name, glm::vec3 value)
-{
-    glUniform3f(this->getLocation(name), value.x, value.y, value.z);
-}
-
-void Shader::updateParam(const std::string& name, glm::mat3 value)
-{
-    glUniformMatrix3fv(this->getLocation(name), 1, GL_FALSE, glm::value_ptr(value));
-}
-
-void Shader::updateParam(const std::string& name, bool value)
-{
-    glUniform1i(this->getLocation(name), value);
-}
-
 glm::uvec3 Shader::getGroups(glm::uvec2 size)
 {
     return glm::uvec3(glm::ceil(glm::vec3(size, 1) / glm::vec3(Shader::groupSize)));

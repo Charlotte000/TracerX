@@ -18,31 +18,28 @@ void Texture::init(GLint internalFormat)
 
 void Texture::bind(int binding)
 {
-    glActiveTexture(GL_TEXTURE0 + binding);
-    glBindTexture(GL_TEXTURE_2D, this->handler);
+    glBindTextureUnit(binding, this->handler);
 }
 
 void Texture::bindImage(int binding, GLenum access)
 {
-    glActiveTexture(GL_TEXTURE0 + binding);
-    glBindTexture(GL_TEXTURE_2D, this->handler);
     glBindImageTexture(binding, this->handler, 0, GL_FALSE, 0, access, this->internalFormat);
 }
 
 void Texture::update(const Image& image)
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
-
-    if (image.size != this->size)
     {
-        this->size = image.size;
-        glTexImage2D(GL_TEXTURE_2D, 0, this->internalFormat, this->size.x, this->size.y, 0, GL_RGBA, GL_FLOAT, image.pixels.data());
+        if (image.size != this->size)
+        {
+            this->size = image.size;
+            glTexImage2D(GL_TEXTURE_2D, 0, this->internalFormat, this->size.x, this->size.y, 0, GL_RGBA, GL_FLOAT, image.pixels.data());
+        }
+        else
+        {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->size.x, this->size.y, GL_RGBA, GL_FLOAT, image.pixels.data());
+        }
     }
-    else
-    {
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->size.x, this->size.y, GL_RGBA, GL_FLOAT, image.pixels.data());
-    }
-
     glBindTexture(GL_TEXTURE_2D, 0);
 
 }
@@ -51,7 +48,9 @@ Image Texture::upload() const
 {
     std::vector<float> pixels(this->size.x * this->size.y * 4);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, pixels.data());
+    {
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, pixels.data());
+    }
     glBindTexture(GL_TEXTURE_2D, 0);
     return Image::loadFromMemory(this->size, pixels);
 }

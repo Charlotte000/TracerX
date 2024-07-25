@@ -18,7 +18,7 @@ def link_shader(shader: str) -> str:
 
 
 def write_shaders(path: str, shader: str) -> None:
-    with open(path, "w") as file:  
+    with open(path, "w") as file:
         file.write("#include <TracerX/Renderer.h>\n\n")
         file.write("using namespace TracerX;\n\n")
 

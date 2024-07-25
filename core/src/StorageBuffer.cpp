@@ -22,18 +22,18 @@ template <class T>
 void StorageBuffer::update(const std::vector<T>& data)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, this->handler);
-
-    size_t size = sizeof(T) * data.size();
-    if (this->size != size)
     {
-        this->size = size;
-        glBufferData(GL_SHADER_STORAGE_BUFFER, this->size, data.data(), GL_STATIC_COPY);
+        size_t size = sizeof(T) * data.size();
+        if (this->size != size)
+        {
+            this->size = size;
+            glBufferData(GL_SHADER_STORAGE_BUFFER, this->size, data.data(), GL_STATIC_COPY);
+        }
+        else
+        {
+            glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, this->size, data.data());
+        }
     }
-    else
-    {
-        glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, this->size, data.data());
-    }
-
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 

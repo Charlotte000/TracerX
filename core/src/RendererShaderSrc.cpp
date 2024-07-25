@@ -21,18 +21,18 @@ struct Ray
 
 struct Env
 {
+    mat3 Rotation;
     bool Transparent;
     float Intensity;
-    mat3 Rotation;
 };
 
 struct Cam
 {
     vec3 Position;
-    vec3 Forward;
-    vec3 Up;
     float FOV;
+    vec3 Forward;
     float FocalDistance;
+    vec3 Up;
     float Aperture;
     float Blur;
 };
@@ -134,16 +134,27 @@ layout(std430, binding=4) readonly buffer BvhSSBO
     Node BVH[];
 };
 
-uniform uint MaxBounceCount;
-uniform float MinRenderDistance;
-uniform float MaxRenderDistance;
-uniform uint SampleCount;
-uniform Cam Camera;
-uniform Env Environment;
-uniform float Gamma;
-uniform ivec2 UVlow;
-uniform ivec2 UVup;
-uniform bool OnlyToneMapping;
+layout(std140, binding=0) uniform CameraUBO
+{
+    Cam Camera;
+};
+
+layout(std140, binding=1) uniform EnvironmentUBO
+{
+    Env Environment;
+};
+
+layout(std140, binding=2) uniform ParamsUBO
+{
+    ivec2 UVlow;
+    ivec2 UVup;
+    uint SampleCount;
+    uint MaxBounceCount;
+    float MinRenderDistance;
+    float MaxRenderDistance;
+    float Gamma;
+    bool OnlyToneMapping;
+};
 
 ivec2 Size = imageSize(AccumulatorImage);
 ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy);
@@ -533,12 +544,12 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
     vec3 throughput = vec3(1);
     vec3 radiance = vec3(0);
 
-    bool isFirstHit = true;
+    bool isFirstSolidHit = true;
     uint bounce = 0;
     while (bounce <= MaxBounceCount)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : 0, manifold))
+        if (!FindIntersection(ray, isFirstSolidHit ? MinRenderDistance : 0, manifold))
         {
             radiance += GetEnvironment(ray) * throughput;
             if (bounce == 0)
@@ -548,7 +559,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
                 depth = MaxRenderDistance;
             }
 
-            return vec4(radiance, Environment.Transparent ? 0 : 1);
+            return vec4(radiance, bounce == 0 && Environment.Transparent ? 0 : 1);
         }
 
         if (CollisionReact(ray, throughput, radiance, manifold))
@@ -572,7 +583,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
             }
         }
 
-        isFirstHit = false;
+        isFirstSolidHit = false;
     }
 
     return vec4(radiance, 1);

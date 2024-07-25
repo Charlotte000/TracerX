@@ -9,6 +9,7 @@
 #include "Environment.h"
 #include "TextureArray.h"
 #include "StorageBuffer.h"
+#include "UniformBuffer.h"
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -231,11 +232,15 @@ private:
     core::StorageBuffer meshBuffer;
     core::StorageBuffer materialBuffer;
     core::StorageBuffer bvhBuffer;
+    core::UniformBuffer cameraBuffer;
+    core::UniformBuffer environmentBuffer;
+    core::UniformBuffer paramBuffer;
 
     static const char* shaderSrc;
 
     void initData();
     void bindData();
+    void updateUniform(glm::ivec2 uvLow, glm::ivec2 uvUp, bool onlyToneMapping);
 };
 
 }

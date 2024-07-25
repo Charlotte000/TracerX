@@ -17,8 +17,7 @@ void TextureArray::init(GLint internalFormat)
 
 void TextureArray::bind(int binding)
 {
-    glActiveTexture(GL_TEXTURE0 + binding);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
+    glBindTextureUnit(binding, this->handler);
 }
 
 void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
@@ -33,18 +32,18 @@ void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
     }
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
-
-    glm::uvec3 size3(size, images.size());
-    if (this->size != size3)
     {
-        this->size = size3;
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, this->internalFormat, this->size.x, this->size.y, this->size.z, 0, GL_RGBA, GL_FLOAT, data.data());
+        glm::uvec3 size3(size, images.size());
+        if (this->size != size3)
+        {
+            this->size = size3;
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, this->internalFormat, this->size.x, this->size.y, this->size.z, 0, GL_RGBA, GL_FLOAT, data.data());
+        }
+        else
+        {
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, this->size.x, this->size.y, this->size.z, GL_RGBA, GL_FLOAT, data.data());
+        }
     }
-    else
-    {
-        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, this->size.x, this->size.y, this->size.z, GL_RGBA, GL_FLOAT, data.data());
-    }
-
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 

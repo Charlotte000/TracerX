@@ -7,18 +7,18 @@ struct Ray
 
 struct Env
 {
+    mat3 Rotation;
     bool Transparent;
     float Intensity;
-    mat3 Rotation;
 };
 
 struct Cam
 {
     vec3 Position;
-    vec3 Forward;
-    vec3 Up;
     float FOV;
+    vec3 Forward;
     float FocalDistance;
+    vec3 Up;
     float Aperture;
     float Blur;
 };

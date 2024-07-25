@@ -17,12 +17,6 @@ public:
     void init(const std::string& shaderSrc);
     void shutdown();
     void use();
-    void updateParam(const std::string& name, unsigned int value);
-    void updateParam(const std::string& name, float value);
-    void updateParam(const std::string& name, glm::ivec2 value);
-    void updateParam(const std::string& name, glm::vec3 value);
-    void updateParam(const std::string& name, glm::mat3 value);
-    void updateParam(const std::string& name, bool value);
 
     static glm::uvec3 getGroups(glm::uvec2 size);
     static void dispatchCompute(glm::uvec3 groups);
