@@ -44,8 +44,8 @@ layout(std140, binding=1) uniform EnvironmentUBO
 
 layout(std140, binding=2) uniform ParamsUBO
 {
-    ivec2 UVlow;
-    ivec2 UVup;
+    ivec2 FramePosition;
+    ivec2 FrameSize;
     uint SampleCount;
     uint MaxBounceCount;
     float MinRenderDistance;

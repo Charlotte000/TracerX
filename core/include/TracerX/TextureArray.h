@@ -19,11 +19,14 @@ public:
 
     void init(GLint internalFormat);
     void bind(int binding);
-    void update(glm::uvec2 size, const std::vector<Image>& images);
+    void update(const std::vector<Image>& images);
     void shutdown();
 private:
     GLuint handler;
     GLint internalFormat;
+
+    static glm::uvec2 getMaxSize(const std::vector<Image>& images);
+    static std::vector<float> resizeImages(const std::vector<Image>& images, glm::uvec2 size);
 };
 
 }

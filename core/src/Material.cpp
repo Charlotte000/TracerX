@@ -26,9 +26,9 @@ Material Material::transparent(glm::vec3 albedoColor, float ior, glm::vec3 fresn
 Material Material::constantDensity(glm::vec3 albedoColor, float density)
 {
     Material m;
-    m.roughness = 1.f;
+    m.roughness = 1;
     m.albedoColor = albedoColor;
-    m.ior = 1.f;
+    m.ior = 1;
     m.density = density;
     return m;
 }
@@ -37,7 +37,7 @@ Material Material::matte(glm::vec3 albedoColor, float metalness)
 {
     Material m;
     m.albedoColor = albedoColor;
-    m.roughness = 1.f;
+    m.roughness = 1;
     m.metalness = metalness;
     return m;
 }
@@ -45,7 +45,7 @@ Material Material::matte(glm::vec3 albedoColor, float metalness)
 Material Material::mirror()
 {
     Material m;
-    m.roughness = 0.f;
-    m.metalness = 1.f;
+    m.roughness = 0;
+    m.metalness = 1;
     return m;
 }

@@ -51,11 +51,7 @@ void Application::init(glm::uvec2 size)
     // Init components
     this->renderer.init(size);
     this->ui.init(this);
-
-    if (this->renderer.environment.name == "None")
-    {
-        this->loadAnyEnvironment();
-    }
+    this->loadAnyEnvironment();
 
     this->renderer.loadScene(this->scene);
 }
@@ -149,7 +145,7 @@ void Application::control()
     }
 
     float elapsedMove = this->cameraSpeed * elapsedTime;
-    float elapsedRotate = this->cameraRotationSpeed * 3.f * elapsedTime;
+    float elapsedRotate = this->cameraRotationSpeed * 3 * elapsedTime;
 
     Camera& camera = this->renderer.camera;
     glm::vec3 right = glm::cross(camera.forward, camera.up);

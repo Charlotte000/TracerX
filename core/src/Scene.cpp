@@ -6,6 +6,7 @@
 #include "TracerX/Scene.h"
 
 #include <stdexcept>
+#include <filesystem>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -28,13 +29,12 @@ int Scene::loadMaterial(const Material& material, const std::string& name)
 Scene Scene::loadGLTF(const std::string& fileName)
 {
     Scene scene;
-    scene.name = fileName.substr(fileName.find_last_of("/\\") + 1);
 
     tinygltf::TinyGLTF loader;
     tinygltf::Model model;
-    std::string err;
 
-    if (fileName.substr(fileName.find_last_of('.') + 1) == "glb")
+    std::string err;
+    if (std::filesystem::path(fileName).extension() == ".glb")
     {
         if (!loader.LoadBinaryFromFile(&model, &err, nullptr, fileName))
         {
@@ -131,12 +131,6 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
 
         this->materials.push_back(material);
         this->materialNames.push_back(gltfMaterial.name);
-    }
-
-    if (this->materials.empty())
-    {
-        this->materials.push_back(Material::matte(glm::vec3(1)));
-        this->materialNames.push_back("Default");
     }
 }
 

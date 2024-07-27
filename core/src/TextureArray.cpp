@@ -20,16 +20,10 @@ void TextureArray::bind(int binding)
     glBindTextureUnit(binding, this->handler);
 }
 
-void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
+void TextureArray::update(const std::vector<Image>& images)
 {
-    size_t count = size.x * size.y * 4;
-    std::vector<float> data(count * images.size());
-    for (size_t i = 0; i < images.size(); i++)
-    {
-        const Image& img = images[i];
-        const Image& resizedImg = img.resize(size);
-        data.insert(data.begin() + count * i, resizedImg.pixels.begin(), resizedImg.pixels.end());
-    }
+    glm::uvec2 size = TextureArray::getMaxSize(images);
+    std::vector<float> data = TextureArray::resizeImages(images, size);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
     {
@@ -50,4 +44,28 @@ void TextureArray::update(glm::uvec2 size, const std::vector<Image>& images)
 void TextureArray::shutdown()
 {
     glDeleteTextures(1, &this->handler);
+}
+
+glm::uvec2 TextureArray::getMaxSize(const std::vector<Image>& images)
+{
+    glm::uvec2 size(0, 0);
+    for (const Image& image : images)
+    {
+        size = glm::max(size, image.size);
+    }
+
+    return size;
+}
+
+std::vector<float> TextureArray::resizeImages(const std::vector<Image>& images, glm::uvec2 size)
+{
+    size_t count = size.x * size.y * 4;
+    std::vector<float> data(count * images.size());
+    for (size_t i = 0; i < images.size(); i++)
+    {
+        const Image resizedImg = images[i].resize(size);
+        data.insert(data.begin() + count * i, resizedImg.pixels.begin(), resizedImg.pixels.end());
+    }
+
+    return data;   
 }

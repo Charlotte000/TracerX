@@ -65,16 +65,16 @@ void Renderer::render(unsigned int samples)
     this->renderRect(samples, glm::uvec2(0, 0), this->accumulationTexture.size);
 }
 
-void Renderer::renderRect(unsigned int samples, glm::uvec2 position, glm::uvec2 size)
+void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize)
 {
     this->bindData();
-    this->updateUniform(position, position + size, false);
+    this->updateUniform(rectPosition, rectSize, false);
 
     this->shader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
         this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), sizeof(int) * 4);
-        Shader::dispatchCompute(Shader::getGroups(size));
+        Shader::dispatchCompute(Shader::getGroups(rectSize));
         this->sampleCount++;
     }
 
@@ -148,6 +148,10 @@ void Renderer::denoise()
 void Renderer::clear()
 {
     this->accumulationTexture.clear();
+    this->albedoTexture.clear();
+    this->normalTexture.clear();
+    this->depthTexture.clear();
+    this->toneMapTexture.clear();
     this->sampleCount = 0;
 }
 
@@ -191,12 +195,12 @@ unsigned int Renderer::getSampleCount() const
     return this->sampleCount;
 }
 
-void Renderer::loadScene(const Scene& scene, glm::uvec2 texturesSize)
+void Renderer::loadScene(const Scene& scene)
 {
-    this->textureArray.update(texturesSize, scene.textures);
-    this->bvhBuffer.update(scene.bvh);
-    this->vertexBuffer.update(scene.vertices);
-    this->triangleBuffer.update(scene.triangles);
+    this->textureArray.update(scene.textures);
+    this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(Node));
+    this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
+    this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(Triangle));
 
     this->updateSceneMeshes(scene);
     this->updateSceneMaterials(scene);
@@ -204,12 +208,12 @@ void Renderer::loadScene(const Scene& scene, glm::uvec2 texturesSize)
 
 void Renderer::updateSceneMaterials(const Scene& scene)
 {
-    this->materialBuffer.update(scene.materials);
+    this->materialBuffer.update(scene.materials.data(), scene.materials.size() * sizeof(Material));
 }
 
 void Renderer::updateSceneMeshes(const Scene& scene)
 {
-    this->meshBuffer.update(scene.meshes);
+    this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
 }
 
 void Renderer::initData()
@@ -262,7 +266,7 @@ void Renderer::bindData()
     this->paramBuffer.bind(2);
 }
 
-void Renderer::updateUniform(glm::ivec2 uvLow, glm::ivec2 uvUp, bool onlyToneMapping)
+void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
 {
     this->cameraBuffer.update(&this->camera, sizeof(this->camera));
 
@@ -271,25 +275,23 @@ void Renderer::updateUniform(glm::ivec2 uvLow, glm::ivec2 uvUp, bool onlyToneMap
         glm::vec4 rotation1;
         glm::vec4 rotation2;
         glm::vec4 rotation3;
-        bool transparent;
+        int transparent;
         float intensity;
         int padding1;
         int padding2;
-    } environment = { glm::vec4(this->environment.rotation[0], 0), glm::vec4(this->environment.rotation[1], 0), glm::vec4(this->environment.rotation[2], 0), this->environment.transparent, this->environment.intensity, 0, 0 };
+    } environment { glm::vec4(this->environment.rotation[0], 0), glm::vec4(this->environment.rotation[1], 0), glm::vec4(this->environment.rotation[2], 0), this->environment.transparent, this->environment.intensity, 0, 0 };
     this->environmentBuffer.update(&environment, sizeof(environment));
 
     struct
     {
-        glm::ivec2 uvLow;
-        glm::ivec2 uvUp;
+        glm::ivec2 rectPosition;
+        glm::ivec2 rectSize;
         unsigned int sampleCount;
         unsigned int maxBounceCount;
         float minRenderDistance;
         float maxRenderDistance;
         float gamma;
-        bool onlyToneMapping;
-        int padding1;
-        int padding2;
-    } params { uvLow, uvUp, this->sampleCount, this->maxBounceCount, this->minRenderDistance, this->maxRenderDistance, this->gamma, onlyToneMapping, 0, 0 };
+        int onlyToneMapping;
+    } params { rectPosition, rectSize, this->sampleCount, this->maxBounceCount, this->minRenderDistance, this->maxRenderDistance, this->gamma, onlyToneMapping };
     this->paramBuffer.update(&params, sizeof(params));
 }

@@ -21,8 +21,8 @@ public:
     TracerX::Renderer renderer;
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
-    float cameraSpeed = 5.f;
-    float cameraRotationSpeed = 1.f;
+    float cameraSpeed = 5;
+    float cameraRotationSpeed = 1;
     unsigned int samplesPerFrame = 1;
     bool enableRendering = false;
     bool enablePreview = true;

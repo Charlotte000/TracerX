@@ -3,8 +3,8 @@
  */
 #include "TracerX/Shader.h"
 
-#include <fstream>
-#include <glm/gtc/type_ptr.hpp>
+#include <string>
+#include <stdexcept>
 
 using namespace TracerX::core;
 
@@ -44,19 +44,6 @@ void Shader::dispatchCompute(glm::uvec3 groups)
 void Shader::stopUse()
 {
     glUseProgram(0);
-}
-
-GLint Shader::getLocation(const std::string& name)
-{
-    std::map<std::string, GLint>::iterator it = this->locations.find(name);
-    if (it != this->locations.end())
-    {
-        return it->second;
-    }
-
-    GLint location = glGetUniformLocation(this->handler, name.c_str());
-    this->locations[name] = location;
-    return location;
 }
 
 GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderType)

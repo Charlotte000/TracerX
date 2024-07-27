@@ -25,7 +25,7 @@ namespace TracerX
  * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors.
  * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
  * 
- * The renderer uses a framebuffer to accumulate the colors and a texture array to store the scene data.
+ * The renderer uses a framebuffer to accumulate the colors and a texture array to store the scene data. / ToDo: remove this (compute shader)
  * The scene data consists of the vertices, triangles, materials, and meshes of the scene.
  * 
  * The renderer can render a full frame or a rectangular region of the frame.
@@ -60,12 +60,12 @@ public:
     /**
      * @brief The minimum distance for rendering objects.
      */
-    float minRenderDistance = .0001f;
+    float minRenderDistance = .1f;
 
     /**
      * @brief The maximum distance for rendering objects.
      */
-    float maxRenderDistance = 1000000;
+    float maxRenderDistance = 1000;
 
     /**
      * @brief The environment settings for the scene.
@@ -116,11 +116,11 @@ public:
      * The rendered image can be accessed using Renderer::getImage().
      * 
      * @param samples The number of samples to render.
-     * @param position The position of the top-left corner of the region.
-     * @param size The size of the region.
+     * @param rectPosition The position of the top-left corner of the region.
+     * @param rectSize The size of the region.
      * @see Renderer::render to render the entire image.
      */
-    void renderRect(unsigned int samples, glm::uvec2 position, glm::uvec2 size);
+    void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize);
 
 #ifdef TX_DENOISE
     /**
@@ -153,10 +153,22 @@ public:
      */
     GLuint getAlbedoTextureHandler() const;
 
-    // ToDo: documentation
+    /**
+     * @brief Gets the OpenGL texture handler for the normal image.
+     * 
+     * The normal image contains the normal information of the first hit of the rays.
+     * 
+     * @return The texture handler.
+     */
     GLuint getNormalTextureHandler() const;
 
-    // ToDo: documentation
+    /**
+     * @brief Gets the OpenGL texture handler for the depth image.
+     * 
+     * The depth image contains the depth information of the first hit of the rays.
+     * 
+     * @return The texture handler.
+     */
     GLuint getDepthTextureHandler() const;
 
     // ToDo: documentation
@@ -193,11 +205,10 @@ public:
      * Use this method to load the entire scene into the renderer.
      * 
      * @param scene The scene to load.
-     * @param texturesSize The size of textures in the scene.
      * @see Renderer::updateSceneMaterials to update only the materials.
      * @see Renderer::updateSceneMeshes to update only the meshes.
      */
-    void loadScene(const Scene& scene, glm::uvec2 texturesSize = glm::uvec2(2048, 2048));
+    void loadScene(const Scene& scene);
 
     /**
      * @brief Updates the materials in the scene.
@@ -240,7 +251,7 @@ private:
 
     void initData();
     void bindData();
-    void updateUniform(glm::ivec2 uvLow, glm::ivec2 uvUp, bool onlyToneMapping);
+    void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping);
 };
 
 }

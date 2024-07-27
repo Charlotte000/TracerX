@@ -3,7 +3,6 @@
  */
 #pragma once
 
-#include <vector>
 #include <GL/glew.h>
 
 namespace TracerX::core
@@ -13,10 +12,7 @@ class StorageBuffer
 {
 public:
     void init();
-
-    template <class T>
-    void update(const std::vector<T>& data);
-
+    void update(const void* data, size_t size);
     void bind(int binding);
     void shutdown();
 private:

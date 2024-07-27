@@ -78,11 +78,6 @@ public:
     std::vector<Camera> cameras;
 
     /**
-     * @brief The name of the scene.
-     */
-    std::string name = "Empty";
-
-    /**
      * @brief Loads a texture from a file and adds it to the scene.
      * @param fileName The name of the file containing the texture.
      * @return The index (texture ID) of the loaded texture in the textures vector.

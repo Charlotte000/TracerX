@@ -3,8 +3,6 @@
  */
 #pragma once
 
-#include <map>
-#include <string>
 #include <vector>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -24,11 +22,8 @@ public:
     static void stopUse();
 private:
     GLuint handler;
-    std::map<std::string, GLint> locations;
 
     static inline const glm::uvec3 groupSize = glm::uvec3(16, 16, 1);
-
-    GLint getLocation(const std::string& name);
 
     static GLuint initShader(const std::vector<unsigned char>& bin, GLenum shaderType);
     static GLuint initProgram(GLuint shaderHandler);

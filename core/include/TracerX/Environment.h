@@ -18,14 +18,9 @@ class Environment
 {
 public:
     /**
-     * @brief The name of the environment.
-     */
-    std::string name = "None";
-
-    /**
      * @brief The intensity of the environment.
      */
-    float intensity = 1.f;
+    float intensity = 1;
 
     /**
      * @brief The rotation matrix of the environment.
@@ -36,13 +31,6 @@ public:
      * @brief Indicates if the environment is transparent.
      */
     bool transparent = false;
-
-    /**
-     * @brief Resets the environment to its default state.
-     * 
-     * This method sets the name of the environment to "None" and updates the texture with an empty black image.
-     */
-    void reset();
 
     /**
      * @brief Loads environment data from a file.

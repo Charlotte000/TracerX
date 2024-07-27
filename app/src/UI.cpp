@@ -479,9 +479,9 @@ void UI::propertyMeshMenu()
         renderer.clear();
     }
 
-    static float translation[3];
-    static float rotation[3];
-    static float scale[3];
+    float translation[3];
+    float rotation[3];
+    float scale[3];
     ImGuizmo::DecomposeMatrixToComponents(
         glm::value_ptr(this->editMesh->transform),
         translation,
@@ -520,15 +520,15 @@ void UI::propertyMeshMenu()
 
 void UI::propertyMaterialMenu()
 {
-    Renderer& renderer = this->app->renderer;
-    Scene& scene = this->app->scene;
-    Material& material = *this->editMaterial;
-    bool changed = false;
-
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
     {
         return;
     }
+
+    Renderer& renderer = this->app->renderer;
+    Scene& scene = this->app->scene;
+    Material& material = *this->editMaterial;
+    bool changed = false;
 
     if (ImGui::BeginTabItem("Albedo"))
     {
@@ -712,8 +712,8 @@ void UI::propertySceneMenu()
         ImGui::EndTooltip();
     }
 
-    if (ImGui::DragFloat("Min render distance", &renderer.minRenderDistance, 0.01f, 0, 10000, "%.4f") |
-        ImGui::DragFloat("Max render distance", &renderer.maxRenderDistance, 10, 0, 10000))
+    if (ImGui::DragFloat("Min render distance", &renderer.minRenderDistance, 0.01f, 0, renderer.maxRenderDistance, "%.4f") |
+        ImGui::DragFloat("Max render distance", &renderer.maxRenderDistance, 10, renderer.minRenderDistance, 10000))
     {
         renderer.clear();
     }
@@ -727,6 +727,11 @@ void UI::propertySceneMenu()
     if (ImGui::Button(this->app->enableRendering ? "Stop" : "Start", ImVec2(-1, 0)))
     {
         this->app->enableRendering = !this->app->enableRendering;
+    }
+
+    if (ImGui::Button("Clear", ImVec2(-1, 0)))
+    {
+        renderer.clear();
     }
 
 #ifdef TX_DENOISE
@@ -749,7 +754,7 @@ bool UI::materialTextureSelector(const std::string& name, int& currentTextureId,
     {
         if (ImGui::Selectable("None", currentTextureId == -1))
         {
-            currentTextureId = -1.f;
+            currentTextureId = -1;
             changed = true;
         }
 
@@ -773,7 +778,7 @@ bool UI::materialTextureSelector(const std::string& name, int& currentTextureId,
     {
         if (this->currentTextureId != currentTextureId)
         {
-            this->textureView.update(scene.textures[(int)currentTextureId]);
+            this->textureView.update(scene.textures[currentTextureId]);
             this->currentTextureId = currentTextureId;
         }
 

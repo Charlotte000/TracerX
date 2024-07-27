@@ -129,12 +129,12 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
     vec3 throughput = vec3(1);
     vec3 radiance = vec3(0);
 
-    bool isFirstSolidHit = true;
+    bool isFirstHit = true;
     uint bounce = 0;
     while (bounce <= MaxBounceCount)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, isFirstSolidHit ? MinRenderDistance : 0, manifold))
+        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : 0, manifold))
         {
             radiance += GetEnvironment(ray) * throughput;
             if (bounce == 0)
@@ -168,7 +168,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
             }
         }
 
-        isFirstSolidHit = false;
+        isFirstHit = false;
     }
 
     return vec4(radiance, 1);
@@ -176,7 +176,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
 
 void main()
 {
-    if (any(lessThan(TexelCoord, UVlow)) || any(lessThanEqual(UVup, TexelCoord)))
+    if (any(lessThan(TexelCoord, FramePosition)) || any(lessThanEqual(FramePosition + FrameSize, TexelCoord)))
     {
         return;
     }
