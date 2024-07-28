@@ -18,12 +18,19 @@ public:
     void shutdown();
     void render();
 private:
-    Application* app = nullptr;
-    TracerX::Mesh* editMesh = nullptr;
-    TracerX::Material* editMaterial = nullptr;
+    enum class PropertyOption
+    {
+        PContorls,
+        PToneMapping,
+        PSettings,
+        PCamera,
+        PEnvironment,
+        PMesh,
+        PMaterial,
+    } property = PropertyOption::PContorls;
+    void* edit = nullptr;
     int currentTextureId = -1;
-    bool editCamera = false;
-    bool editEnvironment = false;
+    Application* app = nullptr;
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
     TracerX::core::Texture textureView;
@@ -32,13 +39,15 @@ private:
     void mainWindowMenu();
     void drawingPanelMenu();
     void sidePanelMenu();
-    void sceneMenu();
+    void propertySelectorMenu();
     void propertyMenu();
-    void propertyMeshMenu();
-    void propertyMaterialMenu();
+    void propertyMeshMenu(TracerX::Mesh& mesh);
+    void propertyMaterialMenu(TracerX::Material& material);
     void propertyCameraMenu();
     void propertyEnvironmentMenu();
-    void propertySceneMenu();
+    void propertyControlsMenu();
+    void propertyToneMappingMenu();
+    void propertySettingsMenu();
     bool materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor);
     void viewTexture(GLint textureHandler);
 };

@@ -52,6 +52,7 @@ layout(std140, binding=2) uniform ParamsUBO
     float MaxRenderDistance;
     float Gamma;
     bool OnlyToneMapping;
+    uint ToneMapMode;
 };
 
 ivec2 Size = imageSize(AccumulatorImage);

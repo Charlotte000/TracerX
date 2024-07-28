@@ -9,17 +9,6 @@ vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
     return (matrix * vec4(v, translate ? 1 : 0)).xyz;
 }
 
-vec4 ToneMap(in vec4 pixel, in float gamma)
-{
-    // Reinhard tone mapping
-    pixel.rgb = pixel.rgb / (pixel.rgb + vec3(1));
-
-    // Gamma correction
-    pixel.rgb = pow(pixel.rgb, vec3(1 / gamma));
-
-    return pixel;
-}
-
 void JitterRay(inout Ray ray)
 {
     // Focal

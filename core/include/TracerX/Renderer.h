@@ -73,6 +73,14 @@ public:
      */
     Environment environment;
 
+    // ToDo: documentation
+    enum class ToneMapMode : unsigned int
+    {
+        Reinhard = 0,
+        ACES = 1,
+        ACESfitted = 2,
+    } toneMapMode = ToneMapMode::Reinhard;
+
     /**
      * @brief Initializes the renderer with the specified size.
      * 
@@ -121,6 +129,9 @@ public:
      * @see Renderer::render to render the entire image.
      */
     void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize);
+
+    // ToDo: documentation
+    void toneMap();
 
 #ifdef TX_DENOISE
     /**

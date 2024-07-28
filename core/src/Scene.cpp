@@ -16,14 +16,32 @@ using namespace TracerX::core;
 int Scene::loadTexture(const std::string& fileName)
 {
     this->textures.push_back(Image::loadFromFile(fileName));
+    this->textureNames.push_back(std::filesystem::path(fileName).filename().string());
     return this->textures.size() - 1;
+}
+
+int Scene::loadTexture(const Image& texture, const std::string& name)
+{
+    this->textures.push_back(texture);
+    int index = this->textures.size() - 1;
+    this->textureNames.push_back(name.empty() ? "Untitled texture " + std::to_string(index) : name);
+    return index;
 }
 
 int Scene::loadMaterial(const Material& material, const std::string& name)
 {
     this->materials.push_back(material);
-    this->materialNames.push_back(name);
-    return this->materials.size() - 1;
+    int index = this->materials.size() - 1;
+    this->materialNames.push_back(name.empty() ? "Untitled material " + std::to_string(index) : name);
+    return index;
+}
+
+int Scene::loadMesh(const Mesh& mesh, const std::string& name)
+{
+    this->meshes.push_back(mesh);
+    int index = this->meshes.size() - 1;
+    this->meshNames.push_back(name.empty() ? "Untitled mesh " + std::to_string(index) : name);
+    return index;
 }
 
 Scene Scene::loadGLTF(const std::string& fileName)
@@ -68,7 +86,6 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
         const tinygltf::Texture& gltfTexture = textures[textureId];
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
 
-        std::string name = gltfTexture.name != "" ? gltfTexture.name : std::to_string(textureId);
         glm::uvec2 size(gltfImage.width, gltfImage.height);
 
         std::vector<float> pixels;
@@ -81,8 +98,7 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
             pixels.push_back(gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1);
         }
 
-        this->textures.push_back(Image::loadFromMemory(size, pixels));
-        this->textureNames.push_back(name);
+        this->loadTexture(Image::loadFromMemory(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
     }
 }
 
@@ -129,8 +145,7 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
             }
         }
 
-        this->materials.push_back(material);
-        this->materialNames.push_back(gltfMaterial.name);
+        this->loadMaterial(material, gltfMaterial.name);
     }
 }
 
@@ -240,8 +255,7 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
         mesh.triangleSize = indexAccessor.count / 3;
         mesh.transform = transform;
         mesh.transformInv = glm::inverse(transform);
-        this->meshes.push_back(mesh);
-        this->meshNames.push_back(gltfMesh.name);
+        this->loadMesh(mesh, gltfMesh.name);
     }
 }
 

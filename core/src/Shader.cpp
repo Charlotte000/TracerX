@@ -84,7 +84,7 @@ GLuint Shader::initProgram(GLuint shaderHandler)
         GLint logSize = 0;
         glGetProgramiv(handler, GL_INFO_LOG_LENGTH, &logSize);
         char* info = new char[logSize + 1];
-        glGetShaderInfoLog(handler, logSize, NULL, info);
+        glGetProgramInfoLog(handler, logSize, NULL, info);
         msg += info;
         delete[] info;
         glDeleteProgram(handler);

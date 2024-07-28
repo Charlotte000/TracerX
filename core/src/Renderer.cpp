@@ -81,6 +81,16 @@ void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uv
     Shader::stopUse();
 }
 
+void Renderer::toneMap()
+{
+    this->bindData();
+    this->updateUniform(glm::ivec2(0), this->accumulationTexture.size, true);
+
+    this->shader.use();
+    Shader::dispatchCompute(Shader::getGroups(this->accumulationTexture.size));
+    Shader::stopUse();
+}
+
 #ifdef TX_DENOISE
 void Renderer::denoise()
 {
@@ -130,12 +140,7 @@ void Renderer::denoise()
         this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
 
         // Update output
-        this->bindData();
-        this->updateUniform(glm::ivec2(0, 0), size, true);
-
-        this->shader.use();
-        Shader::dispatchCompute(Shader::getGroups(size));
-        Shader::stopUse();
+        this->toneMap();
     }
 
     // Release buffers
@@ -148,10 +153,6 @@ void Renderer::denoise()
 void Renderer::clear()
 {
     this->accumulationTexture.clear();
-    this->albedoTexture.clear();
-    this->normalTexture.clear();
-    this->depthTexture.clear();
-    this->toneMapTexture.clear();
     this->sampleCount = 0;
 }
 
@@ -279,7 +280,16 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         float intensity;
         int padding1;
         int padding2;
-    } environment { glm::vec4(this->environment.rotation[0], 0), glm::vec4(this->environment.rotation[1], 0), glm::vec4(this->environment.rotation[2], 0), this->environment.transparent, this->environment.intensity, 0, 0 };
+    } environment
+    {
+        glm::vec4(this->environment.rotation[0], 0),
+        glm::vec4(this->environment.rotation[1], 0),
+        glm::vec4(this->environment.rotation[2], 0),
+        this->environment.transparent,
+        this->environment.intensity,
+        0,
+        0,
+    };
     this->environmentBuffer.update(&environment, sizeof(environment));
 
     struct
@@ -291,7 +301,19 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         float minRenderDistance;
         float maxRenderDistance;
         float gamma;
-        int onlyToneMapping;
-    } params { rectPosition, rectSize, this->sampleCount, this->maxBounceCount, this->minRenderDistance, this->maxRenderDistance, this->gamma, onlyToneMapping };
+        unsigned int onlyToneMapping;
+        unsigned int toneMapMode;
+    } params
+    {
+        rectPosition,
+        rectSize,
+        this->sampleCount,
+        this->maxBounceCount,
+        this->minRenderDistance,
+        this->maxRenderDistance,
+        this->gamma,
+        onlyToneMapping,
+        static_cast<unsigned int>(this->toneMapMode),
+    };
     this->paramBuffer.update(&params, sizeof(params));
 }

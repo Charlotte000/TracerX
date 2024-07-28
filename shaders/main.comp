@@ -12,6 +12,7 @@ const float TWO_PI     = 6.28318530717958648;
 #include "common/random.comp"
 #include "common/transforms.comp"
 #include "common/intersection.comp"
+#include "common/tonemap.comp"
 
 bool CollisionReact(inout Ray ray, inout vec3 throughput, inout vec3 radiance, inout CollisionManifold manifold)
 {
@@ -184,7 +185,7 @@ void main()
     if (OnlyToneMapping)
     {
         vec4 accumColor = imageLoad(AccumulatorImage, TexelCoord);
-        imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount), Gamma));
+        imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / SampleCount));
         return;
     }
 
@@ -197,8 +198,8 @@ void main()
     vec4 accumColor = PathTrace(ray, albedo, normal, depth) + imageLoad(AccumulatorImage, TexelCoord);
 
     imageStore(AccumulatorImage, TexelCoord, accumColor);
-    imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1), Gamma));
+    imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1)));
     imageStore(NormalImage, TexelCoord, NormalToColor(normal));
     imageStore(DepthImage, TexelCoord, DepthToColor(depth));
-    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1), Gamma));
+    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1)));
 }

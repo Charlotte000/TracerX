@@ -84,6 +84,9 @@ public:
      */
     int loadTexture(const std::string& fileName);
 
+    // ToDo: documentation
+    int loadTexture(const Image& texture, const std::string& name);
+
     /**
      * @brief Loads a material and adds it to the scene.
      * @param material The material to be loaded.
@@ -91,6 +94,9 @@ public:
      * @return The index (material ID) of the loaded material in the materials vector.
      */
     int loadMaterial(const Material& material, const std::string& name);
+
+    // ToDo: documentation
+    int loadMesh(const Mesh& mesh, const std::string& name);
 
     /**
      * @brief Loads a scene from a GLTF file.
