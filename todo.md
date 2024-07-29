@@ -1,4 +1,4 @@
-describe core / app / example in the README
+redo the features
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5

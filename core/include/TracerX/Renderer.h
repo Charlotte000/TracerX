@@ -25,7 +25,7 @@ namespace TracerX
  * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors.
  * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
  * 
- * The renderer uses a framebuffer to accumulate the colors and a texture array to store the scene data. / ToDo: remove this (compute shader)
+ * The renderer uses a compute shader to trace the rays and update the colors.
  * The scene data consists of the vertices, triangles, materials, and meshes of the scene.
  * 
  * The renderer can render a full frame or a rectangular region of the frame.
@@ -36,6 +36,7 @@ namespace TracerX
  * The renderer is responsible for initializing OpenGL and GLEW.
  * 
  * @see Renderer::init
+ * @see Renderer::loadScene
  * @see Renderer::render
  * @see Renderer::shutdown
  */
@@ -73,11 +74,35 @@ public:
      */
     Environment environment;
 
-    // ToDo: documentation
+    /**
+     * @brief The tone mapping mode used in rendering.
+     * 
+     * The tone mapping mode determines how the renderer maps the colors to the display.
+     */
     enum class ToneMapMode : unsigned int
     {
+        /**
+         * @brief Reinhard tone mapping.
+         * 
+         * The Reinhard tone mapping algorithm maps the colors to the display using a simple formula: color / (color + 1).
+         * This algorithm is simple and fast but may not produce the best results.
+         */
         Reinhard = 0,
+
+        /**
+         * @brief ACES tone mapping.
+         * 
+         * The ACES tone mapping algorithm maps the colors to the display using the Academy Color Encoding System (ACES).
+         * This algorithm is more complex and slower but produces better results.
+         */
         ACES = 1,
+
+        /**
+         * @brief ACES fitted tone mapping.
+         * 
+         * The ACES fitted tone mapping algorithm maps the colors to the display using a simplified version of the ACES algorithm.
+         * This algorithm is faster than the full ACES algorithm but still produces good results.
+         */
         ACESfitted = 2,
     } toneMapMode = ToneMapMode::Reinhard;
 
@@ -130,7 +155,11 @@ public:
      */
     void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize);
 
-    // ToDo: documentation
+    /**
+     * @brief Applies tone mapping to the rendered image.
+     * 
+     * This method does not path trace the scene. It only updates the tone mapped image.
+     */
     void toneMap();
 
 #ifdef TX_DENOISE
@@ -182,7 +211,13 @@ public:
      */
     GLuint getDepthTextureHandler() const;
 
-    // ToDo: documentation
+    /**
+     * @brief Gets the OpenGL texture handler for the accumulation image.
+     * 
+     * The accumulation image contains the accumulated colors of the rendered image.
+     * 
+     * @return The texture handler.
+     */
     GLuint getAccumulatorTextureHandler() const;
 
     /**
