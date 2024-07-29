@@ -6,7 +6,7 @@
 
 using namespace TracerX;
 
-void Environment::loadFromFile(const std::string& fileName)
+void Environment::loadFromFile(const std::filesystem::path& path)
 {
-    this->texture.update(Image::loadFromFile(fileName));
+    this->texture.update(Image::loadFromFile(path));
 }

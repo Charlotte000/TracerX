@@ -3,8 +3,8 @@
  */
 #pragma once
 
-#include <string>
 #include <vector>
+#include <filesystem>
 #include <glm/glm.hpp>
 
 namespace TracerX
@@ -36,9 +36,9 @@ public:
 
     /**
      * @brief Saves the image to a file.
-     * @param name The name of the file to save the image to.
+     * @param path The path of the file to save the image to.
      */
-    void saveToFile(const std::string& name) const;
+    void saveToFile(const std::filesystem::path& path) const;
  
     /**
      * @brief Resizes the image to the specified size.
@@ -49,11 +49,11 @@ public:
 
     /**
      * @brief Loads an image from a file.
-     * @param fileName The name of the file to load the image from.
+     * @param path The path of the file to load the image from.
      * @return The loaded image.
      * @throws std::runtime_error Thrown if the image fails to load.
      */
-    static Image loadFromFile(const std::string& fileName);
+    static Image loadFromFile(const std::filesystem::path& path);
 
     /**
      * @brief Loads an image from memory.

@@ -50,7 +50,7 @@ void Application::init(glm::uvec2 size)
 
     // Init components
     this->renderer.init(size);
-    this->ui.init(this);
+    this->initUI();
     this->loadAnyEnvironment();
 
     this->renderer.loadScene(this->scene);
@@ -58,7 +58,7 @@ void Application::init(glm::uvec2 size)
 
 void Application::shutdown()
 {
-    this->ui.shutdown();
+    this->shutdownUI();
     this->renderer.shutdown();
     glfwDestroyWindow(this->window);
     glfwTerminate();
@@ -89,7 +89,7 @@ void Application::run()
         }
 
         // UI
-        this->ui.render();
+        this->renderUI();
 
         // Display
         glfwSwapBuffers(this->window);
@@ -98,9 +98,9 @@ void Application::run()
     this->shutdown();
 }
 
-void Application::loadScene(const std::string& fileName)
+void Application::loadScene(const std::filesystem::path& path)
 {
-    this->scene = Scene::loadGLTF(fileName);
+    this->scene = Scene::loadGLTF(path);
     this->renderer.clear();
     this->renderer.loadScene(this->scene);
 }
@@ -118,7 +118,7 @@ void Application::loadAnyEnvironment()
         std::filesystem::path ext = path.extension();
         if (ext == ".hdr" || ext == ".png" || ext == ".jpg")
         {
-            this->renderer.environment.loadFromFile(path.string());
+            this->renderer.environment.loadFromFile(path);
             return;
         }
     }
@@ -126,19 +126,10 @@ void Application::loadAnyEnvironment()
 
 void Application::control()
 {
-    static double lastTime = 0;
-    static glm::vec2 mousePosition;
-
-    double newX, newY;
-    glfwGetCursorPos(this->window, &newX, &newY);
-    glm::vec2 newMousePos(newX, newY);
-    glm::vec2 mouseDelta = (newMousePos - mousePosition) * this->cameraRotationSpeed / 100.f;
-    mousePosition = newMousePos;
-
-    double nextTime = glfwGetTime();
-    float elapsedTime = (float)(nextTime - lastTime);
-    lastTime = nextTime;
-
+    ImGuiIO io = ImGui::GetIO();
+    float elapsedTime = io.DeltaTime;
+    glm::vec2 mouseDelta = glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->cameraRotationSpeed / 100.f;
+    
     if (glfwGetInputMode(this->window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
     {
         return;

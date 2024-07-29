@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <FastBVH.h>
+#include <filesystem>
 #include <glm/glm.hpp>
 #include <tiny_gltf.h>
 
@@ -79,32 +80,42 @@ public:
 
     /**
      * @brief Loads a texture from a file and adds it to the scene.
-     * @param fileName The name of the file containing the texture.
-     * @return The index (texture ID) of the loaded texture in the textures vector.
+     * @param path The path of the file containing the texture.
+     * @return The index (texture ID) of the loaded texture in the Scene::textures vector.
      */
-    int loadTexture(const std::string& fileName);
-
-    // ToDo: documentation
-    int loadTexture(const Image& texture, const std::string& name);
+    int loadTexture(const std::filesystem::path& path);
 
     /**
-     * @brief Loads a material and adds it to the scene.
-     * @param material The material to be loaded.
-     * @param name The name of the material.
-     * @return The index (material ID) of the loaded material in the materials vector.
+     * @brief Adds a texture to the scene.
+     * @param texture The texture to be added.
+     * @param name The name of the texture.
+     * @return The index (texture ID) of the added texture in the Scene::textures vector.
      */
-    int loadMaterial(const Material& material, const std::string& name);
+    int addTexture(const Image& texture, const std::string& name);
 
-    // ToDo: documentation
-    int loadMesh(const Mesh& mesh, const std::string& name);
+    /**
+     * @brief Adds a material to the scene.
+     * @param material The material to be added.
+     * @param name The name of the material.
+     * @return The index (material ID) of the added material in the Scene::materials vector.
+     */
+    int addMaterial(const Material& material, const std::string& name);
+
+    /**
+     * @brief Adds a mesh to the scene.
+     * @param mesh The mesh to be added.
+     * @param name The name of the mesh.
+     * @return The index (mesh ID) of the added mesh in the Scene::meshes vector.
+     */
+    int addMesh(const Mesh& mesh, const std::string& name);
 
     /**
      * @brief Loads a scene from a GLTF file.
-     * @param fileName The name of the file to load the GLTF scene from.
+     * @param path The path of the file to load the GLTF scene from.
      * @return The loaded scene.
      * @throws std::runtime_error Thrown if the GLTF file fails to load.
      */
-    static Scene loadGLTF(const std::string& fileName);
+    static Scene loadGLTF(const std::filesystem::path& path);
 private:
     std::vector<core::Node> bvh;
 

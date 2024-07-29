@@ -5,9 +5,9 @@ set(TX_ASSETS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "Assets folde
 
 add_executable(
     ${PROJECT_NAME}
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/UI.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Application.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ApplicationUI.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/imgui/imgui_draw.cpp

@@ -17,7 +17,7 @@ using namespace TracerX;
 
 Image Image::empty;
 
-void Image::saveToFile(const std::string& name) const
+void Image::saveToFile(const std::filesystem::path& path) const
 {
     std::vector<unsigned char> data(this->pixels.size());
     for (size_t i = 0; i < this->pixels.size(); i++)
@@ -26,7 +26,7 @@ void Image::saveToFile(const std::string& name) const
     }
 
     stbi_flip_vertically_on_write(true);
-    if (!stbi_write_png(name.c_str(), this->size.x, this->size.y, 4, data.data(), 0))
+    if (!stbi_write_png(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 0))
     {
         std::cerr << "Failed to save the image" << std::endl;
     }
@@ -41,14 +41,14 @@ Image Image::resize(glm::uvec2 size) const
     return img;
 }
 
-Image Image::loadFromFile(const std::string& fileName)
+Image Image::loadFromFile(const std::filesystem::path& path)
 {
     Image img;
     glm::ivec2 size;
-    float* data = stbi_loadf(fileName.c_str(), &size.x, &size.y, nullptr, 4);
+    float* data = stbi_loadf(path.string().c_str(), &size.x, &size.y, nullptr, 4);
     if (data == nullptr)
     {
-        throw std::runtime_error("Failed to load the image: " + fileName);
+        throw std::runtime_error("Failed to load the image: " + path.string());
     }
 
     img.size = size;

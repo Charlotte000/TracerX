@@ -5,7 +5,7 @@
 
 #include "Texture.h"
 
-#include <string>
+#include <filesystem>
 #include <glm/glm.hpp>
 
 namespace TracerX
@@ -34,9 +34,9 @@ public:
 
     /**
      * @brief Loads environment data from a file.
-     * @param fileName The name of the file to load the data from.
+     * @param path The path of the file to load the data from.
      */
-    void loadFromFile(const std::string& fileName);
+    void loadFromFile(const std::filesystem::path& path);
 private:
     core::Texture texture;
 

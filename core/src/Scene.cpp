@@ -6,21 +6,20 @@
 #include "TracerX/Scene.h"
 
 #include <stdexcept>
-#include <filesystem>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 using namespace TracerX;
 using namespace TracerX::core;
 
-int Scene::loadTexture(const std::string& fileName)
+int Scene::loadTexture(const std::filesystem::path& path)
 {
-    this->textures.push_back(Image::loadFromFile(fileName));
-    this->textureNames.push_back(std::filesystem::path(fileName).filename().string());
+    this->textures.push_back(Image::loadFromFile(path));
+    this->textureNames.push_back(path.filename().string());
     return this->textures.size() - 1;
 }
 
-int Scene::loadTexture(const Image& texture, const std::string& name)
+int Scene::addTexture(const Image& texture, const std::string& name)
 {
     this->textures.push_back(texture);
     int index = this->textures.size() - 1;
@@ -28,7 +27,7 @@ int Scene::loadTexture(const Image& texture, const std::string& name)
     return index;
 }
 
-int Scene::loadMaterial(const Material& material, const std::string& name)
+int Scene::addMaterial(const Material& material, const std::string& name)
 {
     this->materials.push_back(material);
     int index = this->materials.size() - 1;
@@ -36,7 +35,7 @@ int Scene::loadMaterial(const Material& material, const std::string& name)
     return index;
 }
 
-int Scene::loadMesh(const Mesh& mesh, const std::string& name)
+int Scene::addMesh(const Mesh& mesh, const std::string& name)
 {
     this->meshes.push_back(mesh);
     int index = this->meshes.size() - 1;
@@ -44,7 +43,7 @@ int Scene::loadMesh(const Mesh& mesh, const std::string& name)
     return index;
 }
 
-Scene Scene::loadGLTF(const std::string& fileName)
+Scene Scene::loadGLTF(const std::filesystem::path& path)
 {
     Scene scene;
 
@@ -52,16 +51,16 @@ Scene Scene::loadGLTF(const std::string& fileName)
     tinygltf::Model model;
 
     std::string err;
-    if (std::filesystem::path(fileName).extension() == ".glb")
+    if (path.extension() == ".glb")
     {
-        if (!loader.LoadBinaryFromFile(&model, &err, nullptr, fileName))
+        if (!loader.LoadBinaryFromFile(&model, &err, nullptr, path.string()))
         {
             throw std::runtime_error(err);
         }
     }
     else
     {
-        if (!loader.LoadASCIIFromFile(&model, &err, nullptr, fileName))
+        if (!loader.LoadASCIIFromFile(&model, &err, nullptr, path.string()))
         {
             throw std::runtime_error(err);
         }
@@ -98,7 +97,7 @@ void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const s
             pixels.push_back(gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1);
         }
 
-        this->loadTexture(Image::loadFromMemory(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
+        this->addTexture(Image::loadFromMemory(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
     }
 }
 
@@ -145,7 +144,7 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
             }
         }
 
-        this->loadMaterial(material, gltfMaterial.name);
+        this->addMaterial(material, gltfMaterial.name);
     }
 }
 
@@ -255,7 +254,7 @@ void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMes
         mesh.triangleSize = indexAccessor.count / 3;
         mesh.transform = transform;
         mesh.transformInv = glm::inverse(transform);
-        this->loadMesh(mesh, gltfMesh.name);
+        this->addMesh(mesh, gltfMesh.name);
     }
 }
 
