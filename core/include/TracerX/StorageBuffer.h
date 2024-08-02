@@ -13,7 +13,7 @@ class StorageBuffer
 public:
     void init();
     void update(const void* data, size_t size);
-    void bind(int binding);
+    void bind(unsigned int binding);
     void shutdown();
 private:
     GLuint handler;

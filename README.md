@@ -10,7 +10,7 @@ This repository contains three main projects:
 
 Additional assets can be downloaded here and installed in the directory:
 - `app/assets/environments`: [Poly Haven](https://polyhaven.com/hdris)
-- `app/assets/scenes`: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com/)
+- `app/assets/scenes`: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com)
 
 # Renders
 ![](imgs/UI.jpg)
@@ -81,13 +81,14 @@ Each time you rebuild the shaders, you need to rebuild the project to see the ch
 - [glfw/glfw](https://github.com/glfw/glfw): A multi-platform library for OpenGL, OpenGL ES, Vulkan, window and input
 - [ocornut/imgui](https://github.com/ocornut/imgui): Bloat-free Graphical User interface for C++ with minimal dependencies
 - [CedricGuillemet/ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo): Immediate mode 3D gizmo for scene editing and other controls based on Dear Imgui
-- [vareille/tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs/): Tiny file dialogs ( cross-platform C C++ )
+- [vareille/tinyfiledialogs](https://sourceforge.net/projects/tinyfiledialogs): Tiny file dialogs ( cross-platform C C++ )
 
 ## Assets
 - [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets): To store all models and other assets related to glTF
 - [Patitotective/ImThemes](https://github.com/Patitotective/ImThemes): Dear ImGui style browser and editor written in Nim
 
 # Aknowledgements
-- [Ray Tracing in One Weekend](https://raytracing.github.io/) is a series of books by Peter Shirley that explain the fundamentals of ray tracing.
+- [Ray Tracing in One Weekend](https://raytracing.github.io) is a series of books by Peter Shirley that explain the fundamentals of ray tracing.
+- [Scratchapixel](https://scratchapixel.com) is a website that provides a comprehensive introduction to computer graphics.
 - [knightcrawler25/GLSL-PathTracer](https://github.com/knightcrawler25/GLSL-PathTracer) is a path tracing project that inspired the development of this app.
-- [Physically Based Rendering: From Theory to Implementation](https://pbr-book.org/) is a book by Matt Pharr, Wenzel Jakob, and Greg Humphreys that provides a comprehensive overview of physically based rendering.
+- [Physically Based Rendering: From Theory to Implementation](https://pbr-book.org) is a book by Matt Pharr, Wenzel Jakob, and Greg Humphreys that provides a comprehensive overview of physically based rendering.

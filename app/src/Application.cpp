@@ -19,6 +19,7 @@ void Application::init(glm::uvec2 size)
     }
 
     // Create window
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
     this->window = glfwCreateWindow(size.x, size.y, "TracerX", nullptr, nullptr);
     if (this->window == nullptr)
     {
@@ -27,7 +28,6 @@ void Application::init(glm::uvec2 size)
 
     glfwMakeContextCurrent(this->window);
     glfwSetWindowUserPointer(this->window, this);
-    glfwMaximizeWindow(this->window);
     glfwSwapInterval(0);
 
     // Key listener

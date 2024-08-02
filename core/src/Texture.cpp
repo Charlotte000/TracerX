@@ -16,12 +16,12 @@ void Texture::init(GLint internalFormat)
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Texture::bind(int binding)
+void Texture::bind(unsigned int binding)
 {
     glBindTextureUnit(binding, this->handler);
 }
 
-void Texture::bindImage(int binding, GLenum access)
+void Texture::bindImage(unsigned int binding, GLenum access)
 {
     glBindImageTexture(binding, this->handler, 0, GL_FALSE, 0, access, this->internalFormat);
 }
@@ -62,7 +62,7 @@ void Texture::clear()
 
 void Texture::resize(glm::uvec2 size)
 {
-    this->update(Image::loadFromMemory(size, std::vector<float>()));
+    this->update(Image::loadFromMemory(size, std::vector<float>(size.x * size.y * 4, 0)));
 }
 
 void Texture::shutdown()

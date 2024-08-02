@@ -15,7 +15,7 @@ void TextureArray::init(GLint internalFormat)
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
-void TextureArray::bind(int binding)
+void TextureArray::bind(unsigned int binding)
 {
     glBindTextureUnit(binding, this->handler);
 }

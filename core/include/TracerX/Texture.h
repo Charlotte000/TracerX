@@ -16,8 +16,8 @@ public:
     glm::uvec2 size;
 
     void init(GLint internalFormat);
-    void bind(int binding);
-    void bindImage(int binding, GLenum access = GL_READ_WRITE);
+    void bind(unsigned int binding);
+    void bindImage(unsigned int binding, GLenum access = GL_READ_WRITE);
     void update(const Image& image);
     Image upload() const;
     void clear();

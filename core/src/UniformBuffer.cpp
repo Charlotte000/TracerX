@@ -45,7 +45,7 @@ void UniformBuffer::updateSub(const void* data, size_t size, size_t offset)
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
-void UniformBuffer::bind(int binding)
+void UniformBuffer::bind(unsigned int binding)
 {
     glBindBufferBase(GL_UNIFORM_BUFFER, binding, this->handler);
 }

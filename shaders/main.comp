@@ -12,115 +12,8 @@ const float TWO_PI     = 6.28318530717958648;
 #include "common/random.comp"
 #include "common/transforms.comp"
 #include "common/intersection.comp"
+#include "common/bsdf.comp"
 #include "common/tonemap.comp"
-
-bool CollisionReact(inout Ray ray, inout vec3 throughput, inout vec3 radiance, inout CollisionManifold manifold)
-{
-    Material material = Materials[manifold.MaterialId];
-
-    if (material.AlbedoTextureId >= 0)
-    {
-        vec4 texAlbedo = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
-        material.AlbedoColor *= texAlbedo.rgb;
-
-        // Alpha blend
-        if (texAlbedo.a < RandomValue())
-        {
-            return false;
-        }
-    }
-
-    if (material.MetalnessTextureId >= 0)
-    {
-        material.Metalness *= texture(Textures, vec3(manifold.TextureCoordinate, material.MetalnessTextureId)).b;
-    }
-
-    if (material.RoughnessTextureId >= 0)
-    {
-        material.Roughness *= texture(Textures, vec3(manifold.TextureCoordinate, material.RoughnessTextureId)).g;
-    }
-
-    material.EmissionColor *= material.EmissionStrength;
-    if (material.EmissionTextureId >= 0)
-    {
-        material.EmissionColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.EmissionTextureId)).rgb;
-    }
-
-    if (material.NormalTextureId >= 0)
-    {
-        vec3 texNormal = texture(Textures, vec3(manifold.TextureCoordinate, material.NormalTextureId)).rgb;
-        texNormal.y = 1 - texNormal.y;
-        texNormal = normalize(texNormal * 2 - 1);
-        manifold.Normal = normalize(manifold.Tangent * texNormal.x + manifold.Bitangent * texNormal.y + manifold.Normal * texNormal.z);
-    }
-
-    if (!manifold.IsFrontFace)
-    {
-        manifold.Normal *= -1;
-    }
-
-    vec3 specularDir = reflect(ray.Direction, manifold.Normal);
-    vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
-
-    if (material.Metalness <= RandomValue() && RandomValue() >= 0.2)
-    {
-        material.Roughness = 1;
-    }
-
-    // Fresnel
-    if (material.FresnelStrength > 0.0 &&
-        1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
-    {
-        ray.Origin = manifold.Point;
-        ray.Direction = specularDir;
-
-        radiance += material.EmissionColor * throughput;
-        throughput *= material.FresnelColor;
-        return true;
-    }
-
-    // Density
-    if (material.Density > 0.0)
-    {
-        float depth = -log(RandomValue()) / material.Density;
-        if (manifold.IsFrontFace || depth >= manifold.Depth)
-        {
-            return false;
-        }
-
-        ray.Origin += ray.Direction * depth;
-        ray.Direction = RandomVector3();
-
-        radiance += material.EmissionColor * throughput;
-        throughput *= material.AlbedoColor;
-        return true;
-    }
-
-    // Refract
-    if (material.IOR > 0.0)
-    {
-        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1.0 / material.IOR : material.IOR);
-        if (refractedDir == vec3(0))
-        {
-            refractedDir = specularDir;
-        }
-
-        ray.Origin = manifold.Point;
-        ray.Direction = refractedDir;
-
-        radiance += material.EmissionColor * throughput;
-        throughput *= material.AlbedoColor;
-        return true;
-    }
-
-    // Scatter
-    ray.Origin = manifold.Point;
-    ray.Direction = Slerp(specularDir, diffuseDir, material.Roughness);
-
-    radiance += material.EmissionColor * throughput;
-    throughput *= material.AlbedoColor;
-    return true;
-}
 
 vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
 {
@@ -148,7 +41,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
             return vec4(radiance, bounce == 0 && Environment.Transparent ? 0 : 1);
         }
 
-        if (CollisionReact(ray, throughput, radiance, manifold))
+        if (BSDF(ray, throughput, radiance, manifold))
         {
             ray.InvDirection = 1 / ray.Direction;
             if (bounce == 0)

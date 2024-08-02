@@ -1,4 +1,4 @@
-redo the features
+redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5

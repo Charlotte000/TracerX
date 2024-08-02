@@ -7,6 +7,7 @@
 
 #include "TracerX/Image.h"
 
+#include <assert.h>
 #include <iostream>
 #include <stdexcept>
 #include <stb_image.h>
@@ -62,6 +63,7 @@ Image Image::loadFromFile(const std::filesystem::path& path)
 
 Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float> pixels)
 {
+    assert(size.x * size.y * 4 == pixels.size());
     Image img;
     img.size = size;
     img.pixels = pixels;
