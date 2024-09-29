@@ -122,7 +122,6 @@ void Application::shutdownUI()
     this->textureView.shutdown();
 }
 
-
 void Application::renderUI()
 {
     ImGui_ImplOpenGL3_NewFrame();
@@ -216,7 +215,7 @@ void Application::mainMenuBar()
     {
         ImGui::OpenPopup("infoMenu");
     }
-    
+
     if (ImGui::BeginPopup("infoMenu"))
     {
         ImGui::Text(

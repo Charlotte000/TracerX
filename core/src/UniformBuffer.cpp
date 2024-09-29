@@ -8,7 +8,6 @@
 #include "TracerX/Material.h"
 #include "TracerX/UniformBuffer.h"
 
-#include <iostream>
 using namespace TracerX;
 using namespace TracerX::core;
 

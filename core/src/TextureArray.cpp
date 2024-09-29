@@ -67,5 +67,5 @@ std::vector<float> TextureArray::resizeImages(const std::vector<Image>& images, 
         data.insert(data.begin() + count * i, resizedImg.pixels.begin(), resizedImg.pixels.end());
     }
 
-    return data;   
+    return data;
 }
