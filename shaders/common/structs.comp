@@ -56,12 +56,19 @@ struct Triangle
 
 struct Mesh
 {
+    int TriangleSize;
+    int NodeOffset;
+    int TriangleOffset;
+};
+
+struct MeshInstance
+{
     mat4 Transform;
     mat4 TransformInv;
     int MaterialId;
-    int NodeOffset;
-    int TriangleOffset;
-    int TriangleSize;
+    int MeshId;
+    int Padding1;
+    int Padding2;
 };
 
 struct CollisionManifold
@@ -83,6 +90,9 @@ struct Node
     int Start;
     int PrimitiveCount;
     int RightOffset;
-
     int Padding;
 };
+
+const uint ReinhardToneMap = 0;
+const uint ACESToneMap = 1;
+const uint ACESfittedToneMap = 2;

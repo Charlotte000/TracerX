@@ -7,7 +7,8 @@
 
 #include <stdexcept>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/extended_min_max.hpp>
 
 using namespace TracerX;
 using namespace TracerX::core;
@@ -66,9 +67,10 @@ Scene Scene::loadGLTF(const std::filesystem::path& path)
         }
     }
 
+    std::map<int, std::vector<glm::ivec2>> meshMap = scene.GLTFmeshes(model);
     scene.GLTFtextures(model.textures, model.images);
     scene.GLTFmaterials(model.materials);
-    scene.GLTFnodes(model, glm::mat4(1));
+    scene.GLTFnodes(model, meshMap, glm::mat4(1));
 
     for (Mesh& mesh : scene.meshes)
     {
@@ -76,6 +78,131 @@ Scene Scene::loadGLTF(const std::filesystem::path& path)
     }
 
     return scene;
+}
+
+std::map<int, std::vector<glm::ivec2>> Scene::GLTFmeshes(const tinygltf::Model& model)
+{
+    std::map<int, std::vector<glm::ivec2>> meshMap;
+    this->meshes.reserve(model.meshes.size());
+    this->meshNames.reserve(model.meshes.size());
+
+    for (size_t gltfMeshId = 0; gltfMeshId < model.meshes.size(); gltfMeshId++)
+    {
+        const tinygltf::Mesh& gltfMesh = model.meshes[gltfMeshId];
+        for (tinygltf::Primitive primitive : gltfMesh.primitives)
+        {
+            if (primitive.mode != TINYGLTF_MODE_TRIANGLES)
+            {
+                continue;
+            }
+
+            // Get vertex data
+            const tinygltf::Accessor& positionAccessor = model.accessors[primitive.attributes["POSITION"]];
+            const tinygltf::BufferView& positionBufferView = model.bufferViews[positionAccessor.bufferView];
+            const tinygltf::Buffer& positionBuffer = model.buffers[positionBufferView.buffer];
+            const uint8_t* positionBufferAddress = positionBuffer.data.data();
+            const uint8_t* positionData = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset;
+            size_t positionStride = tinygltf::GetComponentSizeInBytes(positionAccessor.componentType) * tinygltf::GetNumComponentsInType(positionAccessor.type);
+
+            const tinygltf::Accessor& normalAccessor = model.accessors[primitive.attributes["NORMAL"]];
+            const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
+            const tinygltf::Buffer& normalBuffer = model.buffers[normalBufferView.buffer];
+            const uint8_t* normalBufferAddress = normalBuffer.data.data();
+            const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset;
+            size_t normalStride = tinygltf::GetComponentSizeInBytes(normalAccessor.componentType) * tinygltf::GetNumComponentsInType(normalAccessor.type);
+
+            const tinygltf::Accessor& uvAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
+            const tinygltf::BufferView& uvBufferView = model.bufferViews[uvAccessor.bufferView];
+            const tinygltf::Buffer& uvBuffer = model.buffers[uvBufferView.buffer];
+            const uint8_t* uvBufferAddress = uvBuffer.data.data();
+            const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset;
+            size_t uvStride = tinygltf::GetComponentSizeInBytes(uvAccessor.componentType) * tinygltf::GetNumComponentsInType(uvAccessor.type);
+
+            size_t vertexOffset = this->vertices.size();
+            for (size_t i = 0; i < positionAccessor.count; i++)
+            {
+                Vertex v;
+
+                // Position
+                std::memcpy(glm::value_ptr(v.positionU), positionData + i * positionStride, sizeof(float) * 3);
+
+                // Normal
+                std::memcpy(glm::value_ptr(v.normalV), normalData + i * normalStride, sizeof(float) * 3);
+
+                // Texture coordinate
+                glm::vec2 uv;
+                std::memcpy(glm::value_ptr(uv), uvData + i * uvStride, sizeof(float) * 2);
+                v.positionU.w = uv.x;
+                v.normalV.w = uv.y;
+
+                this->vertices.push_back(v);
+            }
+
+            // Get indices data
+            const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
+            const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
+            const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
+            const uint8_t* indexBufferAddress = indexBuffer.data.data();
+            const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
+            size_t indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
+
+            size_t triangleOffset = this->triangles.size();
+            for (size_t i = 0; i < indexAccessor.count; i += 3)
+            {
+                const uint8_t* data = indexData + (i * indexStride);
+
+                Triangle triangle;
+                if (indexStride == 1)
+                {
+                    glm::vec<3, uint8_t> index;
+                    std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
+                    triangle.v1 = (int)(index.x + vertexOffset);
+                    triangle.v2 = (int)(index.y + vertexOffset);
+                    triangle.v3 = (int)(index.z + vertexOffset);
+                }
+                else if (indexStride == 2)
+                {
+                    glm::vec<3, uint16_t> index;
+                    std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
+                    triangle.v1 = (int)(index.x + vertexOffset);
+                    triangle.v2 = (int)(index.y + vertexOffset);
+                    triangle.v3 = (int)(index.z + vertexOffset);
+                }
+                else if (indexStride == 4)
+                {
+                    glm::vec<3, uint32_t> index;
+                    std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
+                    triangle.v1 = (int)(index.x + vertexOffset);
+                    triangle.v2 = (int)(index.y + vertexOffset);
+                    triangle.v3 = (int)(index.z + vertexOffset);
+                }
+                else if (indexStride == 8)
+                {
+                    glm::vec<3, uint64_t> index;
+                    std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
+                    triangle.v1 = (int)(index.x + vertexOffset);
+                    triangle.v2 = (int)(index.y + vertexOffset);
+                    triangle.v3 = (int)(index.z + vertexOffset);
+                }
+                else
+                {
+                    throw std::runtime_error("Unsupported index stride");
+                }
+
+                this->triangles.push_back(triangle);
+            }
+
+            // Mesh
+            Mesh mesh;
+            mesh.triangleOffset = triangleOffset;
+            mesh.triangleSize = indexAccessor.count / 3;
+            int meshId = this->addMesh(mesh, gltfMesh.name);
+
+            meshMap[gltfMeshId].push_back(glm::ivec2(meshId, primitive.material));
+        }
+    }
+
+    return meshMap;
 }
 
 void Scene::GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
@@ -148,134 +275,15 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
     }
 }
 
-void Scene::GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform)
-{
-    for (tinygltf::Primitive primitive : gltfMesh.primitives)
-    {
-        if (primitive.mode != TINYGLTF_MODE_TRIANGLES)
-        {
-            continue;
-        }
-
-        const tinygltf::Accessor& positionAccessor = model.accessors[primitive.attributes["POSITION"]];
-        const tinygltf::BufferView& positionBufferView = model.bufferViews[positionAccessor.bufferView];
-        const tinygltf::Buffer& positionBuffer = model.buffers[positionBufferView.buffer];
-        const uint8_t* positionBufferAddress = positionBuffer.data.data();
-
-        const tinygltf::Accessor& normalAccessor = model.accessors[primitive.attributes["NORMAL"]];
-        const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
-        const tinygltf::Buffer& normalBuffer = model.buffers[normalBufferView.buffer];
-        const uint8_t* normalBufferAddress = normalBuffer.data.data();
-
-        const tinygltf::Accessor& uvAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
-        const tinygltf::BufferView& uvBufferView = model.bufferViews[uvAccessor.bufferView];
-        const tinygltf::Buffer& uvBuffer = model.buffers[uvBufferView.buffer];
-        const uint8_t* uvBufferAddress = uvBuffer.data.data();
-
-        size_t vertexOffset = this->vertices.size();
-        for (size_t i = 0; i < positionAccessor.count; i++)
-        {
-            Vertex v;
-
-            // Position
-            const uint8_t* positionData = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset + (i * sizeof(float) * 3);
-            std::memcpy(glm::value_ptr(v.positionU), positionData, sizeof(float) * 3);
-
-            // Normal
-            const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset + (i * sizeof(float) * 3);
-            std::memcpy(glm::value_ptr(v.normalV), normalData, sizeof(float) * 3);
-
-            // Texture coordinate
-            const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset + (i * sizeof(float) * 2);
-            glm::vec2 uv;
-            std::memcpy(glm::value_ptr(uv), uvData, sizeof(float) * 2);
-            v.positionU.w = uv.x;
-            v.normalV.w = uv.y;
-
-            this->vertices.push_back(v);
-        }
-
-        // Indices
-        const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
-        const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
-        const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
-        const uint8_t* indexBufferAddress = indexBuffer.data.data();
-        int indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
-        size_t triangleOffset = this->triangles.size();
-        for (size_t i = 0; i < indexAccessor.count; i += 3)
-        {
-            const uint8_t* data = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset + (i * indexStride);
-
-            Triangle triangle;
-            if (indexStride == 1)
-            {
-                glm::vec<3, uint8_t> index;
-                std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
-                triangle.v1 = (int)(index.x + vertexOffset);
-                triangle.v2 = (int)(index.y + vertexOffset);
-                triangle.v3 = (int)(index.z + vertexOffset);
-            }
-            else if (indexStride == 2)
-            {
-                glm::vec<3, uint16_t> index;
-                std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
-                triangle.v1 = (int)(index.x + vertexOffset);
-                triangle.v2 = (int)(index.y + vertexOffset);
-                triangle.v3 = (int)(index.z + vertexOffset);
-            }
-            else if (indexStride == 4)
-            {
-                glm::vec<3, uint32_t> index;
-                std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
-                triangle.v1 = (int)(index.x + vertexOffset);
-                triangle.v2 = (int)(index.y + vertexOffset);
-                triangle.v3 = (int)(index.z + vertexOffset);
-            }
-            else if (indexStride == 8)
-            {
-                glm::vec<3, uint64_t> index;
-                std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
-                triangle.v1 = (int)(index.x + vertexOffset);
-                triangle.v2 = (int)(index.y + vertexOffset);
-                triangle.v3 = (int)(index.z + vertexOffset);
-            }
-            else
-            {
-                throw std::runtime_error("Unsupported index stride");
-            }
-
-            this->triangles.push_back(triangle);
-        }
-
-        // Mesh
-        Mesh mesh;
-        mesh.materialId = primitive.material;
-        mesh.triangleOffset = triangleOffset;
-        mesh.triangleSize = indexAccessor.count / 3;
-        mesh.transform = transform;
-        mesh.transformInv = glm::inverse(transform);
-        this->addMesh(mesh, gltfMesh.name);
-    }
-}
-
-void Scene::GLTFcamera(const glm::mat4 transform)
-{
-    Camera c;
-    c.position = glm::vec3(transform[3]);
-    c.forward = -glm::normalize(glm::vec3(transform[2]));
-    c.up = glm::normalize(glm::vec3(transform[1]));
-    this->cameras.push_back(c);
-}
-
-void Scene::GLTFnodes(const tinygltf::Model& model, const glm::mat4& world)
+void Scene::GLTFnodes(const tinygltf::Model& model, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& world)
 {
     for (int index : model.scenes[model.defaultScene].nodes)
     {
-        this->GLTFtraverseNode(model, model.nodes[index], world);
+        this->GLTFtraverseNode(model, model.nodes[index], meshMap, world);
     }
 }
 
-void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform)
+void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& globalTransform)
 {
     glm::mat4 localTransform(1);
     if (!node.matrix.empty())
@@ -310,7 +318,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
 
         if (!node.rotation.empty())
         {
-            rotate = glm::toMat4(glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]));
+            rotate = (glm::mat4)glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
         }
 
         if (!node.translation.empty())
@@ -325,17 +333,29 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
 
     if (node.children.empty() && node.mesh != -1)
     {
-        this->GLTFmesh(model, model.meshes[node.mesh], transform);
+        for (glm::ivec2 primitive : meshMap.at(node.mesh))
+        {
+            MeshInstance meshInstance;
+            meshInstance.meshId = primitive.x;
+            meshInstance.materialId = primitive.y;
+            meshInstance.transform = transform;
+            meshInstance.transformInv = glm::inverse(meshInstance.transform);
+            this->meshInstances.push_back(meshInstance);
+        }
     }
 
     if (node.children.empty() && node.camera != -1)
     {
-        this->GLTFcamera(transform);
+        Camera c;
+        c.position = glm::vec3(transform[3]);
+        c.forward = -glm::normalize(glm::vec3(transform[2]));
+        c.up = glm::normalize(glm::vec3(transform[1]));
+        this->cameras.push_back(c);
     }
 
     for (int child : node.children)
     {
-        this->GLTFtraverseNode(model, model.nodes[child], transform);
+        this->GLTFtraverseNode(model, model.nodes[child], meshMap, transform);
     }
 }
 
@@ -356,7 +376,7 @@ void Scene::buildBVH(Mesh& mesh)
             glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
             glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
             glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
-            return FastBVH::BBox<float>(glm::min(glm::min(v1, v2), v3), glm::max(glm::max(v1, v2), v3));
+            return FastBVH::BBox<float>(glm::min(v1, v2, v3), glm::max(v1, v2, v3));
         }
     };
 

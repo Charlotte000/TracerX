@@ -27,7 +27,7 @@ int main()
     Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb");
 
     // Move the mesh
-    Mesh& ajaxMesh = scene.meshes[0];
+    MeshInstance& ajaxMesh = scene.meshInstances[0];
     ajaxMesh.transform = glm::translate(ajaxMesh.transform, glm::vec3(0, -.5f, 0));
     ajaxMesh.transformInv = glm::inverse(ajaxMesh.transform);
 

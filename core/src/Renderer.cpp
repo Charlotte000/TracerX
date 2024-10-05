@@ -50,6 +50,7 @@ void Renderer::shutdown()
     this->vertexBuffer.shutdown();
     this->triangleBuffer.shutdown();
     this->meshBuffer.shutdown();
+    this->meshInstanceBuffer.shutdown();
     this->materialBuffer.shutdown();
     this->bvhBuffer.shutdown();
 
@@ -202,8 +203,9 @@ void Renderer::loadScene(const Scene& scene)
     this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(Node));
     this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
     this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(Triangle));
+    this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
 
-    this->updateSceneMeshes(scene);
+    this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);
 }
 
@@ -212,9 +214,9 @@ void Renderer::updateSceneMaterials(const Scene& scene)
     this->materialBuffer.update(scene.materials.data(), scene.materials.size() * sizeof(Material));
 }
 
-void Renderer::updateSceneMeshes(const Scene& scene)
+void Renderer::updateSceneMeshInstances(const Scene& scene)
 {
-    this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
+    this->meshInstanceBuffer.update(scene.meshInstances.data(), scene.meshInstances.size() * sizeof(MeshInstance));
 }
 
 void Renderer::initData()
@@ -232,6 +234,7 @@ void Renderer::initData()
     this->vertexBuffer.init();
     this->triangleBuffer.init();
     this->meshBuffer.init();
+    this->meshInstanceBuffer.init();
     this->materialBuffer.init();
     this->bvhBuffer.init();
 
@@ -258,8 +261,9 @@ void Renderer::bindData()
     this->vertexBuffer.bind(0);
     this->triangleBuffer.bind(1);
     this->meshBuffer.bind(2);
-    this->materialBuffer.bind(3);
-    this->bvhBuffer.bind(4);
+    this->meshInstanceBuffer.bind(3);
+    this->materialBuffer.bind(4);
+    this->bvhBuffer.bind(5);
 
     // Uniform buffers
     this->cameraBuffer.bind(0);

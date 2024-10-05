@@ -90,9 +90,13 @@ void main()
     float depth;
     vec4 accumColor = PathTrace(ray, albedo, normal, depth) + imageLoad(AccumulatorImage, TexelCoord);
 
+    if (SampleCount == 0)
+    {
+        imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1)));
+        imageStore(NormalImage, TexelCoord, NormalToColor(normal));
+        imageStore(DepthImage, TexelCoord, DepthToColor(depth));
+    }
+
     imageStore(AccumulatorImage, TexelCoord, accumColor);
-    imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1)));
-    imageStore(NormalImage, TexelCoord, NormalToColor(normal));
-    imageStore(DepthImage, TexelCoord, DepthToColor(depth));
     imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1)));
 }

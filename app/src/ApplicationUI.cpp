@@ -315,37 +315,18 @@ void Application::sidePanel()
 
 void Application::viewTexture(GLint textureHandler)
 {
-    ImGui::BeginChild("viewTexture", ImVec2(0, 0), 0, ImGuiWindowFlags_NoScrollbar);
+    ImGui::BeginChild("viewTexture");
 
-    ImVec2 size = ImGui::GetContentRegionAvail();
-    float aspectRatio = size.x / size.y;
-    glm::vec2 imSize = this->renderer.getSize();
-    float imAspectRatio = imSize.x / imSize.y;
-    ImVec2 imageSize = imAspectRatio > aspectRatio ?
-        ImVec2(size.x, size.y / imAspectRatio * aspectRatio) :
-        ImVec2(size.x * imAspectRatio / aspectRatio, size.y);
-    ImVec2 imagePos(
-        (ImGui::GetWindowSize().x - imageSize.x) * 0.5f,
-        (ImGui::GetWindowSize().y - imageSize.y) * 0.5f);
-
-    ImVec4 borderColor = this->renderer.environment.transparent ?
-        ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight] :
-        ImVec4(0, 0, 0, 0);
-    ImGui::SetCursorPos(imagePos);
-    ImGui::Image(
-        (void*)(intptr_t)textureHandler,
-        imageSize,
-        ImVec2(0, 1),
-        ImVec2(1, 0),
-        ImVec4(1, 1, 1, 1),
-        borderColor);
+    glm::vec2 imagePos, imageSize;
+    this->drawFillImage(textureHandler, this->renderer.getSize(), glm::vec3(1, 1, 1), true, imagePos, imageSize);
 
     glm::mat4 view = this->renderer.camera.createView();
     glm::mat4 projection = this->renderer.camera.createProjection(
-        imSize.x,
-        imSize.y,
+        this->renderer.getSize().x,
+        this->renderer.getSize().y,
         this->renderer.minRenderDistance,
         this->renderer.maxRenderDistance);
+
     ImGuizmo::SetRect(
         imagePos.x + ImGui::GetWindowPos().x,
         imagePos.y + ImGui::GetWindowPos().y,
@@ -355,19 +336,19 @@ void Application::viewTexture(GLint textureHandler)
 
     switch (this->property)
     {
-        case PropertyOption::PMesh:
+        case PropertyOption::PMeshInstance:
         {
-            Mesh& mesh = *(Mesh*)this->edit;
+            MeshInstance& meshInstance = *(MeshInstance*)this->edit;
             if (ImGuizmo::Manipulate(
                 glm::value_ptr(view),
                 glm::value_ptr(projection),
                 this->operation,
                 this->mode,
-                glm::value_ptr(mesh.transform)))
+                glm::value_ptr(meshInstance.transform)))
             {
-                mesh.transformInv = glm::inverse(mesh.transform);
+                meshInstance.transformInv = glm::inverse(meshInstance.transform);
                 this->renderer.clear();
-                this->renderer.updateSceneMeshes(this->scene);
+                this->renderer.updateSceneMeshInstances(this->scene);
             }
 
             break;
@@ -436,14 +417,14 @@ void Application::propertySelector()
 
         if (ImGui::TreeNode("Meshes"))
         {
-            for (size_t i = 0; i < this->scene.meshes.size(); i++)
+            for (size_t i = 0; i < this->scene.meshInstances.size(); i++)
             {
-                Mesh& mesh = this->scene.meshes[i];
-                std::string name = this->scene.meshNames[i] + "##" + std::to_string(i);
-                if (ImGui::Selectable(name.c_str(), this->property == PropertyOption::PMesh && &mesh == this->edit))
+                MeshInstance& meshInstance = this->scene.meshInstances[i];
+                std::string name = this->scene.meshNames[meshInstance.meshId] + "##" + std::to_string(i);
+                if (ImGui::Selectable(name.c_str(), this->property == PropertyOption::PMeshInstance && &meshInstance == this->edit))
                 {
-                    this->property = PropertyOption::PMesh;
-                    this->edit = &mesh;
+                    this->property = PropertyOption::PMeshInstance;
+                    this->edit = &meshInstance;
                 }
             }
 
@@ -493,8 +474,8 @@ void Application::propertyEditor()
         case PropertyOption::PEnvironment:
             this->propertyEnvironment();
             break;
-        case PropertyOption::PMesh:
-            this->propertyMesh(*(Mesh*)this->edit);
+        case PropertyOption::PMeshInstance:
+            this->propertyMeshInstance(*(MeshInstance*)this->edit);
             break;
         case PropertyOption::PMaterial:
             this->propertyMaterial(*(Material*)this->edit);
@@ -692,7 +673,7 @@ void Application::propertyEnvironment()
     }
 }
 
-void Application::propertyMesh(Mesh& mesh)
+void Application::propertyMeshInstance(MeshInstance& meshInstance)
 {
     if (!ImGui::BeginTabBar("propertyMeshMenu"))
     {
@@ -703,10 +684,10 @@ void Application::propertyMesh(Mesh& mesh)
 
     if (ImGui::BeginTabItem("Info"))
     {
-        ImGui::Text("%d triangles", mesh.triangleSize);
+        ImGui::Text("%d triangles", this->scene.meshes[meshInstance.meshId].triangleSize);
         if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
         {
-            this->renderer.camera.lookAt(mesh.transform[3]);
+            this->renderer.camera.lookAt(meshInstance.transform[3]);
             this->renderer.clear();
         }
 
@@ -719,7 +700,7 @@ void Application::propertyMesh(Mesh& mesh)
         float rotation[3];
         float scale[3];
         ImGuizmo::DecomposeMatrixToComponents(
-            glm::value_ptr(mesh.transform),
+            glm::value_ptr(meshInstance.transform),
             translation,
             rotation,
             scale);
@@ -732,8 +713,8 @@ void Application::propertyMesh(Mesh& mesh)
                 translation,
                 rotation,
                 scale,
-                glm::value_ptr(mesh.transform));
-            mesh.transformInv = glm::inverse(mesh.transform);
+                glm::value_ptr(meshInstance.transform));
+            meshInstance.transformInv = glm::inverse(meshInstance.transform);
             changed = true;
         }
 
@@ -754,15 +735,15 @@ void Application::propertyMesh(Mesh& mesh)
     {
         if (ImGui::BeginCombo(
             "Material",
-            mesh.materialId == -1 ? "None" : this->scene.materialNames[mesh.materialId].c_str()))
+            meshInstance.materialId == -1 ? "None" : this->scene.materialNames[meshInstance.materialId].c_str()))
         {
             for (size_t index = 0; index < this->scene.materials.size(); index++)
             {
                 if (ImGui::Selectable(
                     (this->scene.materialNames[index] + "##meshMaterial" + std::to_string(index)).c_str(),
-                    index == mesh.materialId))
+                    index == meshInstance.materialId))
                 {
-                    mesh.materialId = index;
+                    meshInstance.materialId = index;
                     changed = true;
                 }
             }
@@ -770,11 +751,14 @@ void Application::propertyMesh(Mesh& mesh)
             ImGui::EndCombo();
         }
 
+        ImGui::BeginDisabled(meshInstance.materialId == -1);
         if (ImGui::Button("Edit", ImVec2(-1, 0)))
         {
-            this->edit = &this->scene.materials[mesh.materialId];
+            this->edit = &this->scene.materials[meshInstance.materialId];
             this->property = PropertyOption::PMaterial;
         }
+
+        ImGui::EndDisabled();
 
         ImGui::EndTabItem();
     }
@@ -784,7 +768,7 @@ void Application::propertyMesh(Mesh& mesh)
     if (changed)
     {
         this->renderer.clear();
-        this->renderer.updateSceneMeshes(this->scene);
+        this->renderer.updateSceneMeshInstances(this->scene);
     }
 }
 
@@ -896,13 +880,31 @@ bool Application::materialTextureSelector(const std::string& name, int& currentT
             this->currentTextureId = currentTextureId;
         }
 
-        ImGui::Image(
-            (void*)(intptr_t)this->textureView.getHandler(),
-            ImVec2(200, 200),
-            ImVec2(0, 0),
-            ImVec2(1, 1),
-            ImVec4(tintColor.r, tintColor.g, tintColor.b, 1));
+        glm::vec2 imagePos, imageSize;
+        ImGui::BeginChild("viewMaterialTexture");
+        this->drawFillImage(this->textureView.getHandler(), this->textureView.size, tintColor, false, imagePos, imageSize);
+        ImGui::EndChild();
     }
 
     return changed;
+}
+
+void Application::drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec3 tintColor, bool flipY, glm::vec2& imagePos, glm::vec2& imageSize)
+{
+    float srcAspectRatio = srcSize.x / srcSize.y;
+
+    glm::vec2 dstSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+    float dstAspectRatio = dstSize.x / dstSize.y;
+
+    imageSize = dstSize * (srcAspectRatio > dstAspectRatio ? glm::vec2(1, dstAspectRatio / srcAspectRatio) : glm::vec2(srcAspectRatio / dstAspectRatio, 1));
+    imagePos = (glm::vec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y) - imageSize) * 0.5f;
+
+    ImGui::SetCursorPos(ImVec2(imagePos.x, imagePos.y));
+    ImGui::Image(
+        (void*)(intptr_t)textureHandler,
+        ImVec2(imageSize.x - 2, imageSize.y - 2),
+        flipY ? ImVec2(0, 1) : ImVec2(0, 0),
+        flipY ? ImVec2(1, 0) : ImVec2(1, 1),
+        ImVec4(tintColor.r, tintColor.g, tintColor.b, 1),
+        ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
 }

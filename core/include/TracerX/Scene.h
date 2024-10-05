@@ -11,6 +11,7 @@
 #include "Material.h"
 #include "Triangle.h"
 
+#include <map>
 #include <vector>
 #include <string>
 #include <FastBVH.h>
@@ -74,6 +75,13 @@ public:
     std::vector<std::string> meshNames;
 
     /**
+     * @brief The meshe instances in the scene.
+     * 
+     * The index of the mesh instance in the vector is the mesh instance ID used in the scene.
+     */
+    std::vector<MeshInstance> meshInstances;
+
+    /**
      * @brief The default cameras in the scene.
      */
     std::vector<Camera> cameras;
@@ -119,12 +127,11 @@ public:
 private:
     std::vector<core::Node> bvh;
 
+    std::map<int, std::vector<glm::ivec2>> GLTFmeshes(const tinygltf::Model& model);
     void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
     void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
-    void GLTFmesh(const tinygltf::Model& model, const tinygltf::Mesh& gltfMesh, const glm::mat4 transform);
-    void GLTFcamera(const glm::mat4 transform);
-    void GLTFnodes(const tinygltf::Model& model, const glm::mat4& world);
-    void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const glm::mat4& globalTransform);
+    void GLTFnodes(const tinygltf::Model& model, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& world);
+    void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& globalTransform);
     void buildBVH(Mesh& mesh);
 
     friend class Renderer;

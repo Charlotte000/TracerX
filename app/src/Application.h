@@ -40,7 +40,7 @@ private:
         PSettings,
         PCamera,
         PEnvironment,
-        PMesh,
+        PMeshInstance,
         PMaterial,
     } property = PropertyOption::PContorls;
     void* edit = nullptr;
@@ -71,8 +71,9 @@ private:
     void propertySettings();
     void propertyCamera();
     void propertyEnvironment();
-    void propertyMesh(TracerX::Mesh& mesh);
+    void propertyMeshInstance(TracerX::MeshInstance& meshInstance);
     void propertyMaterial(TracerX::Material& material);
     bool materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor);
+    void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec3 tintColor, bool flipY, glm::vec2& imagePos, glm::vec2& imageSize);
 #pragma endregion UI
 };

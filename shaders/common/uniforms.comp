@@ -22,12 +22,17 @@ layout(std430, binding=2) readonly buffer MeshSSBO
     Mesh Meshes[];
 };
 
-layout(std430, binding=3) readonly buffer MaterialSSBO
+layout(std430, binding=3) readonly buffer MeshInstanceSSBO
+{
+    MeshInstance MeshInstances[];
+};
+
+layout(std430, binding=4) readonly buffer MaterialSSBO
 {
     Material Materials[];
 };
 
-layout(std430, binding=4) readonly buffer BvhSSBO
+layout(std430, binding=5) readonly buffer BvhSSBO
 {
     Node BVH[];
 };
@@ -66,4 +71,48 @@ vec3 GetEnvironment(in Ray ray)
     float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
     float v = acos(direction.y) * INV_PI;
     return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
+}
+
+Material GetMaterial(inout CollisionManifold manifold, out float alpha)
+{
+    alpha = 1;
+    Material material = Materials[manifold.MaterialId];
+
+    if (material.AlbedoTextureId >= 0)
+    {
+        vec4 texAlbedo = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
+        material.AlbedoColor *= texAlbedo.rgb;
+        alpha = texAlbedo.a;
+    }
+
+    if (material.MetalnessTextureId >= 0)
+    {
+        material.Metalness *= texture(Textures, vec3(manifold.TextureCoordinate, material.MetalnessTextureId)).b;
+    }
+
+    if (material.RoughnessTextureId >= 0)
+    {
+        material.Roughness *= texture(Textures, vec3(manifold.TextureCoordinate, material.RoughnessTextureId)).g;
+    }
+
+    material.EmissionColor *= material.EmissionStrength;
+    if (material.EmissionTextureId >= 0)
+    {
+        material.EmissionColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.EmissionTextureId)).rgb;
+    }
+
+    if (material.NormalTextureId >= 0)
+    {
+        vec3 texNormal = texture(Textures, vec3(manifold.TextureCoordinate, material.NormalTextureId)).rgb;
+        texNormal.y = 1 - texNormal.y;
+        texNormal = normalize(texNormal * 2 - 1);
+        manifold.Normal = normalize(manifold.Tangent * texNormal.x + manifold.Bitangent * texNormal.y + manifold.Normal * texNormal.z);
+    }
+
+    if (!manifold.IsFrontFace)
+    {
+        manifold.Normal *= -1;
+    }
+
+    return material;
 }

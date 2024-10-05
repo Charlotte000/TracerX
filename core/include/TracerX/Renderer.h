@@ -267,14 +267,14 @@ public:
     void updateSceneMaterials(const Scene& scene);
 
     /**
-     * @brief Updates the meshes in the scene.
+     * @brief Updates the mesh instances in the scene.
      * 
-     * Use this method to update only the meshes in the scene.
+     * Use this method to update only the mesh instances in the scene.
      * 
-     * @param scene The scene containing the updated meshes.
+     * @param scene The scene containing the updated mesh instances.
      * @see Renderer::loadScene to update the entire scene.
      */
-    void updateSceneMeshes(const Scene& scene);
+    void updateSceneMeshInstances(const Scene& scene);
 private:
     unsigned int sampleCount = 0;
     core::Shader shader;
@@ -287,6 +287,7 @@ private:
     core::StorageBuffer vertexBuffer;
     core::StorageBuffer triangleBuffer;
     core::StorageBuffer meshBuffer;
+    core::StorageBuffer meshInstanceBuffer;
     core::StorageBuffer materialBuffer;
     core::StorageBuffer bvhBuffer;
     core::UniformBuffer cameraBuffer;
