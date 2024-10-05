@@ -116,6 +116,15 @@ struct Material
      */
     int normalTextureId = -1;
 
+    enum class AlphaMode : unsigned int
+    {
+        Opaque = 0,
+        Blend = 1,
+        Mask = 2,
+    } alphaMode = AlphaMode::Opaque;
+
+    float alphaCutoff = .5f;
+
     /**
      * @brief Creates a light source material with the given emission color and strength.
      * @param emissionColor The color of the emission.
@@ -155,6 +164,9 @@ struct Material
      * @return The mirror material.
      */
     static Material mirror();
+private:
+    int padding1;
+    int padding2;
 };
 
 }

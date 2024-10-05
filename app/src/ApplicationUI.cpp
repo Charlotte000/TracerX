@@ -338,7 +338,7 @@ void Application::viewTexture(GLint textureHandler)
     {
         case PropertyOption::PMeshInstance:
         {
-            MeshInstance& meshInstance = *(MeshInstance*)this->edit;
+            MeshInstance& meshInstance = *static_cast<MeshInstance*>(this->edit);
             if (ImGuizmo::Manipulate(
                 glm::value_ptr(view),
                 glm::value_ptr(projection),
@@ -475,10 +475,10 @@ void Application::propertyEditor()
             this->propertyEnvironment();
             break;
         case PropertyOption::PMeshInstance:
-            this->propertyMeshInstance(*(MeshInstance*)this->edit);
+            this->propertyMeshInstance(*static_cast<MeshInstance*>(this->edit));
             break;
         case PropertyOption::PMaterial:
-            this->propertyMaterial(*(Material*)this->edit);
+            this->propertyMaterial(*static_cast<Material*>(this->edit));
             break;
     }
 
@@ -823,6 +823,44 @@ void Application::propertyMaterial(Material& material)
     if (ImGui::BeginTabItem("Normal"))
     {
         changed |= this->materialTextureSelector("normal", material.normalTextureId, glm::vec3(1));
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Alpha"))
+    {
+        if (ImGui::BeginCombo(
+            "Alpha mode",
+            material.alphaMode == Material::AlphaMode::Opaque ?
+            "Opaque" :
+            material.alphaMode == Material::AlphaMode::Blend ?
+            "Blend" :
+            "Mask"))
+        {
+            if (ImGui::Selectable("Opaque", material.alphaMode == Material::AlphaMode::Opaque))
+            {
+                changed = true;
+                material.alphaMode = Material::AlphaMode::Opaque;
+            }
+
+            if (ImGui::Selectable("Blend", material.alphaMode == Material::AlphaMode::Blend))
+            {
+                changed = true;
+                material.alphaMode = Material::AlphaMode::Blend;
+            }
+
+            if (ImGui::Selectable("Mask", material.alphaMode == Material::AlphaMode::Mask))
+            {
+                changed = true;
+                material.alphaMode = Material::AlphaMode::Mask;
+            }
+
+            ImGui::EndCombo();
+        }
+
+        ImGui::BeginDisabled(material.alphaMode != Material::AlphaMode::Mask);
+        changed |= ImGui::SliderFloat("Alpha cutoff", &material.alphaCutoff, 0.f, 1.f);
+        ImGui::EndDisabled();
+
         ImGui::EndTabItem();
     }
 

@@ -4,14 +4,17 @@
 #pragma once
 
 #include "Scene.h"
+#include "Image.h"
 #include "Shader.h"
 #include "Camera.h"
+#include "Texture.h"
 #include "Environment.h"
 #include "TextureArray.h"
 #include "StorageBuffer.h"
 #include "UniformBuffer.h"
 
 #include <vector>
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 namespace TracerX

@@ -56,7 +56,8 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
         normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV),
         materialId,
         det >= 0);
-    return true;
+
+    return AlphaBlend(manifold);
 }
 
 bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNear, out float tFar)

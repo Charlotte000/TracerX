@@ -237,7 +237,7 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
         Material material;
 
         material.albedoColor = glm::vec3(pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]);
-        material.roughness = pbr.roughnessFactor;
+        material.roughness = std::sqrt((float)pbr.roughnessFactor);
         material.emissionColor = glm::vec3(gltfMaterial.emissiveFactor[0], gltfMaterial.emissiveFactor[1], gltfMaterial.emissiveFactor[2]);
         material.emissionStrength = 1;
         material.metalness = pbr.metallicFactor;
@@ -247,6 +247,20 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
         material.emissionTextureId = gltfMaterial.emissiveTexture.index;
         material.roughnessTextureId = pbr.metallicRoughnessTexture.index;
         material.normalTextureId = gltfMaterial.normalTexture.index;
+
+        material.alphaCutoff = gltfMaterial.alphaCutoff;
+        if (gltfMaterial.alphaMode == "BLEND")
+        {
+            material.alphaMode = Material::AlphaMode::Blend;
+        }
+        else if (gltfMaterial.alphaMode == "MASK")
+        {
+            material.alphaMode = Material::AlphaMode::Mask;
+        }
+        else
+        {
+            material.alphaMode = Material::AlphaMode::Opaque;
+        }
 
         if (gltfMaterial.extensions.find("KHR_materials_ior") != gltfMaterial.extensions.end())
         {
@@ -331,7 +345,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
 
     glm::mat4 transform = globalTransform * localTransform;
 
-    if (node.children.empty() && node.mesh != -1)
+    if (node.mesh != -1)
     {
         for (glm::ivec2 primitive : meshMap.at(node.mesh))
         {
@@ -344,7 +358,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
         }
     }
 
-    if (node.children.empty() && node.camera != -1)
+    if (node.camera != -1)
     {
         Camera c;
         c.position = glm::vec3(transform[3]);

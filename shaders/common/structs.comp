@@ -39,6 +39,10 @@ struct Material
     int EmissionTextureId;
     int RoughnessTextureId;
     int NormalTextureId;
+    uint AlphaMode;
+    float AlphaCutoff;
+    int Padding1;
+    int Padding2;
 };
 
 struct Vertex
@@ -96,3 +100,7 @@ struct Node
 const uint ReinhardToneMap = 0;
 const uint ACESToneMap = 1;
 const uint ACESfittedToneMap = 2;
+
+const uint OpaqueAlphaMode = 0;
+const uint BlendAlphaMode = 1;
+const uint MaskAlphaMode = 2;

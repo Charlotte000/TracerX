@@ -73,16 +73,14 @@ vec3 GetEnvironment(in Ray ray)
     return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
 }
 
-Material GetMaterial(inout CollisionManifold manifold, out float alpha)
+Material GetMaterial(inout CollisionManifold manifold)
 {
-    alpha = 1;
     Material material = Materials[manifold.MaterialId];
 
     if (material.AlbedoTextureId >= 0)
     {
         vec4 texAlbedo = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
         material.AlbedoColor *= texAlbedo.rgb;
-        alpha = texAlbedo.a;
     }
 
     if (material.MetalnessTextureId >= 0)

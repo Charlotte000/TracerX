@@ -11,6 +11,7 @@ const float TWO_PI     = 6.28318530717958648;
 #include "common/uniforms.comp"
 #include "common/random.comp"
 #include "common/transforms.comp"
+#include "common/alphaBlend.comp"
 #include "common/intersection.comp"
 #include "common/bsdf.comp"
 #include "common/tonemap.comp"

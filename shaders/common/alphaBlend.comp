@@ -1,0 +1,21 @@
+bool AlphaBlend(in CollisionManifold manifold)
+{
+    Material material = Materials[manifold.MaterialId];
+    if (material.AlphaMode == OpaqueAlphaMode || material.AlbedoTextureId < 0)
+    {
+        return true;
+    }
+
+    float alpha = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId)).a;
+    if (material.AlphaMode == BlendAlphaMode)
+    {
+        return alpha > RandomValue();
+    }
+
+    if (material.AlphaMode == MaskAlphaMode)
+    {
+        return alpha > material.AlphaCutoff;
+    }
+
+    return true;
+}

@@ -1,13 +1,6 @@
 bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in CollisionManifold manifold)
 {
-    float alpha;
-    Material material = GetMaterial(manifold, alpha);
-
-    // Alpha blend
-    if (alpha < RandomValue())
-    {
-        return false;
-    }
+    Material material = GetMaterial(manifold);
 
     vec3 specularDir = reflect(ray.Direction, manifold.Normal);
     vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
