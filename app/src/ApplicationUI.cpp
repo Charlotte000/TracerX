@@ -102,6 +102,16 @@ void SetupImGuiStyle()
     style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
 }
 
+glm::vec2 toVec2(const ImVec2 v)
+{
+    return glm::vec2(v.x, v.y);
+}
+
+ImVec2 toImVec2(const glm::vec2 v)
+{
+    return ImVec2(v.x, v.y);
+}
+
 void Application::initUI()
 {
     ImGui::CreateContext();
@@ -317,8 +327,24 @@ void Application::viewTexture(GLint textureHandler)
 {
     ImGui::BeginChild("viewTexture");
 
+    // Draw filled image
+    glm::vec2 lo = this->viewCenter - this->viewSize * .5f;
+    glm::vec2 up = this->viewCenter + this->viewSize * .5f;
     glm::vec2 imagePos, imageSize;
-    this->drawFillImage(textureHandler, this->renderer.getSize(), glm::vec3(1, 1, 1), true, imagePos, imageSize);
+    this->drawFillImage(textureHandler, this->renderer.getSize(), imagePos, imageSize, glm::vec3(1), lo, up, true);
+
+    this->viewActive = ImGui::IsItemHovered();
+
+    // Draw zoom rectangle
+    lo = lo * imageSize + toVec2(ImGui::GetWindowPos()) + imagePos;
+    up = up * imageSize + toVec2(ImGui::GetWindowPos()) + imagePos;
+    ImGui::GetForegroundDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
+
+    if (this->viewSize != glm::vec2(1))
+    {
+        ImGui::EndChild();
+        return;
+    }
 
     glm::mat4 view = this->renderer.camera.createView();
     glm::mat4 projection = this->renderer.camera.createProjection(
@@ -327,6 +353,7 @@ void Application::viewTexture(GLint textureHandler)
         this->renderer.minRenderDistance,
         this->renderer.maxRenderDistance);
 
+    // Draw gizmos
     ImGuizmo::SetRect(
         imagePos.x + ImGui::GetWindowPos().x,
         imagePos.y + ImGui::GetWindowPos().y,
@@ -920,29 +947,35 @@ bool Application::materialTextureSelector(const std::string& name, int& currentT
 
         glm::vec2 imagePos, imageSize;
         ImGui::BeginChild("viewMaterialTexture");
-        this->drawFillImage(this->textureView.getHandler(), this->textureView.size, tintColor, false, imagePos, imageSize);
+        this->drawFillImage(this->textureView.getHandler(), this->textureView.size, imagePos, imageSize, tintColor);
         ImGui::EndChild();
     }
 
     return changed;
 }
 
-void Application::drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec3 tintColor, bool flipY, glm::vec2& imagePos, glm::vec2& imageSize)
+void Application::drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor, glm::vec2 uvLo, glm::vec2 uvUp, bool flipY)
 {
+    if (flipY)
+    {
+        uvLo.y = 1 - uvLo.y;
+        uvUp.y = 1 - uvUp.y;
+    }
+
     float srcAspectRatio = srcSize.x / srcSize.y;
 
-    glm::vec2 dstSize(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+    glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
     float dstAspectRatio = dstSize.x / dstSize.y;
 
     imageSize = dstSize * (srcAspectRatio > dstAspectRatio ? glm::vec2(1, dstAspectRatio / srcAspectRatio) : glm::vec2(srcAspectRatio / dstAspectRatio, 1));
-    imagePos = (glm::vec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y) - imageSize) * 0.5f;
+    imagePos = (toVec2(ImGui::GetWindowSize()) - imageSize) * 0.5f;
 
-    ImGui::SetCursorPos(ImVec2(imagePos.x, imagePos.y));
+    ImGui::SetCursorPos(toImVec2(imagePos));
     ImGui::Image(
         (void*)(intptr_t)textureHandler,
-        ImVec2(imageSize.x - 2, imageSize.y - 2),
-        flipY ? ImVec2(0, 1) : ImVec2(0, 0),
-        flipY ? ImVec2(1, 0) : ImVec2(1, 1),
+        toImVec2(imageSize - 2.f),
+        toImVec2(uvLo),
+        toImVec2(uvUp),
         ImVec4(tintColor.r, tintColor.g, tintColor.b, 1),
         ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
 }

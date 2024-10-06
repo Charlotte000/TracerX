@@ -39,11 +39,34 @@ void Application::init(glm::uvec2 size)
             switch (key)
             {
                 case GLFW_KEY_C:
-                    glfwSetInputMode(window, GLFW_CURSOR, glfwGetInputMode(window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+                    app->enableCameraControl = !app->enableCameraControl;
+                    glfwSetInputMode(window, GLFW_CURSOR, app->enableCameraControl ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+                    app->viewCenter = glm::vec2(.5f);
+                    app->viewSize = glm::vec2(1);
                     break;
                 case GLFW_KEY_SPACE:
                     app->enableRendering = !app->enableRendering;
                     break;
+            }
+        }
+    });
+
+    glfwSetScrollCallback(this->window, [](GLFWwindow* window, double xOffset, double yOffset)
+    {
+        Application* app = (Application*)glfwGetWindowUserPointer(window);
+        if (app->viewActive && !app->enableCameraControl)
+        {
+            if (yOffset > 0)
+            {
+                app->viewSize *= .9f;
+                app->viewSize = glm::max(glm::vec2(.0001f), app->viewSize);
+                app->viewCenter = glm::clamp(app->viewCenter, app->viewSize * .5f, 1.f - app->viewSize * .5f);
+            }
+            else if (yOffset < 0)
+            {
+                app->viewSize *= 1.1f;
+                app->viewSize = glm::min(glm::vec2(1), app->viewSize);
+                app->viewCenter = glm::clamp(app->viewCenter, app->viewSize * .5f, 1.f - app->viewSize * .5f);
             }
         }
     });
@@ -129,8 +152,14 @@ void Application::control()
     ImGuiIO io = ImGui::GetIO();
     float elapsedTime = io.DeltaTime;
     glm::vec2 mouseDelta = glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->cameraRotationSpeed / 100.f;
-    
-    if (glfwGetInputMode(this->window, GLFW_CURSOR) != GLFW_CURSOR_DISABLED)
+
+    if (this->viewActive && !this->enableCameraControl && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        this->viewCenter -= glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->viewSize / (glm::vec2)this->renderer.getSize();
+        this->viewCenter = glm::clamp(this->viewCenter, this->viewSize * .5f, 1.f - this->viewSize * .5f);
+    }
+
+    if (!this->enableCameraControl)
     {
         return;
     }

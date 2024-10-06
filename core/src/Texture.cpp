@@ -6,13 +6,13 @@
 using namespace TracerX;
 using namespace TracerX::core;
 
-void Texture::init(GLint internalFormat)
+void Texture::init(GLint internalFormat, GLint sampler)
 {
     this->internalFormat = internalFormat;
     glGenTextures(1, &this->handler);
     glBindTexture(GL_TEXTURE_2D, this->handler);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, sampler);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, sampler);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

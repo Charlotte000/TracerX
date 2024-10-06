@@ -222,11 +222,11 @@ void Renderer::updateSceneMeshInstances(const Scene& scene)
 void Renderer::initData()
 {
     // Textures
-    this->accumulationTexture.init(GL_RGBA32F);
-    this->albedoTexture.init(GL_RGBA32F);
-    this->normalTexture.init(GL_RGBA32F);
-    this->depthTexture.init(GL_R32F);
-    this->toneMapTexture.init(GL_RGBA32F);
+    this->accumulationTexture.init(GL_RGBA32F, GL_NEAREST);
+    this->albedoTexture.init(GL_RGBA32F, GL_NEAREST);
+    this->normalTexture.init(GL_RGBA32F, GL_NEAREST);
+    this->depthTexture.init(GL_R32F, GL_NEAREST);
+    this->toneMapTexture.init(GL_RGBA32F, GL_NEAREST);
     this->environment.texture.init(GL_RGBA32F);
     this->textureArray.init(GL_RGBA32F);
 

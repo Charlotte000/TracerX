@@ -15,7 +15,7 @@ class Texture
 public:
     glm::uvec2 size;
 
-    void init(GLint internalFormat);
+    void init(GLint internalFormat, GLint sampler = GL_LINEAR);
     void bind(unsigned int binding);
     void bindImage(unsigned int binding, GLenum access = GL_READ_WRITE);
     void update(const Image& image);

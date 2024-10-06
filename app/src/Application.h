@@ -33,6 +33,10 @@ private:
     unsigned int samplesPerFrame = 1;
     bool enableRendering = false;
     bool enablePreview = true;
+    bool enableCameraControl = false;
+    glm::vec2 viewCenter = glm::vec2(.5f);
+    glm::vec2 viewSize = glm::vec2(1);
+    bool viewActive = false;
     enum class PropertyOption
     {
         PContorls,
@@ -74,6 +78,6 @@ private:
     void propertyMeshInstance(TracerX::MeshInstance& meshInstance);
     void propertyMaterial(TracerX::Material& material);
     bool materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor);
-    void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec3 tintColor, bool flipY, glm::vec2& imagePos, glm::vec2& imageSize);
+    void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false);
 #pragma endregion UI
 };
