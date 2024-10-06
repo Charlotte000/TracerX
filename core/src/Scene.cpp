@@ -139,63 +139,77 @@ std::map<int, std::vector<glm::ivec2>> Scene::GLTFmeshes(const tinygltf::Model& 
             }
 
             // Get indices data
-            const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
-            const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
-            const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
-            const uint8_t* indexBufferAddress = indexBuffer.data.data();
-            const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
-            size_t indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
-
             size_t triangleOffset = this->triangles.size();
-            for (size_t i = 0; i < indexAccessor.count; i += 3)
+            if (primitive.indices >= 0)
             {
-                const uint8_t* data = indexData + (i * indexStride);
+                const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
+                const tinygltf::BufferView& indexBufferView = model.bufferViews[indexAccessor.bufferView];
+                const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
+                const uint8_t* indexBufferAddress = indexBuffer.data.data();
+                const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
+                size_t indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
 
-                Triangle triangle;
-                if (indexStride == 1)
+                for (size_t i = 0; i < indexAccessor.count; i += 3)
                 {
-                    glm::vec<3, uint8_t> index;
-                    std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
-                    triangle.v1 = (int)(index.x + vertexOffset);
-                    triangle.v2 = (int)(index.y + vertexOffset);
-                    triangle.v3 = (int)(index.z + vertexOffset);
-                }
-                else if (indexStride == 2)
-                {
-                    glm::vec<3, uint16_t> index;
-                    std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
-                    triangle.v1 = (int)(index.x + vertexOffset);
-                    triangle.v2 = (int)(index.y + vertexOffset);
-                    triangle.v3 = (int)(index.z + vertexOffset);
-                }
-                else if (indexStride == 4)
-                {
-                    glm::vec<3, uint32_t> index;
-                    std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
-                    triangle.v1 = (int)(index.x + vertexOffset);
-                    triangle.v2 = (int)(index.y + vertexOffset);
-                    triangle.v3 = (int)(index.z + vertexOffset);
-                }
-                else if (indexStride == 8)
-                {
-                    glm::vec<3, uint64_t> index;
-                    std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
-                    triangle.v1 = (int)(index.x + vertexOffset);
-                    triangle.v2 = (int)(index.y + vertexOffset);
-                    triangle.v3 = (int)(index.z + vertexOffset);
-                }
-                else
-                {
-                    throw std::runtime_error("Unsupported index stride");
-                }
+                    const uint8_t* data = indexData + (i * indexStride);
 
-                this->triangles.push_back(triangle);
+                    Triangle triangle;
+                    if (indexStride == 1)
+                    {
+                        glm::vec<3, uint8_t> index;
+                        std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
+                        triangle.v1 = (int)(index.x + vertexOffset);
+                        triangle.v2 = (int)(index.y + vertexOffset);
+                        triangle.v3 = (int)(index.z + vertexOffset);
+                    }
+                    else if (indexStride == 2)
+                    {
+                        glm::vec<3, uint16_t> index;
+                        std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
+                        triangle.v1 = (int)(index.x + vertexOffset);
+                        triangle.v2 = (int)(index.y + vertexOffset);
+                        triangle.v3 = (int)(index.z + vertexOffset);
+                    }
+                    else if (indexStride == 4)
+                    {
+                        glm::vec<3, uint32_t> index;
+                        std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
+                        triangle.v1 = (int)(index.x + vertexOffset);
+                        triangle.v2 = (int)(index.y + vertexOffset);
+                        triangle.v3 = (int)(index.z + vertexOffset);
+                    }
+                    else if (indexStride == 8)
+                    {
+                        glm::vec<3, uint64_t> index;
+                        std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
+                        triangle.v1 = (int)(index.x + vertexOffset);
+                        triangle.v2 = (int)(index.y + vertexOffset);
+                        triangle.v3 = (int)(index.z + vertexOffset);
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unsupported index stride");
+                    }
+
+                    this->triangles.push_back(triangle);
+                }
+            }
+            else
+            {
+                for (size_t i = vertexOffset; i < this->vertices.size(); i += 3)
+                {
+                    Triangle triangle;
+                    triangle.v1 = i + 0;
+                    triangle.v2 = i + 1;
+                    triangle.v3 = i + 2;
+                    this->triangles.push_back(triangle);
+                }
             }
 
             // Mesh
             Mesh mesh;
             mesh.triangleOffset = triangleOffset;
-            mesh.triangleSize = indexAccessor.count / 3;
+            mesh.triangleSize = this->triangles.size() - triangleOffset;
             int meshId = this->addMesh(mesh, gltfMesh.name);
 
             meshMap[gltfMeshId].push_back(glm::ivec2(meshId, primitive.material));
@@ -291,7 +305,12 @@ void Scene::GLTFmaterials(const std::vector<tinygltf::Material>& materials)
 
 void Scene::GLTFnodes(const tinygltf::Model& model, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& world)
 {
-    for (int index : model.scenes[model.defaultScene].nodes)
+    if (model.scenes.empty())
+    {
+        throw std::runtime_error("No scenes are provided");
+    }
+
+    for (int index : model.scenes[std::clamp(model.defaultScene, 0, (int)model.scenes.size() - 1)].nodes)
     {
         this->GLTFtraverseNode(model, model.nodes[index], meshMap, world);
     }
@@ -345,7 +364,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
 
     glm::mat4 transform = globalTransform * localTransform;
 
-    if (node.mesh != -1)
+    if (node.mesh >= 0)
     {
         for (glm::ivec2 primitive : meshMap.at(node.mesh))
         {
@@ -358,7 +377,7 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
         }
     }
 
-    if (node.camera != -1)
+    if (node.camera >= 0)
     {
         Camera c;
         c.position = glm::vec3(transform[3]);

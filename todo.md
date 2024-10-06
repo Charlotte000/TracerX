@@ -1,4 +1,5 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
+- get look at distance
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5

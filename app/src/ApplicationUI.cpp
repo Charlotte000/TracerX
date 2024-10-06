@@ -648,8 +648,8 @@ void Application::propertyCamera()
     changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 180);
     ImGui::Separator();
 
-    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000);
-    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000);
+    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
+    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
     ImGui::Separator();
 
     changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
@@ -718,7 +718,7 @@ void Application::propertyEnvironment()
     ImGui::TextDisabled("(?)");
     if (ImGui::BeginItemTooltip())
     {
-        ImGui::Text("Hold LCrtl for snapping");
+        ImGui::Text("Hold LCtrl for snapping");
         ImGui::EndTooltip();
     }
 
@@ -786,7 +786,7 @@ void Application::propertyMeshInstance(MeshInstance& meshInstance)
         ImGui::TextDisabled("(?)");
         if (ImGui::BeginItemTooltip())
         {
-            ImGui::Text("Hold LCrtl for snapping");
+            ImGui::Text("Hold LCtrl for snapping");
             ImGui::EndTooltip();
         }
 
