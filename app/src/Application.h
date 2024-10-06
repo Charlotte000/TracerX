@@ -34,7 +34,8 @@ private:
     bool enableRendering = false;
     bool enablePreview = true;
     bool enableCameraControl = false;
-    glm::vec2 viewCenter = glm::vec2(.5f);
+    glm::vec2 viewUVCenter = glm::vec2(.5f);
+    glm::vec2 viewUVSize = glm::vec2(1);
     glm::vec2 viewSize = glm::vec2(1);
     bool viewActive = false;
     enum class PropertyOption
@@ -52,6 +53,7 @@ private:
     ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
     ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
     TracerX::core::Texture textureView;
+    float snap = 1;
 
     static inline const std::filesystem::path assetsFolder = std::filesystem::relative(ASSETS_PATH).string();
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";

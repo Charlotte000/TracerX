@@ -155,7 +155,7 @@ void Application::mainMenuBar()
 
     if (ImGui::BeginMenu("File"))
     {
-        if (ImGui::MenuItem("Open scene"))
+        if (ImGui::MenuItem("Open scene", "(glb/gltf)"))
         {
             const char* patterns[] = { "*.glb", "*.gltf" };
             const char* path = tinyfd_openFileDialog(
@@ -184,9 +184,9 @@ void Application::mainMenuBar()
             }
         }
 
-        if (ImGui::MenuItem("Open environment"))
+        if (ImGui::MenuItem("Open environment", "(png/hdr/jpg)"))
         {
-            const char* patterns[] = { "*.png", "*.hdr", ".jpg" };
+            const char* patterns[] = { "*.png", "*.hdr", "*.jpg" };
             const char* fileName = tinyfd_openFileDialog(
                 "Open environment image",
                 Application::environmentFolder.string().c_str(),
@@ -208,7 +208,7 @@ void Application::mainMenuBar()
             }
         }
 
-        if (ImGui::MenuItem("Save (as png)"))
+        if (ImGui::MenuItem("Save", "(png)"))
         {
             const char* patterns[] = { "*.png" };
             const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
@@ -221,22 +221,35 @@ void Application::mainMenuBar()
         ImGui::EndMenu();
     }
 
-    if (ImGui::MenuItem("Info"))
-    {
-        ImGui::OpenPopup("infoMenu");
-    }
-
-    if (ImGui::BeginPopup("infoMenu"))
+    if (ImGui::BeginMenu("Controls"))
     {
         ImGui::Text(
-            "C - start/stop camera control mode\n"
-            "W, A, S, D - camera forward, left, backward, right movement\n"
-            "LShift, LCtrl - camera up, down movement\n"
-            "Mouse - camera rotation\n"
-            "Q, E - camera tilt\n"
-            "Space - start/stop rendering"
+            "Space - start/stop rendering\n"
+            "Mouse wheel - zoom in/out\n"
+            "Mouse drag - move view\n"
         );
-        ImGui::EndPopup();
+
+        if (ImGui::BeginMenu("Camera"))
+        {
+            ImGui::Text(
+                "C - start/stop camera control mode\n"
+                "W, A, S, D - camera forward, left, backward, right movement\n"
+                "LShift, LCtrl - camera up, down movement\n"
+                "Mouse - camera rotation\n"
+                "Q, E - camera tilt\n"
+            );
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("About"))
+    {
+        ImGui::Text("Made by: Charlotte000");
+        ImGui::Text("Version: v3");
+        ImGui::EndMenu();
     }
 
     float elapsedTime = ImGui::GetIO().DeltaTime;
@@ -328,19 +341,19 @@ void Application::viewTexture(GLint textureHandler)
     ImGui::BeginChild("viewTexture");
 
     // Draw filled image
-    glm::vec2 lo = this->viewCenter - this->viewSize * .5f;
-    glm::vec2 up = this->viewCenter + this->viewSize * .5f;
-    glm::vec2 imagePos, imageSize;
-    this->drawFillImage(textureHandler, this->renderer.getSize(), imagePos, imageSize, glm::vec3(1), lo, up, true);
+    glm::vec2 lo = this->viewUVCenter - this->viewUVSize * .5f;
+    glm::vec2 up = this->viewUVCenter + this->viewUVSize * .5f;
+    glm::vec2 viewPos;
+    this->drawFillImage(textureHandler, this->renderer.getSize(), viewPos, this->viewSize, glm::vec3(1), lo, up, true);
 
     this->viewActive = ImGui::IsItemHovered();
 
     // Draw zoom rectangle
-    lo = lo * imageSize + toVec2(ImGui::GetWindowPos()) + imagePos;
-    up = up * imageSize + toVec2(ImGui::GetWindowPos()) + imagePos;
-    ImGui::GetForegroundDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
+    lo = lo * this->viewSize + toVec2(ImGui::GetWindowPos()) + viewPos;
+    up = up * this->viewSize + toVec2(ImGui::GetWindowPos()) + viewPos;
+    ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
 
-    if (this->viewSize != glm::vec2(1))
+    if (this->viewUVSize != glm::vec2(1))
     {
         ImGui::EndChild();
         return;
@@ -355,12 +368,13 @@ void Application::viewTexture(GLint textureHandler)
 
     // Draw gizmos
     ImGuizmo::SetRect(
-        imagePos.x + ImGui::GetWindowPos().x,
-        imagePos.y + ImGui::GetWindowPos().y,
-        imageSize.x,
-        imageSize.y);
+        viewPos.x + ImGui::GetWindowPos().x,
+        viewPos.y + ImGui::GetWindowPos().y,
+        this->viewSize.x,
+        this->viewSize.y);
     ImGuizmo::SetDrawlist();
 
+    glm::vec3 snap(this->snap);
     switch (this->property)
     {
         case PropertyOption::PMeshInstance:
@@ -371,7 +385,9 @@ void Application::viewTexture(GLint textureHandler)
                 glm::value_ptr(projection),
                 this->operation,
                 this->mode,
-                glm::value_ptr(meshInstance.transform)))
+                glm::value_ptr(meshInstance.transform),
+                nullptr,
+                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
             {
                 meshInstance.transformInv = glm::inverse(meshInstance.transform);
                 this->renderer.clear();
@@ -387,8 +403,10 @@ void Application::viewTexture(GLint textureHandler)
                 glm::value_ptr(view),
                 glm::value_ptr(projection),
                 ImGuizmo::OPERATION::ROTATE,
-                ImGuizmo::MODE::WORLD,
-                glm::value_ptr(rotation)))
+                ImGuizmo::MODE::LOCAL,
+                glm::value_ptr(rotation),
+                nullptr,
+                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
             {
                 this->renderer.environment.rotation = rotation;
                 this->renderer.clear();
@@ -396,6 +414,8 @@ void Application::viewTexture(GLint textureHandler)
 
             break;
         }
+        default:
+            break;
     }
 
     ImGui::EndChild();
@@ -531,7 +551,7 @@ void Application::propertyControls()
     }
 #endif
 
-    if (ImGui::Checkbox("Enable preview", &this->enablePreview) & this->renderer.getSampleCount() == 1)
+    if (ImGui::Checkbox("Enable preview", &this->enablePreview) & (this->renderer.getSampleCount() == 1))
     {
         this->renderer.clear();
     }
@@ -583,6 +603,7 @@ void Application::propertySettings()
     glm::ivec2 size = this->renderer.getSize();
     if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
     {
+        size = glm::max(glm::ivec2(1), size);
         this->renderer.resize(size);
     }
 
@@ -692,6 +713,15 @@ void Application::propertyEnvironment()
         changed = true;
     }
 
+    ImGui::DragFloat("Snap value", &this->snap, 1, 0.f, 1000000);
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::Text("Hold LCrtl for snapping");
+        ImGui::EndTooltip();
+    }
+
     changed |= ImGui::Checkbox("Transparent background", &this->renderer.environment.transparent);
 
     if (changed)
@@ -750,6 +780,15 @@ void Application::propertyMeshInstance(MeshInstance& meshInstance)
         ImGui::RadioButton("Rotate", (int*)&this->operation, (int)ImGuizmo::OPERATION::ROTATE);
         ImGui::SameLine();
         ImGui::RadioButton("Scale", (int*)&this->operation, (int)ImGuizmo::OPERATION::SCALE);
+
+        ImGui::DragFloat("Snap value", &this->snap, 1, 0.f, 1000000);
+        ImGui::SameLine();
+        ImGui::TextDisabled("(?)");
+        if (ImGui::BeginItemTooltip())
+        {
+            ImGui::Text("Hold LCrtl for snapping");
+            ImGui::EndTooltip();
+        }
 
         ImGui::RadioButton("World", (int*)&this->mode, (int)ImGuizmo::MODE::WORLD);
         ImGui::SameLine();
@@ -895,6 +934,14 @@ void Application::propertyMaterial(Material& material)
     {
         changed |= ImGui::DragFloat("Density", &material.density, .001f, 0, 100);
         changed |= ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100);
+        ImGui::SameLine();
+        ImGui::TextDisabled("(?)");
+        if (ImGui::BeginItemTooltip())
+        {
+            ImGui::Text("If you notice black spots, try to increase the max bounce count");
+            ImGui::EndTooltip();
+        }
+
         ImGui::EndTabItem();
     }
 

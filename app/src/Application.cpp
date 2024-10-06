@@ -41,8 +41,8 @@ void Application::init(glm::uvec2 size)
                 case GLFW_KEY_C:
                     app->enableCameraControl = !app->enableCameraControl;
                     glfwSetInputMode(window, GLFW_CURSOR, app->enableCameraControl ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-                    app->viewCenter = glm::vec2(.5f);
-                    app->viewSize = glm::vec2(1);
+                    app->viewUVCenter = glm::vec2(.5f);
+                    app->viewUVSize = glm::vec2(1);
                     break;
                 case GLFW_KEY_SPACE:
                     app->enableRendering = !app->enableRendering;
@@ -58,15 +58,15 @@ void Application::init(glm::uvec2 size)
         {
             if (yOffset > 0)
             {
-                app->viewSize *= .9f;
-                app->viewSize = glm::max(glm::vec2(.0001f), app->viewSize);
-                app->viewCenter = glm::clamp(app->viewCenter, app->viewSize * .5f, 1.f - app->viewSize * .5f);
+                app->viewUVSize *= .9f;
+                app->viewUVSize = glm::max(glm::vec2(.0001f), app->viewUVSize);
+                app->viewUVCenter = glm::clamp(app->viewUVCenter, app->viewUVSize * .5f, 1.f - app->viewUVSize * .5f);
             }
             else if (yOffset < 0)
             {
-                app->viewSize *= 1.1f;
-                app->viewSize = glm::min(glm::vec2(1), app->viewSize);
-                app->viewCenter = glm::clamp(app->viewCenter, app->viewSize * .5f, 1.f - app->viewSize * .5f);
+                app->viewUVSize *= 1.1f;
+                app->viewUVSize = glm::min(glm::vec2(1), app->viewUVSize);
+                app->viewUVCenter = glm::clamp(app->viewUVCenter, app->viewUVSize * .5f, 1.f - app->viewUVSize * .5f);
             }
         }
     });
@@ -155,8 +155,8 @@ void Application::control()
 
     if (this->viewActive && !this->enableCameraControl && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
-        this->viewCenter -= glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->viewSize / (glm::vec2)this->renderer.getSize();
-        this->viewCenter = glm::clamp(this->viewCenter, this->viewSize * .5f, 1.f - this->viewSize * .5f);
+        this->viewUVCenter -= glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->viewUVSize / this->viewSize;
+        this->viewUVCenter = glm::clamp(this->viewUVCenter, this->viewUVSize * .5f, 1.f - this->viewUVSize * .5f);
     }
 
     if (!this->enableCameraControl)
