@@ -1,6 +1,9 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
-- image save as hdr and other
-- may be divide scene and GLTF loader
+
+- divide scene and GLTF load
+- scene quad support (divide to triangles)
+- ui renderRect
+- use #include <algorithm>
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5

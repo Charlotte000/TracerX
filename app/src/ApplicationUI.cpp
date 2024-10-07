@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include <iostream>
 #include <stdexcept>
 #include <tinyfiledialogs.h>
 #include <imgui_impl_glfw.h>
@@ -167,8 +168,9 @@ void Application::mainMenuBar()
                         this->property = PropertyOption::PContorls;
                     }
                 }
-                catch (const std::runtime_error&)
+                catch (const std::runtime_error& err)
                 {
+                    std::cerr << err.what() << std::endl;
                     tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
                 }
             }
@@ -191,8 +193,9 @@ void Application::mainMenuBar()
                     this->renderer.environment.loadFromFile(fileName);
                     this->renderer.clear();
                 }
-                catch (const std::runtime_error&)
+                catch (const std::runtime_error& err)
                 {
+                    std::cerr << err.what() << std::endl;
                     tinyfd_messageBox("Error", "Invalid environment file", "ok", "warning", 0);
                 }
             }
@@ -204,7 +207,15 @@ void Application::mainMenuBar()
             const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
             if (fileName != nullptr)
             {
-                this->renderer.getImage().saveToFile(fileName);
+                try
+                {
+                    this->renderer.getImage().saveToFile(fileName);
+                }
+                catch (const std::runtime_error& err)
+                {
+                    std::cerr << err.what() << std::endl;
+                    tinyfd_messageBox("Error", "Failed to save the image", "ok", "warning", 0);
+                }
             }
         }
 
@@ -537,7 +548,15 @@ void Application::propertyControls()
 #ifdef TX_DENOISE
     if (ImGui::Button("Denoise", ImVec2(-1, 0)))
     {
-        this->renderer.denoise();
+        try
+        {
+            this->renderer.denoise();
+        }
+        catch (const std::runtime_error& err)
+        {
+            std::cerr << err.what() << std::endl;
+            tinyfd_messageBox("Error", "Failed to denoise", "ok", "warning", 0);
+        }
     }
 #endif
 

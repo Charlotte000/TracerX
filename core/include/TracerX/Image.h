@@ -35,10 +35,12 @@ public:
     static Image empty;
 
     /**
-     * @brief Saves the image to a PNG file.
+     * @brief Saves the image to a file.
      * @param path The path of the file to save the image to.
+     * @param isHDR Whether to save the image as a high dynamic range (HDR) image. If not, the image is saved as a PNG image.
+     * @throws std::runtime_error Thrown if the image fails to save.
      */
-    void saveToFile(const std::filesystem::path& path) const;
+    void saveToFile(const std::filesystem::path& path, bool isHDR = false) const;
  
     /**
      * @brief Resizes the image to the specified size.

@@ -8,7 +8,6 @@
 #include "TracerX/Material.h"
 #include "TracerX/Renderer.h"
 
-#include <iostream>
 #include <stdexcept>
 #ifdef TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
@@ -72,7 +71,7 @@ void Renderer::render(unsigned int samples)
     this->renderRect(samples, glm::uvec2(0, 0), this->accumulationTexture.size);
 }
 
-void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize)
+void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount)
 {
     this->bindData();
     this->updateUniform(rectPosition, rectSize, false);
@@ -86,6 +85,11 @@ void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uv
     }
 
     Shader::stopUse();
+
+    if (!updateSampleCount)
+    {
+        this->sampleCount -= samples;
+    }
 }
 
 void Renderer::toneMap()
@@ -137,18 +141,19 @@ void Renderer::denoise()
     const char* errorMessage;
     if (device.getError(errorMessage) != oidn::Error::None)
     {
-        std::cerr << "Failed to denoise: " << errorMessage << std::endl;
+        colorBuf.release();
+        albedoBuf.release();
+        normalBuf.release();
+        throw std::runtime_error("Failed to denoise: " + std::string(errorMessage));
     }
-    else
-    {
-        // Update accumulator
-        float* data = (float*)colorBuf.getData();
-        std::vector<float> pixels(data, data + colorImage.pixels.size());
-        this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
 
-        // Update output
-        this->toneMap();
-    }
+    // Update accumulator
+    float* data = (float*)colorBuf.getData();
+    std::vector<float> pixels(data, data + colorImage.pixels.size());
+    this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
+
+    // Update output
+    this->toneMap();
 
     // Release buffers
     colorBuf.release();

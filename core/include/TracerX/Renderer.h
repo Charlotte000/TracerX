@@ -158,15 +158,16 @@ public:
      * @brief Renders a rectangular region of the image.
      * 
      * Renders the specified region of the image using accumulation and tone mapping.
-     * The sample count is incremented.
+     * The sample count is incremented if updateSampleCount is true.
      * The rendered image can be accessed using Renderer::getImage().
      * 
      * @param samples The number of samples to render.
      * @param rectPosition The position of the top-left corner of the region.
      * @param rectSize The size of the region.
+     * @param updateSampleCount Whether to update the sample count.
      * @see Renderer::render to render the entire image.
      */
-    void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize);
+    void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount = true);
 
     /**
      * @brief Applies tone mapping to the rendered image.
@@ -181,6 +182,8 @@ public:
      * @brief Applies denoising to the rendered image.
      * 
      * Use this method after rendering the scene to reduce noise.
+     * 
+     * @throws std::runtime_error Thrown if the denoising fails.
      */
     void denoise();
 #endif

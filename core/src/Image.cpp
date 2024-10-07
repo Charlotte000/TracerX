@@ -8,7 +8,6 @@
 #include "TracerX/Image.h"
 
 #include <assert.h>
-#include <iostream>
 #include <stdexcept>
 #include <stb_image.h>
 #include <stb_image_write.h>
@@ -18,18 +17,29 @@ using namespace TracerX;
 
 Image Image::empty;
 
-void Image::saveToFile(const std::filesystem::path& path) const
+void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
 {
+    stbi_flip_vertically_on_write(true);
+
+    if (isHDR)
+    {
+        if (!stbi_write_hdr(path.string().c_str(), this->size.x, this->size.y, 4, this->pixels.data()))
+        {
+            throw std::runtime_error("Failed to save the image");
+        }
+
+        return;
+    }
+
     std::vector<unsigned char> data(this->pixels.size());
     for (size_t i = 0; i < this->pixels.size(); i++)
     {
         data[i] = (unsigned char)(this->pixels[i] * 255);
     }
 
-    stbi_flip_vertically_on_write(true);
     if (!stbi_write_png(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 0))
     {
-        std::cerr << "Failed to save the image" << std::endl;
+        throw std::runtime_error("Failed to save the image");
     }
 }
 
