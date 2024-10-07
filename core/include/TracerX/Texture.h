@@ -10,6 +10,10 @@
 namespace TracerX::core
 {
 
+/**
+ * @brief An OpenGL 2D texture wrapper class.
+ * @remark Should not be used directly and is only used internally by the renderer.
+ */
 class Texture
 {
 public:

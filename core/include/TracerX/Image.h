@@ -11,7 +11,7 @@ namespace TracerX
 {
 
 /**
- * @brief Represents an image with a size and pixel data.
+ * @brief An array of pixel data stored in RAM.
  */
 struct Image
 {
@@ -35,7 +35,7 @@ public:
     static Image empty;
 
     /**
-     * @brief Saves the image to a file.
+     * @brief Saves the image to a PNG file.
      * @param path The path of the file to save the image to.
      */
     void saveToFile(const std::filesystem::path& path) const;

@@ -23,61 +23,69 @@ namespace TracerX
 {
 
 /**
- * @brief Represents a scene in the TracerX rendering engine.
+ * @brief A collection of all the data that makes up a 3D scene to be rendered.
  */
 class Scene
 {
 public:
     /**
      * @brief The vertices of the scene.
+     * 
+     * The index of the vertex in the vector is the Triangle::v1, Triangle::v2, or Triangle::v3 of the triangles in the scene.
      */
     std::vector<core::Vertex> vertices;
 
     /**
      * @brief The triangles of the scene.
+     * 
+     * The range of the triangles in the vector is [Mesh::triangleOffset, Mesh::triangleOffset + Mesh::triangleSize) for each mesh in the scene.
      */
     std::vector<core::Triangle> triangles;
 
     /**
      * @brief The textures used in the scene.
      * 
-     * The index of the texture in the vector is the texture ID used in the scene.
+     * The index of the texture in the vector is the material texture ID used in the scene.
      */
     std::vector<Image> textures;
 
     /**
      * @brief The names of the textures.
+     * 
+     * Does not affect the rendering of the scene and is used for debugging and UI purposes.
      */
     std::vector<std::string> textureNames;
 
     /**
      * @brief The materials used in the scene.
      * 
-     * The index of the material in the vector is the material ID used in the scene.
+     * The index of the material in the vector is the MeshInstance::materialId used in the scene.
      */
     std::vector<Material> materials;
 
     /**
      * @brief The names of the materials.
+     * 
+     * Does not affect the rendering of the scene and is used for debugging and UI purposes.
      */
     std::vector<std::string> materialNames;
 
     /**
      * @brief The meshes in the scene.
      * 
-     * The index of the mesh in the vector is the mesh ID used in the scene.
+     * The index of the mesh in the vector is the MeshInstance::meshId used in the scene.
      */
     std::vector<Mesh> meshes;
 
     /**
      * @brief The names of the meshes.
+     * 
+     * Does not affect the rendering of the scene and is used for debugging and UI purposes.
      */
     std::vector<std::string> meshNames;
 
     /**
-     * @brief The meshe instances in the scene.
-     * 
-     * The index of the mesh instance in the vector is the mesh instance ID used in the scene.
+     * @brief The mesh instances in the scene.
      */
     std::vector<MeshInstance> meshInstances;
 
@@ -119,7 +127,7 @@ public:
 
     /**
      * @brief Loads a scene from a GLTF file.
-     * @param path The path of the file to load the GLTF scene from.
+     * @param path The path of the file to load the GLTF scene from. The file can be in GLTF or GLB format.
      * @return The loaded scene.
      * @throws std::runtime_error Thrown if the GLTF file fails to load.
      */

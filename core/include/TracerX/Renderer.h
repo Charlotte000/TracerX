@@ -21,27 +21,34 @@ namespace TracerX
 {
 
 /**
- * @brief Represents a renderer in the TracerX rendering engine.
+ * @brief The main class of the TracerX rendering engine.
  * 
  * The renderer uses a path tracing algorithm to render the scene.
+ * 
  * The process consists of two stages:
+ * 
  * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors.
+ * 
  * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
  * 
- * The renderer uses a compute shader to trace the rays and update the colors.
- * The scene data consists of the vertices, triangles, materials, and meshes of the scene.
+ * An OpenGL compute shader is utilized to trace rays and update the image.
+ * It is responsible for initializing and destroying the OpenGL and GLEW contexts.
  * 
- * The renderer can render a full frame or a rectangular region of the frame.
- * The renderer supports gamma correction and environment settings.
+ * The renderer can handle both full-frame and rectangular region rendering.
+ * It supports gamma correction and environment settings.
+ * Additionally, the renderer can apply denoising to the final image.
  * 
- * The renderer can also apply denoising to the rendered image.
- * 
- * The renderer is responsible for initializing OpenGL and GLEW.
- * 
- * @see Renderer::init
- * @see Renderer::loadScene
- * @see Renderer::render
- * @see Renderer::shutdown
+ * The renderer can be used in the following way:
+ * @code {.cpp}
+ * TracerX::Renderer renderer;
+ * renderer.init(glm::uvec2(800, 600));
+ * renderer.loadScene(scene);
+ * renderer.render(100);
+ * renderer.denoise();
+ * TracerX::Image image = renderer.getImage();
+ * image.saveToFile("output.png");
+ * renderer.shutdown();
+ * @endcode
  */
 class Renderer
 {
@@ -78,9 +85,8 @@ public:
     Environment environment;
 
     /**
-     * @brief The tone mapping mode used in rendering.
+     * @brief Determines how the renderer maps the colors to the display.
      * 
-     * The tone mapping mode determines how the renderer maps the colors to the display.
      */
     enum class ToneMapMode : unsigned int
     {
@@ -107,7 +113,11 @@ public:
          * This algorithm is faster than the full ACES algorithm but still produces good results.
          */
         ACESfitted = 2,
-    } toneMapMode = ToneMapMode::Reinhard;
+    }
+    /**
+     * @brief The tone mapping mode used by the renderer.
+     */
+    toneMapMode = ToneMapMode::Reinhard;
 
     /**
      * @brief Initializes the renderer with the specified size.
@@ -120,8 +130,8 @@ public:
     void init(glm::uvec2 size);
 
     /**
-     * @brief Resizes the renderer to the specified size.
-     * @param size The new size of the renderer.
+     * @brief Resizes the rendered image to the specified size.
+     * @param size The new size of the image.
      */
     void resize(glm::uvec2 size);
 
@@ -162,12 +172,15 @@ public:
      * @brief Applies tone mapping to the rendered image.
      * 
      * This method does not path trace the scene. It only updates the tone mapped image.
+     * Use this method after changing the tone mapping settings or the gamma value.
      */
     void toneMap();
 
 #ifdef TX_DENOISE
     /**
      * @brief Applies denoising to the rendered image.
+     * 
+     * Use this method after rendering the scene to reduce noise.
      */
     void denoise();
 #endif
@@ -183,6 +196,7 @@ public:
     /**
      * @brief Gets the OpenGL texture handler for the rendered image.
      * @return The texture handler.
+     * @see Renderer::getImage to load the image from the GPU to the CPU.
      */
     GLuint getTextureHandler() const;
 
@@ -193,6 +207,7 @@ public:
      * The color information does not include lighting or shadows and does not depend on the viewing angle.
      * 
      * @return The texture handler.
+     * @see Renderer::getAlbedoImage to load the image from the GPU to the CPU.
      */
     GLuint getAlbedoTextureHandler() const;
 
@@ -200,8 +215,10 @@ public:
      * @brief Gets the OpenGL texture handler for the normal image.
      * 
      * The normal image contains the normal information of the first hit of the rays.
+     * To get the world-space normal, use the formula: normal = 2 * color - 1.
      * 
      * @return The texture handler.
+     * @see Renderer::getNormalImage to load the image from the GPU to the CPU.
      */
     GLuint getNormalTextureHandler() const;
 
@@ -209,8 +226,12 @@ public:
      * @brief Gets the OpenGL texture handler for the depth image.
      * 
      * The depth image contains the depth information of the first hit of the rays.
+     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
+     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
+     * Where near is the minimum render distance and far is the maximum render distance.
      * 
      * @return The texture handler.
+     * @see Renderer::getDepthImage to load the image from the GPU to the CPU.
      */
     GLuint getDepthTextureHandler() const;
 
@@ -220,6 +241,7 @@ public:
      * The accumulation image contains the accumulated colors of the rendered image.
      * 
      * @return The texture handler.
+     * @see Renderer::getAccumulatorImage to load the image from the GPU to the CPU.
      */
     GLuint getAccumulatorTextureHandler() const;
 
@@ -227,8 +249,58 @@ public:
      * @brief Loads the rendered texture from the GPU to the CPU.
      * @return The rendered image.
      * @see Image::saveToFile to save the image to a file.
+     * @see Renderer::getTextureHandler to get the OpenGL texture handler.
      */
     Image getImage() const;
+
+    /**
+     * @brief Loads the albedo texture from the GPU to the CPU.
+     * 
+     * The albedo image contains the color information of the first hit of the rays.
+     * The color information does not include lighting or shadows and does not depend on the viewing angle.
+     * 
+     * @return The albedo image.
+     * @see Image::saveToFile to save the image to a file.
+     * @see Renderer::getAlbedoTextureHandler to get the OpenGL texture handler.
+     */
+    Image getAlbedoImage() const;
+
+    /**
+     * @brief Loads the normal texture from the GPU to the CPU.
+     * 
+     * The normal image contains the normal information of the first hit of the rays.
+     * To get the world-space normal, use the formula: normal = 2 * color - 1.
+     * 
+     * @return The normal image.
+     * @see Image::saveToFile to save the image to a file.
+     * @see Renderer::getNormalTextureHandler to get the OpenGL texture handler.
+     */
+    Image getNormalImage() const;
+
+    /**
+     * @brief Loads the depth texture from the GPU to the CPU.
+     * 
+     * The depth image contains the depth information of the first hit of the rays.
+     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
+     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
+     * Where near is the minimum render distance and far is the maximum render distance.
+     * 
+     * @return The depth image.
+     * @see Image::saveToFile to save the image to a file.
+     * @see Renderer::getDepthTextureHandler to get the OpenGL texture handler.
+     */
+    Image getDepthImage() const;
+
+    /**
+     * @brief Loads the accumulation texture from the GPU to the CPU.
+     * 
+     * The accumulation image contains the accumulated colors of the rendered image.
+     * 
+     * @return The accumulation image.
+     * @see Image::saveToFile to save the image to a file.
+     * @see Renderer::getAccumulatorTextureHandler to get the OpenGL texture handler.
+     */
+    Image getAccumulatorImage() const;
 
     /**
      * @brief Gets the size of the renderer.
@@ -251,7 +323,7 @@ public:
     /**
      * @brief Loads the specified scene into the renderer.
      * 
-     * Use this method to load the entire scene into the renderer.
+     * Use this method to load the entire scene into the GPU.
      * 
      * @param scene The scene to load.
      * @see Renderer::updateSceneMaterials to update only the materials.

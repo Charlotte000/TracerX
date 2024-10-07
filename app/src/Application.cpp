@@ -151,11 +151,11 @@ void Application::control()
 {
     ImGuiIO io = ImGui::GetIO();
     float elapsedTime = io.DeltaTime;
-    glm::vec2 mouseDelta = glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->cameraRotationSpeed / 100.f;
+    glm::vec2 mouseDelta = toVec2(io.MouseDelta);
 
     if (this->viewActive && !this->enableCameraControl && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
-        this->viewUVCenter -= glm::vec2(io.MouseDelta.x, io.MouseDelta.y) * this->viewUVSize / this->viewSize;
+        this->viewUVCenter -= mouseDelta * this->viewUVSize / this->viewSize;
         this->viewUVCenter = glm::clamp(this->viewUVCenter, this->viewUVSize * .5f, 1.f - this->viewUVSize * .5f);
     }
 
@@ -212,9 +212,32 @@ void Application::control()
     }
 
     // Mouse
+    mouseDelta *= this->cameraRotationSpeed / 100.f;
     camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
     camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
     camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
 
     this->renderer.clear();
+}
+
+float Application::getLookAtDistance()
+{
+    Image image = this->renderer.getDepthImage();
+    size_t centerIndex = image.size.x / 2 * (1 + image.size.y) * 4;
+    float nonLinear = image.pixels[centerIndex] * 2 - 1;
+
+    float min = this->renderer.minRenderDistance;
+    float max = this->renderer.maxRenderDistance;
+    float linear = 2 * min * max / (max + min - nonLinear * (max - min));
+    return linear;
+}
+
+glm::vec2 toVec2(const ImVec2 v)
+{
+    return glm::vec2(v.x, v.y);
+}
+
+ImVec2 toImVec2(const glm::vec2 v)
+{
+    return ImVec2(v.x, v.y);
 }

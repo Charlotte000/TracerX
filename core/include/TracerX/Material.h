@@ -9,7 +9,7 @@ namespace TracerX
 {
 
 /**
- * @brief Represents the properties of a material used in rendering.
+ * @brief Describes the properties of the surface of an object and how it interacts with light according to Disney's BSDF model.
  */
 struct Material
 {
@@ -116,13 +116,39 @@ struct Material
      */
     int normalTextureId = -1;
 
+    /**
+     * @brief Determines how the material uses the alpha value.
+     */
     enum class AlphaMode : unsigned int
     {
+        /**
+         * @brief The alpha value is ignored.
+         */
         Opaque = 0,
-        Blend = 1,
-        Mask = 2,
-    } alphaMode = AlphaMode::Opaque;
 
+        /**
+         * @brief The alpha value is used to blend the material with the background.
+         */
+        Blend = 1,
+
+        /**
+         * @brief The alpha value is used to determine if a pixel is transparent or opaque using Material::alphaCutoff.
+         */
+        Mask = 2,
+    }
+    /**
+     * @brief The alpha mode used by the material.
+     */
+    alphaMode = AlphaMode::Opaque;
+
+    /**
+     * @brief The alpha cutoff value for the material.
+     * 
+     * Only used when the alpha mode is set to AlphaMode::Mask.
+     * The alpha cutoff value is a threshold value that determines if a pixel is transparent or opaque.
+     * 
+     * @see Material::alphaMode
+     */
     float alphaCutoff = .5f;
 
     /**

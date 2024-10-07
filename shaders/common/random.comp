@@ -1,11 +1,20 @@
-uint Seed = uint((UV.x + UV.y * UV.x) * 549856.0) + SampleCount * 5458u;
+// pcg4d rng algorithm by Moroz Mykhailo (https://www.shadertoy.com/view/wltcRS)
+uvec4 Seed = uvec4(TexelCoord.x, TexelCoord.y, SampleCount, TexelCoord.x + TexelCoord.y);
 
 float RandomValue()
 {
-    Seed = Seed * 747796405u + 2891336453u;
-    uint result = ((Seed >> ((Seed >> 28) + 4u)) ^ Seed) * 277803737u;
-    result = (result >> 22) ^ result;
-    return float(result) / 4294967295.0;
+    Seed = Seed * 1664525u + 1013904223u;
+    Seed.x += Seed.y * Seed.w;
+    Seed.y += Seed.z * Seed.x;
+    Seed.z += Seed.x * Seed.y;
+    Seed.w += Seed.y * Seed.z;
+
+    Seed = Seed ^ (Seed >> 16u);
+    Seed.x += Seed.y * Seed.w;
+    Seed.y += Seed.z * Seed.x;
+    Seed.z += Seed.x * Seed.y;
+    Seed.w += Seed.y * Seed.z;
+    return float(Seed.x) / float(0xffffffffu);
 }
 
 float RandomValueNormalDistribution()

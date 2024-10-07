@@ -187,6 +187,26 @@ Image Renderer::getImage() const
     return this->toneMapTexture.upload();
 }
 
+Image Renderer::getAlbedoImage() const
+{
+    return this->albedoTexture.upload();
+}
+
+Image Renderer::getNormalImage() const
+{
+    return this->normalTexture.upload();
+}
+
+Image Renderer::getDepthImage() const
+{
+    return this->depthTexture.upload();
+}
+
+Image Renderer::getAccumulatorImage() const
+{
+    return this->accumulationTexture.upload();
+}
+
 glm::uvec2 Renderer::getSize() const
 {
     return this->accumulationTexture.size;

@@ -10,6 +10,13 @@
 namespace TracerX::core
 {
 
+/**
+ * @brief An OpenGL shader wrapper class.
+ * 
+ * The shader uses a SPIR-V binary format for loading the shader code.
+ * 
+ * @remark Should not be used directly and is only used internally by the renderer.
+ */
 class Shader
 {
 public:

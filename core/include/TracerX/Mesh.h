@@ -9,7 +9,12 @@ namespace TracerX
 {
 
 /**
- * @brief Represents a mesh in the TracerX system.
+ * @brief A collection of polygons.
+ * 
+ * Only supports triangles.
+ * The mesh itself does not render the triangles, it only stores the information about the triangles and the nodes in the BVH tree in the Scene.
+ * 
+ * @see MeshInstance
  */
 struct Mesh
 {
@@ -21,14 +26,26 @@ public:
      */
     int triangleSize = 0;
 private:
+    /**
+     * @brief The offset of the nodes in the BVH tree in the Scene.
+     */
     int nodeOffset = 0;
+
+    /**
+     * @brief The offset of the triangles in the Scene.
+     * 
+     */
     int triangleOffset = 0;
 
     friend class Scene;
 };
 
 /**
- * @brief Represents a mesh instance in the TracerX system.
+ * @brief An instance of a Mesh with a transformation matrix and a material.
+ * 
+ * It is used to render the Mesh in the Scene.
+ * 
+ * @see Mesh
  */
 struct MeshInstance
 {

@@ -102,16 +102,6 @@ void SetupImGuiStyle()
     style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
 }
 
-glm::vec2 toVec2(const ImVec2 v)
-{
-    return glm::vec2(v.x, v.y);
-}
-
-ImVec2 toImVec2(const glm::vec2 v)
-{
-    return ImVec2(v.x, v.y);
-}
-
 void Application::initUI()
 {
     ImGui::CreateContext();
@@ -345,12 +335,13 @@ void Application::viewTexture(GLint textureHandler)
     glm::vec2 up = this->viewUVCenter + this->viewUVSize * .5f;
     glm::vec2 viewPos;
     this->drawFillImage(textureHandler, this->renderer.getSize(), viewPos, this->viewSize, glm::vec3(1), lo, up, true);
+    viewPos += toVec2(ImGui::GetWindowPos());
 
     this->viewActive = ImGui::IsItemHovered();
 
     // Draw zoom rectangle
-    lo = lo * this->viewSize + toVec2(ImGui::GetWindowPos()) + viewPos;
-    up = up * this->viewSize + toVec2(ImGui::GetWindowPos()) + viewPos;
+    lo = lo * this->viewSize + viewPos;
+    up = up * this->viewSize + viewPos;
     ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
 
     if (this->viewUVSize != glm::vec2(1))
@@ -368,8 +359,8 @@ void Application::viewTexture(GLint textureHandler)
 
     // Draw gizmos
     ImGuizmo::SetRect(
-        viewPos.x + ImGui::GetWindowPos().x,
-        viewPos.y + ImGui::GetWindowPos().y,
+        viewPos.x,
+        viewPos.y,
         this->viewSize.x,
         this->viewSize.y);
     ImGuizmo::SetDrawlist();
@@ -645,11 +636,18 @@ void Application::propertyCamera()
     changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
     ImGui::Separator();
 
-    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 180);
+    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179);
     ImGui::Separator();
 
     changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
     changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
+
+    if (ImGui::Button("Focus on look at", ImVec2(-1, 0)))
+    {
+        camera.focalDistance = this->getLookAtDistance();
+        changed = true;
+    }
+
     ImGui::Separator();
 
     changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");

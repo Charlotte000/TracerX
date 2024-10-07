@@ -61,6 +61,7 @@ private:
 
     void loadAnyEnvironment();
     void control();
+    float getLookAtDistance();
 #pragma region UI
     void initUI();
     void renderUI();
@@ -83,3 +84,6 @@ private:
     void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false);
 #pragma endregion UI
 };
+
+glm::vec2 toVec2(const ImVec2 v);
+ImVec2 toImVec2(const glm::vec2 v);

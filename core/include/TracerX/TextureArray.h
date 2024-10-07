@@ -12,6 +12,10 @@
 namespace TracerX::core
 {
 
+/**
+ * @brief An OpenGL 2D texture array wrapper class.
+ * @remark Should not be used directly and is only used internally by the renderer.
+ */
 class TextureArray
 {
 public:

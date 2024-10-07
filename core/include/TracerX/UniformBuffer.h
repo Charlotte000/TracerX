@@ -9,6 +9,13 @@
 namespace TracerX::core
 {
 
+/**
+ * @brief An OpenGL uniform buffer object (UBO) wrapper class.
+ * 
+ * The uniform buffer is used to store data that is shared between the CPU and the GPU, such as camera and environment settings.
+ * 
+ * @remark Should not be used directly and is only used internally by the renderer.
+ */
 class UniformBuffer
 {
 public:
