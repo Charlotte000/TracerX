@@ -25,20 +25,23 @@ void Renderer::init(glm::uvec2 size)
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-    this->shader.init(Renderer::shaderSrc);
-
+    // Init GPU data
     this->initData();
 
+    // Set size
     this->resize(size);
 }
 
 void Renderer::resize(glm::uvec2 size)
 {
+    // Resize textures
     this->accumulationTexture.resize(size);
     this->albedoTexture.resize(size);
     this->normalTexture.resize(size);
     this->depthTexture.resize(size);
     this->toneMapTexture.resize(size);
+
+    // Clear for safety
     this->clear();
 }
 
@@ -77,9 +80,11 @@ void Renderer::render(unsigned int samples)
 
 void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount)
 {
+    // Update UBOs
     this->bindData();
     this->updateUniform(rectPosition, rectSize, false);
 
+    // Render
     this->shader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
@@ -90,6 +95,7 @@ void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uv
 
     Shader::stopUse();
 
+    // Revert sampleCount if needed
     if (!updateSampleCount)
     {
         this->sampleCount -= samples;
@@ -98,9 +104,11 @@ void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uv
 
 void Renderer::toneMap()
 {
+    // Update UBOs
     this->bindData();
     this->updateUniform(glm::ivec2(0), this->accumulationTexture.size, true);
 
+    // Tone map
     this->shader.use();
     Shader::dispatchCompute(Shader::getGroups(this->accumulationTexture.size));
     Shader::stopUse();
@@ -145,9 +153,11 @@ void Renderer::denoise()
     const char* errorMessage;
     if (device.getError(errorMessage) != oidn::Error::None)
     {
+        // Release buffers
         colorBuf.release();
         albedoBuf.release();
         normalBuf.release();
+
         throw std::runtime_error("Failed to denoise: " + std::string(errorMessage));
     }
 
@@ -234,8 +244,7 @@ unsigned int Renderer::getSampleCount() const
 
 void Renderer::loadScene(Scene& scene)
 {
-    // BVH build should be done before updating the scene because the BVH changes the order of the triangles
-    std::vector<Node> bvh = scene.buildBVH();
+    std::vector<Node> bvh = scene.buildBVH(); // BVH build should be done before updating the scene because the BVH changes the order of the triangles
 
     // Textures
     this->textureArray.update(scene.textures);
@@ -256,7 +265,7 @@ void Renderer::updateSceneMaterials(const Scene& scene)
 
 void Renderer::updateSceneMeshInstances(Scene& scene)
 {
-    // Update transformInv
+    // Update transformInv first
     for (MeshInstance& meshInstance : scene.meshInstances)
     {
         meshInstance.transformInv = glm::inverse(meshInstance.transform);
@@ -267,6 +276,9 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
 
 void Renderer::initData()
 {
+    // Shader
+    this->shader.init(Renderer::shaderSrc);
+
     // Textures
     this->accumulationTexture.init(GL_RGBA32F, GL_NEAREST);
     this->albedoTexture.init(GL_RGBA32F, GL_NEAREST);
@@ -319,8 +331,10 @@ void Renderer::bindData()
 
 void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
 {
+    // cameraBuffer
     this->cameraBuffer.update(&this->camera, sizeof(this->camera));
 
+    // environmentBuffer
     struct
     {
         glm::vec4 rotation1;
@@ -342,6 +356,7 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
     };
     this->environmentBuffer.update(&environment, sizeof(environment));
 
+    // paramBuffer
     struct
     {
         glm::ivec2 rectPosition;

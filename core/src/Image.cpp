@@ -23,6 +23,7 @@ void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
 
     if (isHDR)
     {
+        // Write to file
         if (!stbi_write_hdr(path.string().c_str(), this->size.x, this->size.y, 4, this->pixels.data()))
         {
             throw std::runtime_error("Failed to save the image");
@@ -31,12 +32,14 @@ void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
         return;
     }
 
+    // Convert to unsigned char
     std::vector<unsigned char> data(this->pixels.size());
     for (size_t i = 0; i < this->pixels.size(); i++)
     {
         data[i] = (unsigned char)(this->pixels[i] * 255);
     }
 
+    // Write to file
     if (!stbi_write_png(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 0))
     {
         throw std::runtime_error("Failed to save the image");
@@ -55,6 +58,8 @@ Image Image::resize(glm::uvec2 size) const
 Image Image::loadFromFile(const std::filesystem::path& path)
 {
     Image img;
+
+    // Read from file
     glm::ivec2 size;
     float* data = stbi_loadf(path.string().c_str(), &size.x, &size.y, nullptr, 4);
     if (data == nullptr)
@@ -62,6 +67,7 @@ Image Image::loadFromFile(const std::filesystem::path& path)
         throw std::runtime_error("Failed to load the image: " + path.string());
     }
 
+    // Copy to image
     img.size = size;
     size_t pixelCount = img.size.x * img.size.y * 4;
     img.pixels.resize(pixelCount);

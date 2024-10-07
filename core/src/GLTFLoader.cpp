@@ -96,33 +96,25 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
                     {
                         glm::vec<3, uint8_t> index;
                         std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
-                        triangle.v1 = (int)(index.x + vertexOffset);
-                        triangle.v2 = (int)(index.y + vertexOffset);
-                        triangle.v3 = (int)(index.z + vertexOffset);
+                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
                     }
                     else if (indexStride == 2)
                     {
                         glm::vec<3, uint16_t> index;
                         std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
-                        triangle.v1 = (int)(index.x + vertexOffset);
-                        triangle.v2 = (int)(index.y + vertexOffset);
-                        triangle.v3 = (int)(index.z + vertexOffset);
+                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
                     }
                     else if (indexStride == 4)
                     {
                         glm::vec<3, uint32_t> index;
                         std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
-                        triangle.v1 = (int)(index.x + vertexOffset);
-                        triangle.v2 = (int)(index.y + vertexOffset);
-                        triangle.v3 = (int)(index.z + vertexOffset);
+                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
                     }
                     else if (indexStride == 8)
                     {
                         glm::vec<3, uint64_t> index;
                         std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
-                        triangle.v1 = (int)(index.x + vertexOffset);
-                        triangle.v2 = (int)(index.y + vertexOffset);
-                        triangle.v3 = (int)(index.z + vertexOffset);
+                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
                     }
                     else
                     {
@@ -136,11 +128,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             {
                 for (size_t i = vertexOffset; i < scene.vertices.size(); i += 3)
                 {
-                    Triangle triangle;
-                    triangle.v1 = i + 0;
-                    triangle.v2 = i + 1;
-                    triangle.v3 = i + 2;
-                    scene.triangles.push_back(triangle);
+                    scene.triangles.push_back(Triangle { .v1 = (int)(i + 0), .v2 = (int)(i + 1), .v3 = (int)(i + 2) });
                 }
             }
 
@@ -159,9 +147,8 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
 
 void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
 {
-    for (size_t textureId = 0; textureId < textures.size(); textureId++)
+    for (const tinygltf::Texture& gltfTexture : textures)
     {
-        const tinygltf::Texture& gltfTexture = textures[textureId];
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
 
         glm::uvec2 size(gltfImage.width, gltfImage.height);
@@ -287,15 +274,15 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
         localTransform = translate * rotate * scale;
     }
 
-    glm::mat4 transform = globalTransform * localTransform;
+    const glm::mat4 transform = globalTransform * localTransform;
 
     if (node.mesh >= 0)
     {
-        for (glm::ivec2 primitive : meshMap.at(node.mesh))
+        for (glm::ivec2 pair : meshMap.at(node.mesh))
         {
             MeshInstance meshInstance;
-            meshInstance.meshId = primitive.x;
-            meshInstance.materialId = primitive.y;
+            meshInstance.meshId = pair.x;
+            meshInstance.materialId = pair.y;
             meshInstance.transform = transform;
             scene.meshInstances.push_back(meshInstance);
         }
@@ -353,7 +340,7 @@ Scene TracerX::loadGLTF(const std::filesystem::path& path)
         }
     }
 
-    std::map<int, std::vector<glm::ivec2>> meshMap = GLTFmeshes(scene, model);
+    const std::map<int, std::vector<glm::ivec2>> meshMap = GLTFmeshes(scene, model);
     GLTFtextures(scene, model.textures, model.images);
     GLTFmaterials(scene, model.materials);
     GLTFnodes(scene, model, meshMap, glm::mat4(1));

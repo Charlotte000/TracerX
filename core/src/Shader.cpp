@@ -48,13 +48,15 @@ void Shader::stopUse()
 
 GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderType)
 {
+    // Create shader
     GLuint handler = glCreateShader(shaderType);
     glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), bin.size());
     glSpecializeShader(handler, "main", 0, nullptr, nullptr);
 
+    // Check shader status
     GLint status = 0;
     glGetShaderiv(handler, GL_COMPILE_STATUS, &status);
-    if (status == GL_FALSE)
+    if (status != GL_TRUE)
     {
         std::string msg;
         GLint logSize = 0;
@@ -72,13 +74,15 @@ GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderTy
 
 GLuint Shader::initProgram(GLuint shaderHandler)
 {
+    // Create program
     GLuint handler = glCreateProgram();
     glAttachShader(handler, shaderHandler);
     glLinkProgram(handler);
 
-    GLint success = 0;
-    glGetProgramiv(handler, GL_LINK_STATUS, &success);
-    if (success != GL_TRUE)
+    // Check program status
+    GLint status = 0;
+    glGetProgramiv(handler, GL_LINK_STATUS, &status);
+    if (status != GL_TRUE)
     {
         std::string msg;
         GLint logSize = 0;

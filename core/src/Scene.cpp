@@ -59,10 +59,12 @@ std::vector<Node> Scene::buildBVH()
     std::vector<Node> nodes;
     for (Mesh& mesh : this->meshes)
     {
+        // Build BVH
         FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
             FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
             triangleConverter);
 
+        // Convert to our format
         mesh.nodeOffset = nodes.size();
         for (const FastBVH::Node<float>& node : bvh.getNodes())
         {

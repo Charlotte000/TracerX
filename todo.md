@@ -1,8 +1,6 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
 
-- scene quad support (divide to triangles)
 - ui renderRect
-- use #include <algorithm>
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5
