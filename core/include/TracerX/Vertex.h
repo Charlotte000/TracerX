@@ -13,7 +13,6 @@ namespace TracerX::core
  */
 struct Vertex
 {
-public:
     /**
      * @brief The position of the vertex in 3D space (xyz) and the U component of the texture coordinates (w).
      */

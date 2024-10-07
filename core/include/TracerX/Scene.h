@@ -14,7 +14,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <FastBVH.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 #include <tiny_gltf.h>

@@ -6,6 +6,7 @@
 #include "Image.h"
 
 #include <GL/glew.h>
+#include <glm/glm.hpp>
 
 namespace TracerX::core
 {

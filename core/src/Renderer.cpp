@@ -1,6 +1,7 @@
 /**
  * @file Renderer.cpp
  */
+#include "TracerX/Mesh.h"
 #include "TracerX/Renderer.h"
 
 #include <iostream>
@@ -217,7 +218,7 @@ unsigned int Renderer::getSampleCount() const
     return this->sampleCount;
 }
 
-void Renderer::loadScene(const Scene& scene)
+void Renderer::loadScene(Scene& scene)
 {
     this->textureArray.update(scene.textures);
     this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(Node));
@@ -234,8 +235,14 @@ void Renderer::updateSceneMaterials(const Scene& scene)
     this->materialBuffer.update(scene.materials.data(), scene.materials.size() * sizeof(Material));
 }
 
-void Renderer::updateSceneMeshInstances(const Scene& scene)
+void Renderer::updateSceneMeshInstances(Scene& scene)
 {
+    // Update transformInv
+    for (MeshInstance& meshInstance : scene.meshInstances)
+    {
+        meshInstance.transformInv = glm::inverse(meshInstance.transform);
+    }
+
     this->meshInstanceBuffer.update(scene.meshInstances.data(), scene.meshInstances.size() * sizeof(MeshInstance));
 }
 

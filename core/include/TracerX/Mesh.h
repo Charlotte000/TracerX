@@ -52,17 +52,11 @@ struct MeshInstance
 public:
     /**
      * @brief The transformation matrix for the mesh instance.
-     * @see Mesh::transformInv
      */
     glm::mat4 transform = glm::mat4(1);
-
-    /**
-     * @brief The inverse transformation matrix for the mesh instance.
-     * 
-     * Must be updated whenever the transform matrix is updated.
-     */
+private:
     glm::mat4 transformInv = glm::mat4(1);
-
+public:
     /**
      * @brief The material ID of the mesh instance.
      * 
@@ -79,6 +73,8 @@ public:
 private:
     int padding1;
     int padding2;
+
+    friend class Renderer;
 };
 
 }

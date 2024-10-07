@@ -380,7 +380,6 @@ void Application::viewTexture(GLint textureHandler)
                 nullptr,
                 ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
             {
-                meshInstance.transformInv = glm::inverse(meshInstance.transform);
                 this->renderer.clear();
                 this->renderer.updateSceneMeshInstances(this->scene);
             }
@@ -769,7 +768,6 @@ void Application::propertyMeshInstance(MeshInstance& meshInstance)
                 rotation,
                 scale,
                 glm::value_ptr(meshInstance.transform));
-            meshInstance.transformInv = glm::inverse(meshInstance.transform);
             changed = true;
         }
 

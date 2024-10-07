@@ -5,6 +5,7 @@
 
 #include "TracerX/Scene.h"
 
+#include <FastBVH.h>
 #include <stdexcept>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -372,7 +373,6 @@ void Scene::GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node&
             meshInstance.meshId = primitive.x;
             meshInstance.materialId = primitive.y;
             meshInstance.transform = transform;
-            meshInstance.transformInv = glm::inverse(meshInstance.transform);
             this->meshInstances.push_back(meshInstance);
         }
     }

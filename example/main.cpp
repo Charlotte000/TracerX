@@ -29,7 +29,6 @@ int main()
     // Move the mesh
     MeshInstance& ajaxMesh = scene.meshInstances[0];
     ajaxMesh.transform = glm::translate(ajaxMesh.transform, glm::vec3(0, -.5f, 0));
-    ajaxMesh.transformInv = glm::inverse(ajaxMesh.transform);
 
     // Setting up the renderer
     Renderer renderer;

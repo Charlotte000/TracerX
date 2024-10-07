@@ -329,7 +329,7 @@ public:
      * @see Renderer::updateSceneMaterials to update only the materials.
      * @see Renderer::updateSceneMeshes to update only the meshes.
      */
-    void loadScene(const Scene& scene);
+    void loadScene(Scene& scene);
 
     /**
      * @brief Updates the materials in the scene.
@@ -349,7 +349,7 @@ public:
      * @param scene The scene containing the updated mesh instances.
      * @see Renderer::loadScene to update the entire scene.
      */
-    void updateSceneMeshInstances(const Scene& scene);
+    void updateSceneMeshInstances(Scene& scene);
 private:
     unsigned int sampleCount = 0;
     core::Shader shader;
