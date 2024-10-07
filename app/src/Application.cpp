@@ -41,12 +41,12 @@ void Application::init(glm::uvec2 size)
             switch (key)
             {
                 case GLFW_KEY_C:
-                    if (app->enableCameraControl || !app->enableRendering)
+                    if (app->cameraControl.enable || !app->enableRendering)
                     {
-                        app->enableCameraControl = !app->enableCameraControl;
-                        glfwSetInputMode(window, GLFW_CURSOR, app->enableCameraControl ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-                        app->viewUVCenter = glm::vec2(.5f);
-                        app->viewUVSize = glm::vec2(1);
+                        app->cameraControl.enable = !app->cameraControl.enable;
+                        glfwSetInputMode(window, GLFW_CURSOR, app->cameraControl.enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+                        app->zooming.uvCenter = glm::vec2(.5f);
+                        app->zooming.uvSize = glm::vec2(1);
                     }
 
                     break;
@@ -54,12 +54,12 @@ void Application::init(glm::uvec2 size)
                     app->enableRendering = !app->enableRendering;
                     if (app->enableRendering)
                     {
-                        if (app->enablePreview && app->renderer.getSampleCount() == 1)
+                        if (app->renderer.getSampleCount() == 1)
                         {
-                            app->renderer.clear();
+                            app->clear();
                         }
 
-                        app->enableCameraControl = false;
+                        app->cameraControl.enable = false;
                         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
                     }
 
@@ -71,19 +71,19 @@ void Application::init(glm::uvec2 size)
     glfwSetScrollCallback(this->window, [](GLFWwindow* window, double xOffset, double yOffset)
     {
         Application* app = (Application*)glfwGetWindowUserPointer(window);
-        if (app->viewActive && !app->enableCameraControl)
+        if (app->zooming.isActive && !app->cameraControl.enable)
         {
             if (yOffset > 0)
             {
-                app->viewUVSize *= .9f;
-                app->viewUVSize = glm::max(glm::vec2(.0001f), app->viewUVSize);
-                app->viewUVCenter = glm::clamp(app->viewUVCenter, app->viewUVSize * .5f, 1.f - app->viewUVSize * .5f);
+                app->zooming.uvSize *= .9f;
+                app->zooming.uvSize = glm::max(glm::vec2(.0001f), app->zooming.uvSize);
+                app->zooming.uvCenter = glm::clamp(app->zooming.uvCenter, app->zooming.uvSize * .5f, 1.f - app->zooming.uvSize * .5f);
             }
             else if (yOffset < 0)
             {
-                app->viewUVSize *= 1.1f;
-                app->viewUVSize = glm::min(glm::vec2(1), app->viewUVSize);
-                app->viewUVCenter = glm::clamp(app->viewUVCenter, app->viewUVSize * .5f, 1.f - app->viewUVSize * .5f);
+                app->zooming.uvSize *= 1.1f;
+                app->zooming.uvSize = glm::min(glm::vec2(1), app->zooming.uvSize);
+                app->zooming.uvCenter = glm::clamp(app->zooming.uvCenter, app->zooming.uvSize * .5f, 1.f - app->zooming.uvSize * .5f);
             }
         }
     });
@@ -113,16 +113,22 @@ void Application::run()
         this->control();
 
         // Render
-        if (this->enablePreview && this->renderer.getSampleCount() == 0)
+        if (this->renderer.getSampleCount() == 0)
         {
             unsigned int maxBounceCount = this->renderer.maxBounceCount;
             this->renderer.maxBounceCount = 0;
             this->renderer.render(1);
             this->renderer.maxBounceCount = maxBounceCount;
         }
-        else if (this->enableRendering || this->renderer.getSampleCount() == 0)
+        else if (this->enableRendering)
         {
-            this->renderer.render(this->samplesPerFrame);
+            this->tiling.factor = glm::clamp(this->tiling.factor, 1u, std::min(this->renderer.getSize().x, this->renderer.getSize().y));
+
+            glm::uvec2 pos, size;
+            this->getCurrentTile(pos, size);
+            this->renderer.renderRect(this->samplesPerFrame, pos, size, this->tiling.count == this->tiling.factor * this->tiling.factor - 1);
+
+            this->tiling.count = (this->tiling.count + 1) % (this->tiling.factor * this->tiling.factor);
         }
 
         // UI
@@ -138,7 +144,7 @@ void Application::run()
 void Application::loadScene(const std::filesystem::path& path)
 {
     this->scene = loadGLTF(path);
-    this->renderer.clear();
+    this->clear();
     this->renderer.loadScene(this->scene);
 }
 
@@ -167,19 +173,19 @@ void Application::control()
     float elapsedTime = io.DeltaTime;
     glm::vec2 mouseDelta = toVec2(io.MouseDelta);
 
-    if (this->viewActive && !this->enableCameraControl && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    if (this->zooming.isActive && !this->cameraControl.enable && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
     {
-        this->viewUVCenter -= mouseDelta * this->viewUVSize / this->viewSize;
-        this->viewUVCenter = glm::clamp(this->viewUVCenter, this->viewUVSize * .5f, 1.f - this->viewUVSize * .5f);
+        this->zooming.uvCenter -= mouseDelta * this->zooming.uvSize / this->zooming.size;
+        this->zooming.uvCenter = glm::clamp(this->zooming.uvCenter, this->zooming.uvSize * .5f, 1.f - this->zooming.uvSize * .5f);
     }
 
-    if (!this->enableCameraControl)
+    if (!this->cameraControl.enable)
     {
         return;
     }
 
-    float elapsedMove = this->cameraSpeed * elapsedTime;
-    float elapsedRotate = this->cameraRotationSpeed * 3 * elapsedTime;
+    float elapsedMove = this->cameraControl.speed * elapsedTime;
+    float elapsedRotate = this->cameraControl.rotationSpeed * 3 * elapsedTime;
 
     Camera& camera = this->renderer.camera;
     glm::vec3 right = glm::cross(camera.forward, camera.up);
@@ -226,15 +232,15 @@ void Application::control()
     }
 
     // Mouse
-    mouseDelta *= this->cameraRotationSpeed / 100.f;
+    mouseDelta *= this->cameraControl.rotationSpeed / 100.f;
     camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
     camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
     camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
 
-    this->renderer.clear();
+    this->clear();
 }
 
-float Application::getLookAtDistance()
+float Application::getLookAtDistance() const
 {
     Image image = this->renderer.getDepthImage();
     size_t centerIndex = image.size.x / 2 * (1 + image.size.y) * 4;
@@ -244,6 +250,18 @@ float Application::getLookAtDistance()
     float max = this->renderer.maxRenderDistance;
     float linear = 2 * min * max / (max + min - nonLinear * (max - min));
     return linear;
+}
+
+void Application::clear()
+{
+    this->renderer.clear();
+    this->tiling.count = 0;
+}
+
+void Application::getCurrentTile(glm::uvec2& pos, glm::uvec2& size) const
+{
+    size = (glm::uvec2)glm::ceil((glm::vec2)this->renderer.getSize() / glm::vec2(this->tiling.factor));
+    pos = glm::uvec2(this->tiling.count % this->tiling.factor, this->tiling.count / this->tiling.factor) * size;
 }
 
 glm::vec2 toVec2(const ImVec2 v)

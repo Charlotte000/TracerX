@@ -28,32 +28,51 @@ private:
     TracerX::Renderer renderer;
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
-    float cameraSpeed = 5;
-    float cameraRotationSpeed = 1;
     unsigned int samplesPerFrame = 1;
     bool enableRendering = false;
-    bool enablePreview = true;
-    bool enableCameraControl = false;
-    glm::vec2 viewUVCenter = glm::vec2(.5f);
-    glm::vec2 viewUVSize = glm::vec2(1);
-    glm::vec2 viewSize = glm::vec2(1);
-    bool viewActive = false;
-    enum class PropertyOption
+    struct CameraControl
     {
-        PContorls,
-        PToneMapping,
-        PSettings,
-        PCamera,
-        PEnvironment,
-        PMeshInstance,
-        PMaterial,
-    } property = PropertyOption::PContorls;
-    void* edit = nullptr;
-    int currentTextureId = -1;
-    ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
-    ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
-    TracerX::core::Texture textureView;
-    float snap = 1;
+        bool enable = false;
+        float speed = 5;
+        float rotationSpeed = 1;
+    } cameraControl;
+    struct Tiling
+    {
+        unsigned int count = 0;
+        unsigned int factor = 1;
+    } tiling;
+    struct Zooming
+    {
+        glm::vec2 uvCenter = glm::vec2(.5f);
+        glm::vec2 uvSize = glm::vec2(1);
+        glm::vec2 size;
+        bool isActive = false;
+    } zooming;
+    struct Property
+    {
+        enum class Type
+        {
+            Contorls,
+            ToneMapping,
+            Settings,
+            Camera,
+            Environment,
+            MeshInstance,
+            Material,
+        } type = Type::Contorls;
+        void* target = nullptr;
+    } property;
+    struct MaterialTexture
+    {
+        int textureId = -1;
+        TracerX::core::Texture texture;
+    } materialTexture;
+    struct Gizmo
+    {
+        ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
+        ImGuizmo::MODE mode = ImGuizmo::MODE::WORLD;
+        float snap = 1;
+    } gizmo;
 
     static inline const std::filesystem::path assetsFolder = std::filesystem::relative(ASSETS_PATH).string();
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
@@ -61,7 +80,9 @@ private:
 
     void loadAnyEnvironment();
     void control();
-    float getLookAtDistance();
+    float getLookAtDistance() const;
+    void clear();
+    void getCurrentTile(glm::uvec2& pos, glm::uvec2& size) const;
 #pragma region UI
     void initUI();
     void renderUI();
