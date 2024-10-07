@@ -61,7 +61,7 @@ layout(std140, binding=2) uniform ParamsUBO
 };
 
 ivec2 Size = imageSize(AccumulatorImage);
-ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy);
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
 vec2 UV = vec2(TexelCoord) / Size;
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 

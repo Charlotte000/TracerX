@@ -41,13 +41,28 @@ void Application::init(glm::uvec2 size)
             switch (key)
             {
                 case GLFW_KEY_C:
-                    app->enableCameraControl = !app->enableCameraControl;
-                    glfwSetInputMode(window, GLFW_CURSOR, app->enableCameraControl ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-                    app->viewUVCenter = glm::vec2(.5f);
-                    app->viewUVSize = glm::vec2(1);
+                    if (app->enableCameraControl || !app->enableRendering)
+                    {
+                        app->enableCameraControl = !app->enableCameraControl;
+                        glfwSetInputMode(window, GLFW_CURSOR, app->enableCameraControl ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+                        app->viewUVCenter = glm::vec2(.5f);
+                        app->viewUVSize = glm::vec2(1);
+                    }
+
                     break;
                 case GLFW_KEY_SPACE:
                     app->enableRendering = !app->enableRendering;
+                    if (app->enableRendering)
+                    {
+                        if (app->enablePreview && app->renderer.getSampleCount() == 1)
+                        {
+                            app->renderer.clear();
+                        }
+
+                        app->enableCameraControl = false;
+                        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    }
+
                     break;
             }
         }
@@ -98,19 +113,16 @@ void Application::run()
         this->control();
 
         // Render
-        if (this->enableRendering || this->renderer.getSampleCount() == 0)
+        if (this->enablePreview && this->renderer.getSampleCount() == 0)
         {
-            if (this->enablePreview)
-            {
-                unsigned int maxBounceCount = this->renderer.maxBounceCount;
-                this->renderer.maxBounceCount = this->enableRendering ? maxBounceCount : 0;
-                this->renderer.render(this->enableRendering ? this->samplesPerFrame : 1);
-                this->renderer.maxBounceCount = maxBounceCount;
-            }
-            else
-            {
-                this->renderer.render(this->samplesPerFrame);
-            }
+            unsigned int maxBounceCount = this->renderer.maxBounceCount;
+            this->renderer.maxBounceCount = 0;
+            this->renderer.render(1);
+            this->renderer.maxBounceCount = maxBounceCount;
+        }
+        else if (this->enableRendering || this->renderer.getSampleCount() == 0)
+        {
+            this->renderer.render(this->samplesPerFrame);
         }
 
         // UI
