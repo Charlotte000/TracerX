@@ -3,6 +3,7 @@
  */
 #include "TracerX/Shader.h"
 
+#include <string>
 #include <stdexcept>
 
 using namespace TracerX::core;

@@ -1,11 +1,6 @@
 /**
  * @file UniformBuffer.cpp
  */
-#include "TracerX/BVH.h"
-#include "TracerX/Mesh.h"
-#include "TracerX/Vertex.h"
-#include "TracerX/Triangle.h"
-#include "TracerX/Material.h"
 #include "TracerX/UniformBuffer.h"
 
 using namespace TracerX;

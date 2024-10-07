@@ -1,5 +1,6 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
-- automatic mesh transformInv
+- image save as hdr and other
+- may be divide scene and GLTF loader
 
 # perfomance test:
 ## ajax | 0.0 0.5 0.5

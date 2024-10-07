@@ -3,6 +3,8 @@
  */
 #include "TracerX/Texture.h"
 
+#include <vector>
+
 using namespace TracerX;
 using namespace TracerX::core;
 

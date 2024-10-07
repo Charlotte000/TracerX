@@ -1,10 +1,15 @@
 /**
  * @file Renderer.cpp
  */
+#include "TracerX/BVH.h"
 #include "TracerX/Mesh.h"
+#include "TracerX/Vertex.h"
+#include "TracerX/Triangle.h"
+#include "TracerX/Material.h"
 #include "TracerX/Renderer.h"
 
 #include <iostream>
+#include <stdexcept>
 #ifdef TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
 #endif
