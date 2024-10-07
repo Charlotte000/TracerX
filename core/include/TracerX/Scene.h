@@ -11,18 +11,17 @@
 #include "Material.h"
 #include "Triangle.h"
 
-#include <map>
 #include <vector>
 #include <string>
 #include <filesystem>
-#include <glm/glm.hpp>
-#include <tiny_gltf.h>
 
 namespace TracerX
 {
 
 /**
  * @brief A collection of all the data that makes up a 3D scene to be rendered.
+ * 
+ * @see TracerX::loadGLTF to load a scene from a GLTF file.
  */
 class Scene
 {
@@ -94,13 +93,6 @@ public:
     std::vector<Camera> cameras;
 
     /**
-     * @brief Loads a texture from a file and adds it to the scene.
-     * @param path The path of the file containing the texture.
-     * @return The index (texture ID) of the loaded texture in the Scene::textures vector.
-     */
-    int loadTexture(const std::filesystem::path& path);
-
-    /**
      * @brief Adds a texture to the scene.
      * @param texture The texture to be added.
      * @param name The name of the texture.
@@ -123,23 +115,18 @@ public:
      * @return The index (mesh ID) of the added mesh in the Scene::meshes vector.
      */
     int addMesh(const Mesh& mesh, const std::string& name);
-
-    /**
-     * @brief Loads a scene from a GLTF file.
-     * @param path The path of the file to load the GLTF scene from. The file can be in GLTF or GLB format.
-     * @return The loaded scene.
-     * @throws std::runtime_error Thrown if the GLTF file fails to load.
-     */
-    static Scene loadGLTF(const std::filesystem::path& path);
 private:
-    std::vector<core::Node> bvh;
-
-    std::map<int, std::vector<glm::ivec2>> GLTFmeshes(const tinygltf::Model& model);
-    void GLTFtextures(const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images);
-    void GLTFmaterials(const std::vector<tinygltf::Material>& materials);
-    void GLTFnodes(const tinygltf::Model& model, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& world);
-    void GLTFtraverseNode(const tinygltf::Model& model, const tinygltf::Node& node, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& globalTransform);
-    void buildBVH(Mesh& mesh);
+    /**
+     * @brief Builds the bounding volume hierarchy (BVH) of the scene.
+     * 
+     * The BVH is used to accelerate path tracing by reducing the number of intersection tests.
+     * Reorders the triangles in the scene to optimize BVH construction.
+     * It may be a time-consuming operation.
+     * Called by the Renderer::loadScene method.
+     * 
+     * @return The nodes of the BVH tree.
+     */
+    std::vector<core::Node> buildBVH();
 
     friend class Renderer;
 };

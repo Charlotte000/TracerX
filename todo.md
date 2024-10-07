@@ -1,6 +1,5 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
 
-- divide scene and GLTF load
 - scene quad support (divide to triangles)
 - ui renderRect
 - use #include <algorithm>

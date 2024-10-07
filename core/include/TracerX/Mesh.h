@@ -20,22 +20,21 @@ struct Mesh
 {
 public:
     /**
-     * @brief The size of the triangles in the mesh.
-     * 
-     * Optional, does not affect the rendering of the mesh.
+     * @brief The offset of the triangles of the mesh in the Scene.
+     */
+    int triangleOffset = 0;
+
+    /**
+     * @brief The size of the triangles of the mesh in the Scene.
      */
     int triangleSize = 0;
 private:
     /**
      * @brief The offset of the nodes in the BVH tree in the Scene.
+     * 
+     * Set by the Scene::buildBVH method.
      */
     int nodeOffset = 0;
-
-    /**
-     * @brief The offset of the triangles in the Scene.
-     * 
-     */
-    int triangleOffset = 0;
 
     friend class Scene;
 };

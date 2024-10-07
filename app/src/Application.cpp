@@ -1,5 +1,7 @@
 #include "Application.h"
 
+#include <TracerX/GLTFLoader.h>
+
 #include <stdexcept>
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -123,7 +125,7 @@ void Application::run()
 
 void Application::loadScene(const std::filesystem::path& path)
 {
-    this->scene = Scene::loadGLTF(path);
+    this->scene = loadGLTF(path);
     this->renderer.clear();
     this->renderer.loadScene(this->scene);
 }

@@ -1,5 +1,6 @@
 #include <TracerX/Scene.h>
 #include <TracerX/Renderer.h>
+#include <TracerX/GLTFLoader.h>
 
 #include <iostream>
 #include <GLFW/glfw3.h>
@@ -24,7 +25,7 @@ int main()
     GLFWwindow* window = createWindow();
 
     // Loading the scene
-    Scene scene = Scene::loadGLTF("../../app/assets/scenes/Ajax.glb");
+    Scene scene = loadGLTF("../../app/assets/scenes/Ajax.glb");
 
     // Move the mesh
     MeshInstance& ajaxMesh = scene.meshInstances[0];

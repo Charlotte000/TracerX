@@ -327,6 +327,7 @@ public:
      * @brief Loads the specified scene into the renderer.
      * 
      * Use this method to load the entire scene into the GPU.
+     * Keep in mind that this method builds the BVH tree of the scene, which may be time-consuming.
      * 
      * @param scene The scene to load.
      * @see Renderer::updateSceneMaterials to update only the materials.

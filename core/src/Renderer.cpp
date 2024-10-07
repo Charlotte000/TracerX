@@ -44,6 +44,7 @@ void Renderer::resize(glm::uvec2 size)
 
 void Renderer::shutdown()
 {
+    // Textures
     this->accumulationTexture.shutdown();
     this->albedoTexture.shutdown();
     this->normalTexture.shutdown();
@@ -52,6 +53,7 @@ void Renderer::shutdown()
     this->environment.texture.shutdown();
     this->textureArray.shutdown();
 
+    // SSBOs
     this->vertexBuffer.shutdown();
     this->triangleBuffer.shutdown();
     this->meshBuffer.shutdown();
@@ -59,10 +61,12 @@ void Renderer::shutdown()
     this->materialBuffer.shutdown();
     this->bvhBuffer.shutdown();
 
+    // UBOs
     this->cameraBuffer.shutdown();
     this->environmentBuffer.shutdown();
     this->paramBuffer.shutdown();
 
+    // Shader
     this->shader.shutdown();
 }
 
@@ -230,14 +234,19 @@ unsigned int Renderer::getSampleCount() const
 
 void Renderer::loadScene(Scene& scene)
 {
+    // BVH build should be done before updating the scene because the BVH changes the order of the triangles
+    std::vector<Node> bvh = scene.buildBVH();
+
+    // Textures
     this->textureArray.update(scene.textures);
-    this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(Node));
+
+    // SSBOs
     this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
     this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(Triangle));
     this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
-
     this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);
+    this->bvhBuffer.update(bvh.data(), bvh.size() * sizeof(Node));
 }
 
 void Renderer::updateSceneMaterials(const Scene& scene)
@@ -267,7 +276,7 @@ void Renderer::initData()
     this->environment.texture.init(GL_RGBA32F);
     this->textureArray.init(GL_RGBA32F);
 
-    // Storage buffers
+    // SSBOs
     this->vertexBuffer.init();
     this->triangleBuffer.init();
     this->meshBuffer.init();
@@ -275,7 +284,7 @@ void Renderer::initData()
     this->materialBuffer.init();
     this->bvhBuffer.init();
 
-    // Uniform buffers
+    // UBOs
     this->cameraBuffer.init();
     this->environmentBuffer.init();
     this->paramBuffer.init();
@@ -294,7 +303,7 @@ void Renderer::bindData()
     this->environment.texture.bind(0);
     this->textureArray.bind(1);
 
-    // Storage buffers
+    // SSBOs
     this->vertexBuffer.bind(0);
     this->triangleBuffer.bind(1);
     this->meshBuffer.bind(2);
@@ -302,7 +311,7 @@ void Renderer::bindData()
     this->materialBuffer.bind(4);
     this->bvhBuffer.bind(5);
 
-    // Uniform buffers
+    // UBOs
     this->cameraBuffer.bind(0);
     this->environmentBuffer.bind(1);
     this->paramBuffer.bind(2);

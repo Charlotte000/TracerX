@@ -60,9 +60,9 @@ struct Triangle
 
 struct Mesh
 {
+    int TriangleOffset;
     int TriangleSize;
     int NodeOffset;
-    int TriangleOffset;
 };
 
 struct MeshInstance
