@@ -202,53 +202,66 @@ void Application::control()
     glm::vec3 right = glm::cross(camera.forward, camera.up);
 
     // Keyboard
+    bool updated = false;
     if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
     {
         camera.position += camera.forward * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_S) == GLFW_PRESS)
     {
         camera.position += -camera.forward * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_A) == GLFW_PRESS)
     {
         camera.position += -right * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_D) == GLFW_PRESS)
     {
         camera.position += right * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
     {
         camera.position += camera.up * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
     {
         camera.position += -camera.up * elapsedMove;
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_Q) == GLFW_PRESS)
     {
         camera.up = glm::rotate(camera.up, -elapsedRotate, camera.forward);
+        updated = true;
     }
 
     if (glfwGetKey(this->window, GLFW_KEY_E) == GLFW_PRESS)
     {
         camera.up = glm::rotate(camera.up, elapsedRotate, camera.forward);
+        updated = true;
     }
 
     // Mouse
+    updated |= mouseDelta != glm::vec2(0);
     mouseDelta *= elapsedRotate;
     camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
     camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
     camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
 
-    this->clear();
+    if (updated)
+    {
+        this->clear();
+    }
 }
 
 float Application::getLookAtDistance() const
