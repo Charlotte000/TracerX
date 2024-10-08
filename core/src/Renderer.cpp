@@ -179,6 +179,11 @@ void Renderer::denoise()
 void Renderer::clear()
 {
     this->accumulationTexture.clear();
+    this->albedoTexture.clear();
+    this->normalTexture.clear();
+    this->depthTexture.clear();
+    this->toneMapTexture.clear();
+
     this->sampleCount = 0;
 }
 

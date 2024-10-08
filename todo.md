@@ -1,9 +1,5 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
 
-- render x samples button
-- highlight current tile
-- use BeginGroup
-
 # perfomance test:
 ## ajax | 0.0 0.5 0.5
 | feature          | time  |

@@ -103,6 +103,26 @@ void SetupImGuiStyle()
     style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
 }
 
+bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
+{
+    return ImGui::DragScalar(label, ImGuiDataType_U32, v, v_speed, &v_min, &v_max, format, flags);
+}
+
+bool DragUInt2(const char* label, unsigned int v[2], float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
+{
+    return ImGui::DragScalarN(label, ImGuiDataType_U32, v, 2, v_speed, &v_min, &v_max, format, flags);
+}
+
+void Tooltip(const std::string& content)
+{
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::BeginItemTooltip())
+    {
+        ImGui::Text(content.c_str());
+        ImGui::EndTooltip();
+    }}
+
 void Application::initUI()
 {
     ImGui::CreateContext();
@@ -253,9 +273,8 @@ void Application::mainMenuBar()
         ImGui::EndMenu();
     }
 
-    float elapsedTime = ImGui::GetIO().DeltaTime;
     ImGui::Separator();
-    ImGui::Text("%4.0fms", 1000 * elapsedTime);
+    ImGui::Text("%4.0fms", 1000 * ImGui::GetIO().DeltaTime);
 
     ImGui::Separator();
     ImGui::Text("Samples: %u", this->renderer.getSampleCount());
@@ -293,11 +312,9 @@ void Application::drawingPanel()
         return;
     }
 
-    if (ImGui::BeginTabItem("Output"))
+    if (ImGui::BeginTabItem("View"))
     {
-        this->viewTexture(
-            this->enableRendering || this->renderer.getSampleCount() > 1 ?
-            this->renderer.getTextureHandler() : this->renderer.getAlbedoTextureHandler());
+        this->viewTexture(this->rendering.isPreview ? this->renderer.getAlbedoTextureHandler() : this->renderer.getTextureHandler());
         ImGui::EndTabItem();
     }
 
@@ -325,6 +342,12 @@ void Application::drawingPanel()
         ImGui::EndTabItem();
     }
 
+    if (ImGui::BeginTabItem("Tonemapped"))
+    {
+        this->viewTexture(this->renderer.getTextureHandler());
+        ImGui::EndTabItem();
+    }
+
     ImGui::EndTabBar();
     ImGui::EndChild();
 }
@@ -342,24 +365,34 @@ void Application::viewTexture(GLint textureHandler)
     ImGui::BeginChild("viewTexture");
 
     // Draw filled image
-    glm::vec2 lo = this->zooming.uvCenter - this->zooming.uvSize * .5f;
-    glm::vec2 up = this->zooming.uvCenter + this->zooming.uvSize * .5f;
-    glm::vec2 viewPos;
-    this->drawFillImage(textureHandler, this->renderer.getSize(), viewPos, this->zooming.size, glm::vec3(1), lo, up, true);
-    viewPos += toVec2(ImGui::GetWindowPos());
+    glm::vec2 lo = this->renderView.uvCenter - this->renderView.uvSize * .5f;
+    glm::vec2 up = this->renderView.uvCenter + this->renderView.uvSize * .5f;
+    this->drawFillImage(textureHandler, this->renderer.getSize(), this->renderView.pos, this->renderView.size, glm::vec3(1), lo, up, true);
 
-    this->zooming.isActive = ImGui::IsItemHovered();
+    this->renderView.isHover = ImGui::IsItemHovered();
 
-    // Draw zoom rectangle
-    lo = lo * this->zooming.size + viewPos;
-    up = up * this->zooming.size + viewPos;
-    ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
-
-    if (this->zooming.uvSize != glm::vec2(1))
+    if (this->renderView.uvSize != glm::vec2(1))
     {
+        // Draw zoom rectangle
+        lo = lo * this->renderView.size + this->renderView.pos;
+        up = up * this->renderView.size + this->renderView.pos;
+        ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderStrong]));
         ImGui::EndChild();
         return;
     }
+
+    // Draw tile rectangle
+    glm::uvec2 pos, size;
+    this->getCurrentTile(pos, size);
+
+    lo = (glm::vec2)pos / (glm::vec2)this->renderer.getSize();
+    up = lo + (glm::vec2)size / (glm::vec2)this->renderer.getSize();
+    lo.y = 1 - lo.y;
+    up.y = 1 - up.y;
+
+    lo = lo * this->renderView.size + this->renderView.pos;
+    up = up * this->renderView.size + this->renderView.pos;
+    ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
 
     glm::mat4 view = this->renderer.camera.createView();
     glm::mat4 projection = this->renderer.camera.createProjection(
@@ -370,10 +403,10 @@ void Application::viewTexture(GLint textureHandler)
 
     // Draw gizmos
     ImGuizmo::SetRect(
-        viewPos.x,
-        viewPos.y,
-        this->zooming.size.x,
-        this->zooming.size.y);
+        this->renderView.pos.x,
+        this->renderView.pos.y,
+        this->renderView.size.x,
+        this->renderView.size.y);
     ImGuizmo::SetDrawlist();
 
     glm::vec3 snap(this->gizmo.snap);
@@ -535,9 +568,9 @@ void Application::propertyEditor()
 
 void Application::propertyControls()
 {
-    if (ImGui::Button(this->enableRendering ? "Stop" : "Start", ImVec2(-1, 0)))
+    if (ImGui::Button(this->rendering.enable ? "Stop" : "Start", ImVec2(-1, 0)))
     {
-        this->enableRendering = !this->enableRendering;
+        this->rendering.enable = !this->rendering.enable;
     }
 
     if (ImGui::Button("Clear", ImVec2(-1, 0)))
@@ -598,7 +631,7 @@ void Application::propertyToneMapping()
 
     if (changed)
     {
-        this->renderer.getSampleCount() == 1 ? this->clear() : this->renderer.toneMap();
+        this->rendering.isPreview ? this->clear() : this->renderer.toneMap();
     }
 }
 
@@ -606,45 +639,29 @@ void Application::propertySettings()
 {
     bool updated = false;
 
-    glm::ivec2 size = this->renderer.getSize();
-    if (ImGui::DragInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
+    glm::uvec2 size = this->renderer.getSize();
+    if (DragUInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
     {
-        size = glm::max(glm::ivec2(1), size);
+        size = glm::max(glm::uvec2(1), size);
         this->renderer.resize(size);
         updated = true;
     }
 
-    int maxBounceCount = this->renderer.maxBounceCount;
-    if (ImGui::DragInt("Max bounce count", &maxBounceCount, .01f, 0, 1000))
-    {
-        this->renderer.maxBounceCount = maxBounceCount;
-        updated = true;
-    }
+    updated |= DragUInt("Tiling factor", &this->tiling.factor, .01f, 1, std::min(this->renderer.getSize().x, this->renderer.getSize().y)) & this->tiling.count != 0;
+    Tooltip("Reduces lags but increases the rendering time, intended for large images");
 
-    int samplesPerFrame = this->samplesPerFrame;
-    if (ImGui::DragInt("Samples per frame", &samplesPerFrame, .1f, 1, 10000))
-    {
-        this->samplesPerFrame = samplesPerFrame;
-        updated |= this->tiling.factor != 1;
-    }
+    ImGui::Separator();
+    DragUInt("Samples target", &this->rendering.sampleCountTarget, 1.f, 0, 100000);
+    Tooltip("Zero means unlimited samples");
 
-    ImGui::SameLine();
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip())
-    {
-        ImGui::Text("A high value can cause lags but the image quality improves faster");
-        ImGui::EndTooltip();
-    }
+    updated |= DragUInt("Samples per frame", &this->rendering.samplesPerFrame, .1f, 1, 10000) & this->tiling.count != 0;
+    Tooltip("A high value can cause lags but the image quality improves faster");
 
-    int tilingFactor = this->tiling.factor;
-    if (ImGui::DragInt("Tiling factor", &tilingFactor, 0.01f, 1, std::min(this->renderer.getSize().x, this->renderer.getSize().y)))
-    {
-        this->tiling.factor = tilingFactor;
-        updated = true;
-    }
+    updated |= DragUInt("Max bounce count", &this->renderer.maxBounceCount, .01f, 0, 1000);
 
-    updated |= ImGui::DragFloat("Min render distance", &this->renderer.minRenderDistance, 0.01f, 0, this->renderer.maxRenderDistance, "%.4f") |
-        ImGui::DragFloat("Max render distance", &this->renderer.maxRenderDistance, 10, this->renderer.minRenderDistance, 10000);
+    ImGui::Separator();
+    updated |= ImGui::DragFloat("Min render distance", &this->renderer.minRenderDistance, 0.01f, 0, this->renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic) |
+        ImGui::DragFloat("Max render distance", &this->renderer.maxRenderDistance, 1, this->renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic);
 
     if (updated)
     {
@@ -660,11 +677,11 @@ void Application::propertyCamera()
     changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
     changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
     changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
-    ImGui::Separator();
 
+    ImGui::Separator();
     changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179);
-    ImGui::Separator();
 
+    ImGui::Separator();
     changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
     changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
 
@@ -675,10 +692,10 @@ void Application::propertyCamera()
     }
 
     ImGui::Separator();
-
     changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
-    ImGui::Separator();
+    Tooltip("Can be used for anti-aliasing");
 
+    ImGui::Separator();
     ImGui::DragFloat(
         "Movement speed",
         &this->cameraControl.speed,
@@ -738,13 +755,7 @@ void Application::propertyEnvironment()
     }
 
     ImGui::DragFloat("Snap value", &this->gizmo.snap, 1, 0.f, 1000000);
-    ImGui::SameLine();
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip())
-    {
-        ImGui::Text("Hold LCtrl for snapping");
-        ImGui::EndTooltip();
-    }
+    Tooltip("Hold LCtrl for snapping");
 
     changed |= ImGui::Checkbox("Transparent background", &this->renderer.environment.transparent);
 
@@ -798,20 +809,14 @@ void Application::propertyMeshInstance(MeshInstance& meshInstance)
             changed = true;
         }
 
+        ImGui::DragFloat("Snap value", &this->gizmo.snap, 1, 0.f, 1000000);
+        Tooltip("Hold LCtrl for snapping");
+
         ImGui::RadioButton("Translate", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::TRANSLATE);
         ImGui::SameLine();
         ImGui::RadioButton("Rotate", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::ROTATE);
         ImGui::SameLine();
         ImGui::RadioButton("Scale", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::SCALE);
-
-        ImGui::DragFloat("Snap value", &this->gizmo.snap, 1, 0.f, 1000000);
-        ImGui::SameLine();
-        ImGui::TextDisabled("(?)");
-        if (ImGui::BeginItemTooltip())
-        {
-            ImGui::Text("Hold LCtrl for snapping");
-            ImGui::EndTooltip();
-        }
 
         ImGui::RadioButton("World", (int*)&this->gizmo.mode, (int)ImGuizmo::MODE::WORLD);
         ImGui::SameLine();
@@ -957,13 +962,7 @@ void Application::propertyMaterial(Material& material)
     {
         changed |= ImGui::DragFloat("Density", &material.density, .001f, 0, 100);
         changed |= ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100);
-        ImGui::SameLine();
-        ImGui::TextDisabled("(?)");
-        if (ImGui::BeginItemTooltip())
-        {
-            ImGui::Text("If you notice black spots, try to increase the max bounce count");
-            ImGui::EndTooltip();
-        }
+        Tooltip("If you notice black spots, try to increase the max bounce count");
 
         ImGui::EndTabItem();
     }
@@ -1048,4 +1047,6 @@ void Application::drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::ve
         toImVec2(uvUp),
         ImVec4(tintColor.r, tintColor.g, tintColor.b, 1),
         ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
+
+    imagePos += toVec2(ImGui::GetWindowPos());
 }

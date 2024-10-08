@@ -93,7 +93,7 @@ void main()
 
     if (SampleCount == 0)
     {
-        imageStore(AlbedoImage, TexelCoord, ToneMap(vec4(albedo, 1)));
+        imageStore(AlbedoImage, TexelCoord, vec4(albedo, 1));
         imageStore(NormalImage, TexelCoord, NormalToColor(normal));
         imageStore(DepthImage, TexelCoord, DepthToColor(depth));
     }

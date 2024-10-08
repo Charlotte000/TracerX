@@ -28,8 +28,14 @@ private:
     TracerX::Renderer renderer;
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
-    unsigned int samplesPerFrame = 1;
-    bool enableRendering = false;
+    struct Rendering
+    {
+        unsigned int sampleCountTarget = 0;
+        unsigned int samplesPerFrame = 1;
+        bool enable = false;
+        bool isPreview = true;
+        bool needClear = false;
+    } rendering;
     struct CameraControl
     {
         bool enable = false;
@@ -41,13 +47,14 @@ private:
         unsigned int count = 0;
         unsigned int factor = 1;
     } tiling;
-    struct Zooming
+    struct RenderView
     {
         glm::vec2 uvCenter = glm::vec2(.5f);
         glm::vec2 uvSize = glm::vec2(1);
         glm::vec2 size;
-        bool isActive = false;
-    } zooming;
+        glm::vec2 pos;
+        bool isHover = false;
+    } renderView;
     struct Property
     {
         enum class Type
@@ -82,7 +89,7 @@ private:
     void control();
     float getLookAtDistance() const;
     void clear();
-    void getCurrentTile(glm::uvec2& pos, glm::uvec2& size) const;
+    void getCurrentTile(glm::uvec2& pos, glm::uvec2& size);
 #pragma region UI
     void initUI();
     void renderUI();
