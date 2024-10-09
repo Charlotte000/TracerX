@@ -3,19 +3,12 @@
  */
 #pragma once
 
-#include "Scene.h"
-#include "Image.h"
-#include "Shader.h"
-#include "Camera.h"
-#include "Texture.h"
-#include "Environment.h"
-#include "TextureArray.h"
-#include "StorageBuffer.h"
-#include "UniformBuffer.h"
-
-#include <vector>
-#include <GL/glew.h>
-#include <glm/glm.hpp>
+#include "TracerX/Scene.h"
+#include "TracerX/Environment.h"
+#include "TracerX/core/GL/Shader.h"
+#include "TracerX/core/GL/TextureArray.h"
+#include "TracerX/core/GL/StorageBuffer.h"
+#include "TracerX/core/GL/UniformBuffer.h"
 
 namespace TracerX
 {
@@ -356,22 +349,22 @@ public:
     void updateSceneMeshInstances(Scene& scene);
 private:
     unsigned int sampleCount = 0;
-    core::Shader shader;
-    core::Texture accumulationTexture;
-    core::Texture albedoTexture;
-    core::Texture normalTexture;
-    core::Texture depthTexture;
-    core::Texture toneMapTexture;
-    core::TextureArray textureArray;
-    core::StorageBuffer vertexBuffer;
-    core::StorageBuffer triangleBuffer;
-    core::StorageBuffer meshBuffer;
-    core::StorageBuffer meshInstanceBuffer;
-    core::StorageBuffer materialBuffer;
-    core::StorageBuffer bvhBuffer;
-    core::UniformBuffer cameraBuffer;
-    core::UniformBuffer environmentBuffer;
-    core::UniformBuffer paramBuffer;
+    core::GL::Shader shader;
+    core::GL::Texture accumulationTexture;
+    core::GL::Texture albedoTexture;
+    core::GL::Texture normalTexture;
+    core::GL::Texture depthTexture;
+    core::GL::Texture toneMapTexture;
+    core::GL::TextureArray textureArray;
+    core::GL::StorageBuffer vertexBuffer;
+    core::GL::StorageBuffer triangleBuffer;
+    core::GL::StorageBuffer meshBuffer;
+    core::GL::StorageBuffer meshInstanceBuffer;
+    core::GL::StorageBuffer materialBuffer;
+    core::GL::StorageBuffer bvhBuffer;
+    core::GL::UniformBuffer cameraBuffer;
+    core::GL::UniformBuffer environmentBuffer;
+    core::GL::UniformBuffer paramBuffer;
 
     static const std::vector<unsigned char> shaderSrc;
 

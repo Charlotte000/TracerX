@@ -3,10 +3,7 @@
  */
 #pragma once
 
-#include "Texture.h"
-
-#include <filesystem>
-#include <glm/glm.hpp>
+#include "TracerX/core/GL/Texture.h"
 
 namespace TracerX
 {
@@ -43,7 +40,7 @@ public:
      */
     void loadFromFile(const std::filesystem::path& path);
 private:
-    core::Texture texture;
+    core::GL::Texture texture;
 
     friend class Renderer;
 };

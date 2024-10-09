@@ -150,46 +150,6 @@ struct Material
      * @see Material::alphaMode
      */
     float alphaCutoff = .5f;
-
-    /**
-     * @brief Creates a light source material with the given emission color and strength.
-     * @param emissionColor The color of the emission.
-     * @param emissionStrength The strength of the emission.
-     * @return The light source material.
-     */
-    static Material lightSource(glm::vec3 emissionColor, float emissionStrength);
-
-    /**
-     * @brief Creates a transparent material with the given albedo color, index of refraction, fresnel color, and fresnel strength.
-     * @param albedoColor The color of the albedo.
-     * @param ior The index of refraction.
-     * @param fresnelColor The color of the fresnel effect.
-     * @param fresnelStrength The strength of the fresnel effect.
-     * @return The transparent material.
-     */
-    static Material transparent(glm::vec3 albedoColor, float ior, glm::vec3 fresnelColor = glm::vec3(1), float fresnelStrength = 0);
-
-    /**
-     * @brief Creates a material with constant density with the given albedo color and density.
-     * @param albedoColor The color of the albedo.
-     * @param density The density.
-     * @return The material with constant density.
-     */
-    static Material constantDensity(glm::vec3 albedoColor, float density);
-
-    /**
-     * @brief Creates a matte material with the given albedo color and metalness.
-     * @param albedoColor The color of the albedo.
-     * @param metalness The metalness.
-     * @return The matte material.
-     */
-    static Material matte(glm::vec3 albedoColor, float metalness = 0);
-
-    /**
-     * @brief Creates a mirror material.
-     * @return The mirror material.
-     */
-    static Material mirror();
 private:
     int padding1;
     int padding2;

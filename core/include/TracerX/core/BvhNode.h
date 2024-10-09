@@ -1,5 +1,5 @@
 /**
- * @file BVH.h
+ * @file BvhNode.h
  */
 #pragma once
 
@@ -16,7 +16,7 @@ namespace TracerX::core
  * 
  * @remark Should not be used directly and is only used internally by the renderer.
  */
-struct Node
+struct BvhNode
 {
 public:
     glm::vec4 bboxMin;

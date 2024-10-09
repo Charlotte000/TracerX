@@ -3,24 +3,21 @@
  */
 #pragma once
 
-#include "BVH.h"
-#include "Mesh.h"
-#include "Image.h"
-#include "Camera.h"
-#include "Vertex.h"
-#include "Material.h"
-#include "Triangle.h"
+#include "TracerX/Mesh.h"
+#include "TracerX/Image.h"
+#include "TracerX/Camera.h"
+#include "TracerX/Material.h"
+#include "TracerX/core/Vertex.h"
+#include "TracerX/core/BvhNode.h"
+#include "TracerX/core/Triangle.h"
 
-#include <vector>
 #include <string>
-#include <filesystem>
 
 namespace TracerX
 {
 
 /**
  * @brief A collection of all the data that makes up a 3D scene to be rendered.
- * 
  * @see TracerX::loadGLTF to load a scene from a GLTF file.
  */
 class Scene
@@ -72,6 +69,7 @@ public:
      * @brief The meshes in the scene.
      * 
      * The index of the mesh in the vector is the MeshInstance::meshId used in the scene.
+     * New meshes should be added only using the Scene::addMesh method.
      */
     std::vector<Mesh> meshes;
 
@@ -110,23 +108,18 @@ public:
 
     /**
      * @brief Adds a mesh to the scene.
+     * 
+     * Builds a BVH tree for the mesh. May take a long time for large meshes.
+     * 
      * @param mesh The mesh to be added.
      * @param name The name of the mesh.
      * @return The index (mesh ID) of the added mesh in the Scene::meshes vector.
      */
     int addMesh(const Mesh& mesh, const std::string& name);
 private:
-    /**
-     * @brief Builds the bounding volume hierarchy (BVH) of the scene.
-     * 
-     * The BVH is used to accelerate path tracing by reducing the number of intersection tests.
-     * Reorders the triangles in the scene to optimize BVH construction.
-     * It may be a time-consuming operation.
-     * Called by the Renderer::loadScene method.
-     * 
-     * @return The nodes of the BVH tree.
-     */
-    std::vector<core::Node> buildBVH();
+    std::vector<core::BvhNode> bvh;
+
+    void buildBVH(Mesh& mesh);
 
     friend class Renderer;
 };

@@ -1,10 +1,9 @@
 /**
  * @file UniformBuffer.cpp
  */
-#include "TracerX/UniformBuffer.h"
+#include "TracerX/core/GL/UniformBuffer.h"
 
-using namespace TracerX;
-using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void UniformBuffer::init()
 {

@@ -1,11 +1,6 @@
 /**
  * @file Renderer.cpp
  */
-#include "TracerX/BVH.h"
-#include "TracerX/Mesh.h"
-#include "TracerX/Vertex.h"
-#include "TracerX/Triangle.h"
-#include "TracerX/Material.h"
 #include "TracerX/Renderer.h"
 
 #include <stdexcept>
@@ -15,6 +10,7 @@
 
 using namespace TracerX;
 using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void Renderer::init(glm::uvec2 size)
 {
@@ -249,8 +245,6 @@ unsigned int Renderer::getSampleCount() const
 
 void Renderer::loadScene(Scene& scene)
 {
-    std::vector<Node> bvh = scene.buildBVH(); // BVH build should be done before updating the scene because the BVH changes the order of the triangles
-
     // Textures
     this->textureArray.update(scene.textures);
 
@@ -260,7 +254,7 @@ void Renderer::loadScene(Scene& scene)
     this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
     this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);
-    this->bvhBuffer.update(bvh.data(), bvh.size() * sizeof(Node));
+    this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(BvhNode));
 }
 
 void Renderer::updateSceneMaterials(const Scene& scene)

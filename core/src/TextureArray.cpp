@@ -1,9 +1,9 @@
 /**
  * @file TextureArray.cpp
  */
-#include "TracerX/TextureArray.h"
+#include "TracerX/core/GL/TextureArray.h"
 
-using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void TextureArray::init(GLint internalFormat)
 {

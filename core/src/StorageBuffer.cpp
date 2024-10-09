@@ -1,9 +1,9 @@
 /**
  * @file StorageBuffer.cpp
  */
-#include "TracerX/StorageBuffer.h"
+#include "TracerX/core/GL/StorageBuffer.h"
 
-using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void StorageBuffer::init()
 {

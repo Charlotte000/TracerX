@@ -3,13 +3,11 @@
  */
 #pragma once
 
-#include "Image.h"
+#include "TracerX/Image.h"
 
-#include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 
-namespace TracerX::core
+namespace TracerX::core::GL
 {
 
 /**

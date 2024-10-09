@@ -6,11 +6,8 @@
 #include "TracerX/GLTFLoader.h"
 
 #include <map>
-#include <vector>
-#include <string>
 #include <stdexcept>
 #include <tiny_gltf.h>
-#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
 

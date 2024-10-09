@@ -8,7 +8,6 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Camera.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Texture.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Material.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLTFLoader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp

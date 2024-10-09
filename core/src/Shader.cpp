@@ -1,12 +1,12 @@
 /**
  * @file Shader.cpp
  */
-#include "TracerX/Shader.h"
+#include "TracerX/core/GL/Shader.h"
 
 #include <string>
 #include <stdexcept>
 
-using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void Shader::init(const std::vector<unsigned char>& shaderBin)
 {

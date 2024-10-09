@@ -3,9 +3,7 @@
  */
 #pragma once
 
-#include "Scene.h"
-
-#include <filesystem>
+#include "TracerX/Scene.h"
 
 namespace TracerX
 {

@@ -4,7 +4,6 @@
 #include "TracerX/Scene.h"
 
 #include <FastBVH.h>
-#include <glm/glm.hpp>
 #include <glm/gtx/extended_min_max.hpp>
 
 using namespace TracerX;
@@ -31,10 +30,11 @@ int Scene::addMesh(const Mesh& mesh, const std::string& name)
     this->meshes.push_back(mesh);
     int index = this->meshes.size() - 1;
     this->meshNames.push_back(name.empty() ? "Untitled mesh " + std::to_string(index) : name);
+    this->buildBVH(this->meshes.back());
     return index;
 }
 
-std::vector<Node> Scene::buildBVH()
+void Scene::buildBVH(Mesh& mesh)
 {
     class TriangleConverter
     {
@@ -56,27 +56,21 @@ std::vector<Node> Scene::buildBVH()
     } triangleConverter(&this->vertices);
     FastBVH::DefaultBuilder<float> bvhBuilder;
 
-    std::vector<Node> nodes;
-    for (Mesh& mesh : this->meshes)
+    // Build BVH
+    FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
+        FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
+        triangleConverter);
+
+    // Convert to our format
+    mesh.nodeOffset = this->bvh.size();
+    for (const FastBVH::Node<float>& node : bvh.getNodes())
     {
-        // Build BVH
-        FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
-            FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
-            triangleConverter);
-
-        // Convert to our format
-        mesh.nodeOffset = nodes.size();
-        for (const FastBVH::Node<float>& node : bvh.getNodes())
-        {
-            Node myNode;
-            myNode.bboxMin = glm::vec4(node.bbox.min, 0);
-            myNode.bboxMax = glm::vec4(node.bbox.max, 0);
-            myNode.start = node.start;
-            myNode.primitiveCount = node.primitive_count;
-            myNode.rightOffset = node.right_offset;
-            nodes.push_back(myNode);
-        }
+        BvhNode myNode;
+        myNode.bboxMin = glm::vec4(node.bbox.min, 0);
+        myNode.bboxMax = glm::vec4(node.bbox.max, 0);
+        myNode.start = node.start;
+        myNode.primitiveCount = node.primitive_count;
+        myNode.rightOffset = node.right_offset;
+        this->bvh.push_back(myNode);
     }
-
-    return nodes;
 }

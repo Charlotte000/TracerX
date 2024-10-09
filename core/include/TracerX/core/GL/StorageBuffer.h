@@ -5,7 +5,7 @@
 
 #include <GL/glew.h>
 
-namespace TracerX::core
+namespace TracerX::core::GL
 {
 
 /**

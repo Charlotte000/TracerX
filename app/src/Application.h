@@ -6,9 +6,9 @@
 
 #include <TracerX/Mesh.h>
 #include <TracerX/Scene.h>
-#include <TracerX/Texture.h>
 #include <TracerX/Material.h>
 #include <TracerX/Renderer.h>
+#include <TracerX/core/GL/Texture.h>
 
 #include <string>
 #include <imgui.h>
@@ -76,7 +76,7 @@ public:
     struct MaterialTextureView
     {
         int textureId = -1;
-        TracerX::core::Texture texture;
+        TracerX::core::GL::Texture texture;
     } materialTextureView;
     struct Gizmo
     {

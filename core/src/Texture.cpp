@@ -1,12 +1,10 @@
 /**
  * @file Texture.cpp
  */
-#include "TracerX/Texture.h"
-
-#include <vector>
+#include "TracerX/core/GL/Texture.h"
 
 using namespace TracerX;
-using namespace TracerX::core;
+using namespace TracerX::core::GL;
 
 void Texture::init(GLint internalFormat, GLint sampler)
 {
