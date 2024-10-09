@@ -20,11 +20,6 @@
 class Application
 {
 public:
-    void init(glm::uvec2 size);
-    void shutdown();
-    void run();
-    void loadScene(const std::filesystem::path& path);
-private:
     TracerX::Renderer renderer;
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
@@ -46,15 +41,24 @@ private:
     {
         unsigned int count = 0;
         unsigned int factor = 1;
+
+        void tick();
+        bool isLastTick() const;
+        void getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::uvec2& size);
     } tiling;
-    struct RenderView
+    struct RenderTextureView
     {
         glm::vec2 uvCenter = glm::vec2(.5f);
         glm::vec2 uvSize = glm::vec2(1);
         glm::vec2 size;
         glm::vec2 pos;
         bool isHover = false;
-    } renderView;
+
+        void reset();
+        void clamp();
+        void getUVRect(glm::vec2& lo, glm::vec2& up) const;
+        void getRectFromUV(glm::vec2& lo, glm::vec2& up) const;
+    } renderTextureView;
     struct Property
     {
         enum class Type
@@ -69,11 +73,11 @@ private:
         } type = Type::Contorls;
         void* target = nullptr;
     } property;
-    struct MaterialTexture
+    struct MaterialTextureView
     {
         int textureId = -1;
         TracerX::core::Texture texture;
-    } materialTexture;
+    } materialTextureView;
     struct Gizmo
     {
         ImGuizmo::OPERATION operation = ImGuizmo::OPERATION::TRANSLATE;
@@ -85,32 +89,17 @@ private:
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
     static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 
+    void init(glm::uvec2 size);
+    void shutdown();
+    void run();
+    void loadScene(const std::filesystem::path& path);
     void loadAnyEnvironment();
     void control();
     float getLookAtDistance() const;
     void clear();
-    void getCurrentTile(glm::uvec2& pos, glm::uvec2& size);
-#pragma region UI
     void initUI();
     void renderUI();
     void shutdownUI();
-    void mainMenuBar();
-    void mainWindow();
-    void drawingPanel();
-    void sidePanel();
-    void viewTexture(GLint textureHandler);
-    void propertySelector();
-    void propertyEditor();
-    void propertyControls();
-    void propertyToneMapping();
-    void propertySettings();
-    void propertyCamera();
-    void propertyEnvironment();
-    void propertyMeshInstance(TracerX::MeshInstance& meshInstance);
-    void propertyMaterial(TracerX::Material& material);
-    bool materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor);
-    void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false);
-#pragma endregion UI
 };
 
 glm::vec2 toVec2(const ImVec2 v);

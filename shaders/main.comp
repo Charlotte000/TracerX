@@ -7,6 +7,9 @@ const float INV_PI     = 0.31830988618379067;
 const float INV_TWO_PI = 0.15915494309189533;
 const float TWO_PI     = 6.28318530717958648;
 
+const float EPS = 0.00001;
+const float INF = 1000000000.0;
+
 #include "common/structs.comp"
 #include "common/uniforms.comp"
 #include "common/random.comp"
@@ -29,7 +32,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
     while (bounce <= MaxBounceCount)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : 0, manifold))
+        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : EPS, isFirstHit ? MaxRenderDistance : INF, manifold))
         {
             radiance += GetEnvironment(ray) * throughput;
             if (bounce == 0)

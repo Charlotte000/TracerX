@@ -12,14 +12,14 @@ void swap(inout int a, inout int b)
     b = tmp;
 }
 
-bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, out CollisionManifold manifold)
+bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, in float minDistance, in float maxDistance, out CollisionManifold manifold)
 {
     vec3 edge12 = v2.PositionU.xyz - v1.PositionU.xyz;
     vec3 edge13 = v3.PositionU.xyz - v1.PositionU.xyz;
     vec3 normal = cross(edge12, edge13);
     float det = -dot(ray.Direction, normal);
 
-    if (abs(det) <= length(normal) * 0.01)
+    if (abs(det) <= length(normal) * EPS)
     {
         return false;
     }
@@ -34,7 +34,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     float v = -dot(edge12, dao) * invDet;
     float w = 1.0 - u - v;
 
-    if (dst <= 0.001 || u < 0.0 || v < 0.0 || w < 0.0)
+    if (u < 0.0 || v < 0.0 || w < 0.0 || dst <= minDistance || dst >= maxDistance)
     {
         return false;
     }
@@ -71,7 +71,7 @@ bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNea
     return tNear <= tFar && tFar >= 0;
 }
 
-bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float minDistance, out CollisionManifold manifold)
+bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float minDistance, in float maxDistance, out CollisionManifold manifold)
 {
     const Mesh mesh = Meshes[meshInstance.MeshId];
 
@@ -80,9 +80,9 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
     ray.Direction = normalize(Transform(ray.Direction, meshInstance.TransformInv, false));
     ray.InvDirection = 1 / ray.Direction;
 
-    float localMinRenderDistance = length(Transform(ray.Direction * minDistance, meshInstance.TransformInv, false));
-    float localMaxRenderDistance = length(Transform(ray.Direction * MaxRenderDistance, meshInstance.TransformInv, false));
-    manifold.Depth = localMaxRenderDistance;
+    float localMinDistance = length(Transform(ray.Direction * minDistance, meshInstance.TransformInv, false));
+    float localMaxDistance = length(Transform(ray.Direction * maxDistance, meshInstance.TransformInv, false));
+    manifold.Depth = localMaxDistance;
 
     float bbhits[4];
 
@@ -112,7 +112,7 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
                 Vertex v3 = Vertices[triangle.V3];
 
                 CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, meshInstance.MaterialId, current) && current.Depth < manifold.Depth && current.Depth >= localMinRenderDistance)
+                if (TriangleIntersection(ray, v1, v2, v3, meshInstance.MaterialId, localMinDistance, manifold.Depth, current))
                 {
                     manifold = current;
                 }
@@ -152,7 +152,7 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
         }
     }
 
-    if (manifold.Depth < localMaxRenderDistance)
+    if (manifold.Depth < localMaxDistance)
     {
         manifold.Point = Transform(manifold.Point, meshInstance.Transform, true);
         manifold.Depth = length(manifold.Point - rayOrigin);
@@ -165,9 +165,9 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
     return false;
 }
 
-bool FindIntersection(in Ray ray, in float minDistance, out CollisionManifold manifold)
+bool FindIntersection(in Ray ray, in float minDistance, in float maxDistance, out CollisionManifold manifold)
 {
-    manifold.Depth = MaxRenderDistance;
+    manifold.Depth = maxDistance;
 
     int meshCount = MeshInstances.length();
     for (int meshId = 0; meshId < meshCount; meshId++)
@@ -175,11 +175,11 @@ bool FindIntersection(in Ray ray, in float minDistance, out CollisionManifold ma
         MeshInstance meshInstance = MeshInstances[meshId];
 
         CollisionManifold current;
-        if (MeshInstanceIntersection(ray, meshInstance, minDistance, current) && current.Depth < manifold.Depth)
+        if (MeshInstanceIntersection(ray, meshInstance, minDistance, manifold.Depth, current))
         {
             manifold = current;
         }
     }
 
-    return manifold.Depth < MaxRenderDistance;
+    return manifold.Depth < maxDistance;
 }

@@ -11,6 +11,7 @@
 
 using namespace TracerX;
 
+#pragma region UI Helper Functions
 void SetupImGuiStyle()
 {
     // Rounded Visual Studio style by RedNicStone from ImThemes
@@ -121,752 +122,85 @@ void Tooltip(const std::string& content)
     {
         ImGui::Text(content.c_str());
         ImGui::EndTooltip();
-    }}
-
-void Application::initUI()
-{
-    ImGui::CreateContext();
-    ImGui_ImplGlfw_InitForOpenGL(this->window, true);
-    ImGui_ImplOpenGL3_Init();
-
-    SetupImGuiStyle();
-
-    this->materialTexture.texture.init(GL_RGBA32F);
-    this->materialTexture.texture.update(Image::empty);
+    }
 }
 
-void Application::shutdownUI()
+void drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
 {
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-    this->materialTexture.texture.shutdown();
+    if (flipY)
+    {
+        uvLo.y = 1 - uvLo.y;
+        uvUp.y = 1 - uvUp.y;
+    }
+
+    float srcAspectRatio = srcSize.x / srcSize.y;
+
+    glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
+    float dstAspectRatio = dstSize.x / dstSize.y;
+
+    imageSize = dstSize * (srcAspectRatio > dstAspectRatio ? glm::vec2(1, dstAspectRatio / srcAspectRatio) : glm::vec2(srcAspectRatio / dstAspectRatio, 1));
+    imagePos = (toVec2(ImGui::GetWindowSize()) - imageSize) * 0.5f;
+
+    ImGui::SetCursorPos(toImVec2(imagePos));
+    ImGui::Image(
+        (void*)(intptr_t)textureHandler,
+        toImVec2(imageSize - 2.f),
+        toImVec2(uvLo),
+        toImVec2(uvUp),
+        ImVec4(tintColor.r, tintColor.g, tintColor.b, 1),
+        ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
+
+    imagePos += toVec2(ImGui::GetWindowPos());
 }
 
-void Application::renderUI()
-{
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGuizmo::BeginFrame();
-
-    this->mainMenuBar();
-    this->mainWindow();
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
-
-void Application::mainMenuBar()
-{
-    if (!ImGui::BeginMainMenuBar())
-    {
-        return;
-    }
-
-    if (ImGui::BeginMenu("File"))
-    {
-        if (ImGui::MenuItem("Open scene", "(glb/gltf)"))
-        {
-            const char* patterns[] = { "*.glb", "*.gltf" };
-            const char* path = tinyfd_openFileDialog(
-                "Open scene file",
-                Application::sceneFolder.string().c_str(),
-                2,
-                patterns,
-                nullptr,
-                0);
-            if (path != nullptr)
-            {
-                try
-                {
-                    this->loadScene(path);
-                    this->materialTexture.textureId = -1;
-                    if (this->property.target != nullptr)
-                    {
-                        this->property.target = nullptr;
-                        this->property.type = Property::Type::Contorls;
-                    }
-                }
-                catch (const std::runtime_error& err)
-                {
-                    std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
-                }
-            }
-        }
-
-        if (ImGui::MenuItem("Open environment", "(png/hdr/jpg)"))
-        {
-            const char* patterns[] = { "*.png", "*.hdr", "*.jpg" };
-            const char* fileName = tinyfd_openFileDialog(
-                "Open environment image",
-                Application::environmentFolder.string().c_str(),
-                3,
-                patterns,
-                nullptr,
-                0);
-            if (fileName != nullptr)
-            {
-                try
-                {
-                    this->renderer.environment.loadFromFile(fileName);
-                    this->clear();
-                }
-                catch (const std::runtime_error& err)
-                {
-                    std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Invalid environment file", "ok", "warning", 0);
-                }
-            }
-        }
-
-        if (ImGui::MenuItem("Save", "(png)"))
-        {
-            const char* patterns[] = { "*.png" };
-            const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
-            if (fileName != nullptr)
-            {
-                try
-                {
-                    this->renderer.getImage().saveToFile(fileName);
-                }
-                catch (const std::runtime_error& err)
-                {
-                    std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Failed to save the image", "ok", "warning", 0);
-                }
-            }
-        }
-
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Controls"))
-    {
-        ImGui::Text(
-            "Space - start/stop rendering\n"
-            "Mouse wheel - zoom in/out\n"
-            "Mouse drag - move view\n"
-        );
-
-        if (ImGui::BeginMenu("Camera"))
-        {
-            ImGui::Text(
-                "C - start/stop camera control mode\n"
-                "W, A, S, D - camera forward, left, backward, right movement\n"
-                "LShift, LCtrl - camera up, down movement\n"
-                "Mouse - camera rotation\n"
-                "Q, E - camera tilt\n"
-            );
-
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("About"))
-    {
-        ImGui::Text("Made by: Charlotte000");
-        ImGui::Text("Version: v3");
-        ImGui::EndMenu();
-    }
-
-    ImGui::Separator();
-    ImGui::Text("%4.0fms", 1000 * ImGui::GetIO().DeltaTime);
-
-    ImGui::Separator();
-    ImGui::Text("Samples: %u", this->renderer.getSampleCount());
-
-    ImGui::EndMainMenuBar();
-}
-
-void Application::mainWindow()
-{
-    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImGui::GetMainViewport()->WorkSize, ImGuiCond_Always);
-    if (!ImGui::Begin("mainWindowMenu", nullptr, ImGuiWindowFlags_NoDecoration))
-    {
-        return;
-    }
-
-    this->drawingPanel();
-    ImGui::SameLine();
-    this->sidePanel();
-
-    ImGui::End();
-}
-
-void Application::drawingPanel()
-{
-    ImGui::BeginChild(
-        "drawingPanelMenu",
-        ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1),
-        ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border,
-        ImGuiWindowFlags_NoScrollbar);
-
-    if (!ImGui::BeginTabBar("viewTextureTab"))
-    {
-        ImGui::EndChild();
-        return;
-    }
-
-    if (ImGui::BeginTabItem("View"))
-    {
-        this->viewTexture(this->rendering.isPreview ? this->renderer.getAlbedoTextureHandler() : this->renderer.getTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Albedo"))
-    {
-        this->viewTexture(this->renderer.getAlbedoTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Normal"))
-    {
-        this->viewTexture(this->renderer.getNormalTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Depth"))
-    {
-        this->viewTexture(this->renderer.getDepthTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Accumulator"))
-    {
-        this->viewTexture(this->renderer.getAccumulatorTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Tonemapped"))
-    {
-        this->viewTexture(this->renderer.getTextureHandler());
-        ImGui::EndTabItem();
-    }
-
-    ImGui::EndTabBar();
-    ImGui::EndChild();
-}
-
-void Application::sidePanel()
-{
-    ImGui::BeginChild("sidePanelMenu", ImVec2(0, -1));
-    this->propertySelector();
-    this->propertyEditor();
-    ImGui::EndChild();
-}
-
-void Application::viewTexture(GLint textureHandler)
-{
-    ImGui::BeginChild("viewTexture");
-
-    // Draw filled image
-    glm::vec2 lo = this->renderView.uvCenter - this->renderView.uvSize * .5f;
-    glm::vec2 up = this->renderView.uvCenter + this->renderView.uvSize * .5f;
-    this->drawFillImage(textureHandler, this->renderer.getSize(), this->renderView.pos, this->renderView.size, glm::vec3(1), lo, up, true);
-
-    this->renderView.isHover = ImGui::IsItemHovered();
-
-    if (this->renderView.uvSize != glm::vec2(1))
-    {
-        // Draw zoom rectangle
-        lo = lo * this->renderView.size + this->renderView.pos;
-        up = up * this->renderView.size + this->renderView.pos;
-        ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderStrong]));
-        ImGui::EndChild();
-        return;
-    }
-
-    // Draw tile rectangle
-    glm::uvec2 pos, size;
-    this->getCurrentTile(pos, size);
-
-    lo = (glm::vec2)pos / (glm::vec2)this->renderer.getSize();
-    up = lo + (glm::vec2)size / (glm::vec2)this->renderer.getSize();
-    lo.y = 1 - lo.y;
-    up.y = 1 - up.y;
-
-    lo = lo * this->renderView.size + this->renderView.pos;
-    up = up * this->renderView.size + this->renderView.pos;
-    ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
-
-    glm::mat4 view = this->renderer.camera.createView();
-    glm::mat4 projection = this->renderer.camera.createProjection(
-        this->renderer.getSize().x,
-        this->renderer.getSize().y,
-        this->renderer.minRenderDistance,
-        this->renderer.maxRenderDistance);
-
-    // Draw gizmos
-    ImGuizmo::SetRect(
-        this->renderView.pos.x,
-        this->renderView.pos.y,
-        this->renderView.size.x,
-        this->renderView.size.y);
-    ImGuizmo::SetDrawlist();
-
-    glm::vec3 snap(this->gizmo.snap);
-    switch (this->property.type)
-    {
-        case Property::Type::MeshInstance:
-        {
-            MeshInstance& meshInstance = *static_cast<MeshInstance*>(this->property.target);
-            if (ImGuizmo::Manipulate(
-                glm::value_ptr(view),
-                glm::value_ptr(projection),
-                this->gizmo.operation,
-                this->gizmo.mode,
-                glm::value_ptr(meshInstance.transform),
-                nullptr,
-                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
-            {
-                this->clear();
-                this->renderer.updateSceneMeshInstances(this->scene);
-            }
-
-            break;
-        }
-        case Property::Type::Environment:
-        {
-            glm::mat4 rotation(this->renderer.environment.rotation);
-            if (ImGuizmo::Manipulate(
-                glm::value_ptr(view),
-                glm::value_ptr(projection),
-                ImGuizmo::OPERATION::ROTATE,
-                ImGuizmo::MODE::LOCAL,
-                glm::value_ptr(rotation),
-                nullptr,
-                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
-            {
-                this->renderer.environment.rotation = rotation;
-                this->clear();
-            }
-
-            break;
-        }
-        default:
-            break;
-    }
-
-    ImGui::EndChild();
-}
-
-void Application::propertySelector()
-{
-    ImGui::BeginChild(
-        "sceneMenu",
-        ImVec2(-1, ImGui::GetMainViewport()->WorkSize.y * .75f),
-        ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
-
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Renderer"))
-    {
-        if (ImGui::Selectable("Controls", this->property.type == Property::Type::Contorls))
-        {
-            this->property.type = Property::Type::Contorls;
-        }
-
-        if (ImGui::Selectable("Tone mapping", this->property.type == Property::Type::ToneMapping))
-        {
-            this->property.type = Property::Type::ToneMapping;
-        }
-
-        if (ImGui::Selectable("Settings", this->property.type == Property::Type::Settings))
-        {
-            this->property.type = Property::Type::Settings;
-        }
-
-        ImGui::TreePop();
-    }
-
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Scene"))
-    {
-        if (ImGui::Selectable("Camera", this->property.type == Property::Type::Camera))
-        {
-            this->property.type = Property::Type::Camera;
-        }
-
-        if (ImGui::Selectable("Environment", this->property.type == Property::Type::Environment))
-        {
-            this->property.type = Property::Type::Environment;
-        }
-
-        if (ImGui::TreeNode("Meshes"))
-        {
-            for (size_t i = 0; i < this->scene.meshInstances.size(); i++)
-            {
-                MeshInstance& meshInstance = this->scene.meshInstances[i];
-                std::string name = this->scene.meshNames[meshInstance.meshId] + "##" + std::to_string(i);
-                if (ImGui::Selectable(name.c_str(), this->property.type == Property::Type::MeshInstance && &meshInstance == this->property.target))
-                {
-                    this->property.type = Property::Type::MeshInstance;
-                    this->property.target = &meshInstance;
-                }
-            }
-
-            ImGui::TreePop();
-        }
-
-        if (ImGui::TreeNode("Materials"))
-        {
-            for (size_t i = 0; i < this->scene.materials.size(); i++)
-            {
-                Material& material = this->scene.materials[i];
-                std::string name = this->scene.materialNames[i] + "##" + std::to_string(i);
-                if (ImGui::Selectable(name.c_str(), this->property.type == Property::Type::Material && &material == this->property.target))
-                {
-                    this->property.type = Property::Type::Material;
-                    this->property.target = &material;
-                }
-            }
-
-            ImGui::TreePop();
-        }
-
-        ImGui::TreePop();
-    }
-
-    ImGui::EndChild();
-}
-
-void Application::propertyEditor()
-{
-    ImGui::BeginChild("propertyEditorMenu", ImVec2(-1, 0), ImGuiChildFlags_Border);
-
-    switch (this->property.type)
-    {
-        case Property::Type::Contorls:
-            this->propertyControls();
-            break;
-        case Property::Type::ToneMapping:
-            this->propertyToneMapping();
-            break;
-        case Property::Type::Settings:
-            this->propertySettings();
-            break;
-        case Property::Type::Camera:
-            this->propertyCamera();
-            break;
-        case Property::Type::Environment:
-            this->propertyEnvironment();
-            break;
-        case Property::Type::MeshInstance:
-            this->propertyMeshInstance(*static_cast<MeshInstance*>(this->property.target));
-            break;
-        case Property::Type::Material:
-            this->propertyMaterial(*static_cast<Material*>(this->property.target));
-            break;
-    }
-
-    ImGui::EndChild();
-}
-
-void Application::propertyControls()
-{
-    if (ImGui::Button(this->rendering.enable ? "Stop" : "Start", ImVec2(-1, 0)))
-    {
-        this->rendering.enable = !this->rendering.enable;
-    }
-
-    if (ImGui::Button("Clear", ImVec2(-1, 0)))
-    {
-        this->clear();
-    }
-
-#ifdef TX_DENOISE
-    if (ImGui::Button("Denoise", ImVec2(-1, 0)))
-    {
-        try
-        {
-            this->renderer.denoise();
-        }
-        catch (const std::runtime_error& err)
-        {
-            std::cerr << err.what() << std::endl;
-            tinyfd_messageBox("Error", "Failed to denoise", "ok", "warning", 0);
-        }
-    }
-#endif
-}
-
-void Application::propertyToneMapping()
+bool materialTextureSelector(Application& app, const std::string& name, int& currentTextureId, glm::vec3 tintColor)
 {
     bool changed = false;
 
     if (ImGui::BeginCombo(
-        "Tone mapping",
-        this->renderer.toneMapMode == Renderer::ToneMapMode::Reinhard ?
-        "Reinhard" :
-        this->renderer.toneMapMode == Renderer::ToneMapMode::ACES ?
-        "ACES" :
-        "ACES fitted"))
+        ("Texture##" + name).c_str(),
+        currentTextureId == -1 ? "None" : app.scene.textureNames[currentTextureId].c_str()))
     {
-        if (ImGui::Selectable("Reinhard", this->renderer.toneMapMode == Renderer::ToneMapMode::Reinhard))
+        if (ImGui::Selectable("None", currentTextureId == -1))
         {
+            currentTextureId = -1;
             changed = true;
-            this->renderer.toneMapMode = Renderer::ToneMapMode::Reinhard;
         }
 
-        if (ImGui::Selectable("ACES", this->renderer.toneMapMode == Renderer::ToneMapMode::ACES))
+        for (size_t textureId = 0; textureId < app.scene.textures.size(); textureId++)
         {
-            changed = true;
-            this->renderer.toneMapMode = Renderer::ToneMapMode::ACES;
-        }
-
-        if (ImGui::Selectable("ACES fitted", this->renderer.toneMapMode == Renderer::ToneMapMode::ACESfitted))
-        {
-            changed = true;
-            this->renderer.toneMapMode = Renderer::ToneMapMode::ACESfitted;
+            const Image& texture = app.scene.textures[textureId];
+            const std::string& textureName = app.scene.textureNames[textureId];
+            if (ImGui::Selectable(
+                (textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(),
+                currentTextureId == textureId))
+            {
+                currentTextureId = textureId;
+                changed = true;
+            }
         }
 
         ImGui::EndCombo();
     }
 
-    changed |= ImGui::DragFloat("Gamma", &this->renderer.gamma, 0.01f, 0, 1000);
-
-    if (changed)
+    if (currentTextureId != -1)
     {
-        this->rendering.isPreview ? this->clear() : this->renderer.toneMap();
-    }
-}
-
-void Application::propertySettings()
-{
-    bool updated = false;
-
-    glm::uvec2 size = this->renderer.getSize();
-    if (DragUInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
-    {
-        size = glm::max(glm::uvec2(1), size);
-        this->renderer.resize(size);
-        updated = true;
-    }
-
-    updated |= DragUInt("Tiling factor", &this->tiling.factor, .01f, 1, std::min(this->renderer.getSize().x, this->renderer.getSize().y)) & this->tiling.count != 0;
-    Tooltip("Reduces lags but increases the rendering time, intended for large images");
-
-    ImGui::Separator();
-    DragUInt("Samples target", &this->rendering.sampleCountTarget, 1.f, 0, 100000);
-    Tooltip("Zero means unlimited samples");
-
-    updated |= DragUInt("Samples per frame", &this->rendering.samplesPerFrame, .1f, 1, 10000) & this->tiling.count != 0;
-    Tooltip("A high value can cause lags but the image quality improves faster");
-
-    updated |= DragUInt("Max bounce count", &this->renderer.maxBounceCount, .01f, 0, 1000);
-
-    ImGui::Separator();
-    updated |= ImGui::DragFloat("Min render distance", &this->renderer.minRenderDistance, 0.01f, 0, this->renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic) |
-        ImGui::DragFloat("Max render distance", &this->renderer.maxRenderDistance, 1, this->renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic);
-
-    if (updated)
-    {
-        this->clear();
-    }
-}
-
-void Application::propertyCamera()
-{
-    Camera& camera = this->renderer.camera;
-    bool changed = false;
-
-    changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
-    changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
-    changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
-
-    ImGui::Separator();
-    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179);
-
-    ImGui::Separator();
-    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
-    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
-
-    if (ImGui::Button("Focus on look at", ImVec2(-1, 0)))
-    {
-        camera.focalDistance = this->getLookAtDistance();
-        changed = true;
-    }
-
-    ImGui::Separator();
-    changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
-    Tooltip("Can be used for anti-aliasing");
-
-    ImGui::Separator();
-    ImGui::DragFloat(
-        "Movement speed",
-        &this->cameraControl.speed,
-        1,
-        0,
-        10000,
-        "%.3f",
-        ImGuiSliderFlags_Logarithmic);
-    ImGui::SliderFloat("Rotation speed", &this->cameraControl.rotationSpeed, .001f, 1);
-
-    if (!this->scene.cameras.empty())
-    {
-        ImGui::Separator();
-        if (ImGui::TreeNode("Default cameras"))
+        if (app.materialTextureView.textureId != currentTextureId)
         {
-            for (size_t i = 0; i < this->scene.cameras.size(); i++)
-            {
-                if (ImGui::Selectable(("Camera " + std::to_string(i)).c_str()))
-                {
-                    camera = this->scene.cameras[i];
-                    changed = true;
-                }
-            }
-
-            ImGui::TreePop();
-        }
-    }
-
-    if (changed)
-    {
-        camera.forward = glm::normalize(camera.forward);
-        camera.up = glm::normalize(camera.up);
-        this->clear();
-    }
-}
-
-void Application::propertyEnvironment()
-{
-    bool changed = false;
-
-    changed |= ImGui::DragFloat("Intensity", &this->renderer.environment.intensity, .001f, 0, 1000000);
-
-    float translation[3];
-    float rotation[3];
-    float scale[3];
-    glm::mat4 rotationMat(this->renderer.environment.rotation);
-    ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(rotationMat), translation, rotation, scale);
-    if (ImGui::DragFloat3("Rotation", rotation, .01f))
-    {
-        ImGuizmo::RecomposeMatrixFromComponents(
-            translation,
-            rotation,
-            scale,
-            glm::value_ptr(rotationMat));
-        this->renderer.environment.rotation = rotationMat;
-        changed = true;
-    }
-
-    ImGui::DragFloat("Snap value", &this->gizmo.snap, 1, 0.f, 1000000);
-    Tooltip("Hold LCtrl for snapping");
-
-    changed |= ImGui::Checkbox("Transparent background", &this->renderer.environment.transparent);
-
-    if (changed)
-    {
-        this->clear();
-    }
-}
-
-void Application::propertyMeshInstance(MeshInstance& meshInstance)
-{
-    if (!ImGui::BeginTabBar("propertyMeshMenu"))
-    {
-        return;
-    }
-
-    bool changed = false;
-
-    if (ImGui::BeginTabItem("Info"))
-    {
-        ImGui::Text("%d triangles", this->scene.meshes[meshInstance.meshId].triangleSize);
-        if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
-        {
-            this->renderer.camera.lookAt(meshInstance.transform[3]);
-            this->clear();
+            app.materialTextureView.texture.update(app.scene.textures[currentTextureId]);
+            app.materialTextureView.textureId = currentTextureId;
         }
 
-        ImGui::EndTabItem();
+        glm::vec2 imagePos, imageSize;
+        ImGui::BeginChild("viewMaterialTexture");
+        drawFillImage(app.materialTextureView.texture.getHandler(), app.materialTextureView.texture.size, imagePos, imageSize, tintColor);
+        ImGui::EndChild();
     }
 
-    if (ImGui::BeginTabItem("Transform"))
-    {
-        float translation[3];
-        float rotation[3];
-        float scale[3];
-        ImGuizmo::DecomposeMatrixToComponents(
-            glm::value_ptr(meshInstance.transform),
-            translation,
-            rotation,
-            scale);
-
-        if (ImGui::DragFloat3("Translation", translation, .01f) |
-            ImGui::DragFloat3("Rotation", rotation, .01f) |
-            ImGui::DragFloat3("Scale", scale, .01f, 0, 1000))
-        {
-            ImGuizmo::RecomposeMatrixFromComponents(
-                translation,
-                rotation,
-                scale,
-                glm::value_ptr(meshInstance.transform));
-            changed = true;
-        }
-
-        ImGui::DragFloat("Snap value", &this->gizmo.snap, 1, 0.f, 1000000);
-        Tooltip("Hold LCtrl for snapping");
-
-        ImGui::RadioButton("Translate", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::TRANSLATE);
-        ImGui::SameLine();
-        ImGui::RadioButton("Rotate", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::ROTATE);
-        ImGui::SameLine();
-        ImGui::RadioButton("Scale", (int*)&this->gizmo.operation, (int)ImGuizmo::OPERATION::SCALE);
-
-        ImGui::RadioButton("World", (int*)&this->gizmo.mode, (int)ImGuizmo::MODE::WORLD);
-        ImGui::SameLine();
-        ImGui::RadioButton("Local", (int*)&this->gizmo.mode, (int)ImGuizmo::MODE::LOCAL);
-
-        ImGui::EndTabItem();
-    }
-
-    if (ImGui::BeginTabItem("Material"))
-    {
-        if (ImGui::BeginCombo(
-            "Material",
-            meshInstance.materialId == -1 ? "None" : this->scene.materialNames[meshInstance.materialId].c_str()))
-        {
-            for (size_t index = 0; index < this->scene.materials.size(); index++)
-            {
-                if (ImGui::Selectable(
-                    (this->scene.materialNames[index] + "##meshMaterial" + std::to_string(index)).c_str(),
-                    index == meshInstance.materialId))
-                {
-                    meshInstance.materialId = index;
-                    changed = true;
-                }
-            }
-
-            ImGui::EndCombo();
-        }
-
-        ImGui::BeginDisabled(meshInstance.materialId == -1);
-        if (ImGui::Button("Edit", ImVec2(-1, 0)))
-        {
-            this->property.target = &this->scene.materials[meshInstance.materialId];
-            this->property.type = Property::Type::Material;
-        }
-
-        ImGui::EndDisabled();
-
-        ImGui::EndTabItem();
-    }
-
-    ImGui::EndTabBar();
-
-    if (changed)
-    {
-        this->clear();
-        this->renderer.updateSceneMeshInstances(this->scene);
-    }
+    return changed;
 }
 
-void Application::propertyMaterial(Material& material)
+void propertyMaterial(Application& app, Material& material)
 {
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
     {
@@ -877,25 +211,25 @@ void Application::propertyMaterial(Material& material)
 
     if (ImGui::BeginTabItem("Albedo"))
     {
-        glm::vec3 albedoColor = glm::pow(material.albedoColor, glm::vec3(1 / this->renderer.gamma));
+        glm::vec3 albedoColor = glm::pow(material.albedoColor, glm::vec3(1 / app.renderer.gamma));
         changed |= ImGui::ColorEdit3("Color (gamma corrected)##albedo", glm::value_ptr(albedoColor), ImGuiColorEditFlags_Float);
-        material.albedoColor = glm::pow(albedoColor, glm::vec3(this->renderer.gamma));
+        material.albedoColor = glm::pow(albedoColor, glm::vec3(app.renderer.gamma));
 
-        changed |= this->materialTextureSelector("albedo", material.albedoTextureId, material.albedoColor);
+        changed |= materialTextureSelector(app, "albedo", material.albedoTextureId, material.albedoColor);
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Roughness"))
     {
         changed |= ImGui::SliderFloat("Strength##roughness", &material.roughness, 0, 1);
-        changed |= this->materialTextureSelector("roughness", material.roughnessTextureId, glm::vec3(0, material.roughness, 0));
+        changed |= materialTextureSelector(app, "roughness", material.roughnessTextureId, glm::vec3(0, material.roughness, 0));
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Metalness"))
     {
         changed |= ImGui::SliderFloat("Strength##metalness", &material.metalness, 0, 1);
-        changed |= this->materialTextureSelector("metalness", material.metalnessTextureId, glm::vec3(0, 0, material.metalness));
+        changed |= materialTextureSelector(app, "metalness", material.metalnessTextureId, glm::vec3(0, 0, material.metalness));
         ImGui::EndTabItem();
     }
 
@@ -903,7 +237,7 @@ void Application::propertyMaterial(Material& material)
     {
         changed |= ImGui::ColorEdit3("Color##emission", glm::value_ptr(material.emissionColor), ImGuiColorEditFlags_Float);
         changed |= ImGui::DragFloat("Strength##emission", &material.emissionStrength, .001f, 0, 10000);
-        changed |= this->materialTextureSelector("emission", material.emissionTextureId, material.emissionColor * material.emissionStrength);
+        changed |= materialTextureSelector(app, "emission", material.emissionTextureId, material.emissionColor * material.emissionStrength);
         ImGui::EndTabItem();
     }
 
@@ -916,7 +250,7 @@ void Application::propertyMaterial(Material& material)
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        changed |= this->materialTextureSelector("normal", material.normalTextureId, glm::vec3(1));
+        changed |= materialTextureSelector(app, "normal", material.normalTextureId, glm::vec3(1));
         ImGui::EndTabItem();
     }
 
@@ -971,82 +305,744 @@ void Application::propertyMaterial(Material& material)
 
     if (changed)
     {
-        this->clear();
-        this->renderer.updateSceneMaterials(this->scene);
+        app.clear();
+        app.renderer.updateSceneMaterials(app.scene);
     }
 }
 
-bool Application::materialTextureSelector(const std::string& name, int& currentTextureId, glm::vec3 tintColor)
+void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
+{
+    if (!ImGui::BeginTabBar("propertyMeshMenu"))
+    {
+        return;
+    }
+
+    bool changed = false;
+
+    if (ImGui::BeginTabItem("Info"))
+    {
+        ImGui::Text("%d triangles", app.scene.meshes[meshInstance.meshId].triangleSize);
+        if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
+        {
+            app.renderer.camera.lookAt(meshInstance.transform[3]);
+            app.clear();
+        }
+
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Transform"))
+    {
+        float translation[3];
+        float rotation[3];
+        float scale[3];
+        ImGuizmo::DecomposeMatrixToComponents(
+            glm::value_ptr(meshInstance.transform),
+            translation,
+            rotation,
+            scale);
+
+        if (ImGui::DragFloat3("Translation", translation, .01f) |
+            ImGui::DragFloat3("Rotation", rotation, .01f) |
+            ImGui::DragFloat3("Scale", scale, .01f, 0, 1000))
+        {
+            ImGuizmo::RecomposeMatrixFromComponents(
+                translation,
+                rotation,
+                scale,
+                glm::value_ptr(meshInstance.transform));
+            changed = true;
+        }
+
+        ImGui::DragFloat("Snap value", &app.gizmo.snap, 1, 0.f, 1000000);
+        Tooltip("Hold LCtrl for snapping");
+
+        ImGui::RadioButton("Translate", (int*)&app.gizmo.operation, (int)ImGuizmo::OPERATION::TRANSLATE);
+        ImGui::SameLine();
+        ImGui::RadioButton("Rotate", (int*)&app.gizmo.operation, (int)ImGuizmo::OPERATION::ROTATE);
+        ImGui::SameLine();
+        ImGui::RadioButton("Scale", (int*)&app.gizmo.operation, (int)ImGuizmo::OPERATION::SCALE);
+
+        ImGui::RadioButton("World", (int*)&app.gizmo.mode, (int)ImGuizmo::MODE::WORLD);
+        ImGui::SameLine();
+        ImGui::RadioButton("Local", (int*)&app.gizmo.mode, (int)ImGuizmo::MODE::LOCAL);
+
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Material"))
+    {
+        if (ImGui::BeginCombo(
+            "Material",
+            meshInstance.materialId == -1 ? "None" : app.scene.materialNames[meshInstance.materialId].c_str()))
+        {
+            for (size_t index = 0; index < app.scene.materials.size(); index++)
+            {
+                if (ImGui::Selectable(
+                    (app.scene.materialNames[index] + "##meshMaterial" + std::to_string(index)).c_str(),
+                    index == meshInstance.materialId))
+                {
+                    meshInstance.materialId = index;
+                    changed = true;
+                }
+            }
+
+            ImGui::EndCombo();
+        }
+
+        ImGui::BeginDisabled(meshInstance.materialId == -1);
+        if (ImGui::Button("Edit", ImVec2(-1, 0)))
+        {
+            app.property.target = &app.scene.materials[meshInstance.materialId];
+            app.property.type = Application::Property::Type::Material;
+        }
+
+        ImGui::EndDisabled();
+
+        ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
+
+    if (changed)
+    {
+        app.clear();
+        app.renderer.updateSceneMeshInstances(app.scene);
+    }
+}
+
+void propertyEnvironment(Application& app, Environment& environment)
+{
+    bool changed = false;
+
+    changed |= ImGui::DragFloat("Intensity", &environment.intensity, .001f, 0, 1000000);
+
+    float translation[3];
+    float rotation[3];
+    float scale[3];
+    glm::mat4 rotationMat(environment.rotation);
+    ImGuizmo::DecomposeMatrixToComponents(glm::value_ptr(rotationMat), translation, rotation, scale);
+    if (ImGui::DragFloat3("Rotation", rotation, .01f))
+    {
+        ImGuizmo::RecomposeMatrixFromComponents(
+            translation,
+            rotation,
+            scale,
+            glm::value_ptr(rotationMat));
+        environment.rotation = rotationMat;
+        changed = true;
+    }
+
+    ImGui::DragFloat("Snap value", &app.gizmo.snap, 1, 0.f, 1000000);
+    Tooltip("Hold LCtrl for snapping");
+
+    changed |= ImGui::Checkbox("Transparent background", &environment.transparent);
+
+    if (changed)
+    {
+        app.clear();
+    }
+}
+
+void propertyCamera(Application& app, Camera& camera)
+{
+    bool changed = false;
+
+    changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
+    changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
+    changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
+
+    ImGui::Separator();
+    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179);
+
+    ImGui::Separator();
+    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
+    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
+
+    if (ImGui::Button("Focus on look at", ImVec2(-1, 0)))
+    {
+        camera.focalDistance = app.getLookAtDistance();
+        changed = true;
+    }
+
+    ImGui::Separator();
+    changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
+    Tooltip("Can be used for anti-aliasing");
+
+    ImGui::Separator();
+    ImGui::DragFloat(
+        "Movement speed",
+        &app.cameraControl.speed,
+        1,
+        0,
+        10000,
+        "%.3f",
+        ImGuiSliderFlags_Logarithmic);
+    ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+
+    if (!app.scene.cameras.empty())
+    {
+        ImGui::Separator();
+        if (ImGui::TreeNode("Default cameras"))
+        {
+            for (size_t i = 0; i < app.scene.cameras.size(); i++)
+            {
+                if (ImGui::Selectable(("Camera " + std::to_string(i)).c_str()))
+                {
+                    camera = app.scene.cameras[i];
+                    changed = true;
+                }
+            }
+
+            ImGui::TreePop();
+        }
+    }
+
+    if (changed)
+    {
+        camera.forward = glm::normalize(camera.forward);
+        camera.up = glm::normalize(camera.up);
+        app.clear();
+    }
+}
+
+void propertySettings(Application& app)
+{
+    bool updated = false;
+
+    glm::uvec2 size = app.renderer.getSize();
+    if (DragUInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
+    {
+        size = glm::max(glm::uvec2(1), size);
+        app.renderer.resize(size);
+        updated = true;
+    }
+
+    updated |= DragUInt("Tiling factor", &app.tiling.factor, .01f, 1, std::min(app.renderer.getSize().x, app.renderer.getSize().y)) & app.tiling.count != 0;
+    Tooltip("Reduces lags but increases the rendering time, intended for large images");
+
+    ImGui::Separator();
+    DragUInt("Samples target", &app.rendering.sampleCountTarget, 1.f, 0, 100000);
+    Tooltip("Zero means unlimited samples");
+
+    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000) & app.tiling.count != 0;
+    Tooltip("A high value can cause lags but the image quality improves faster");
+
+    updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000);
+
+    ImGui::Separator();
+    updated |= ImGui::DragFloat("Min render distance", &app.renderer.minRenderDistance, 0.01f, 0, app.renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic) |
+        ImGui::DragFloat("Max render distance", &app.renderer.maxRenderDistance, 1, app.renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic);
+
+    if (updated)
+    {
+        app.clear();
+    }
+}
+
+void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
 {
     bool changed = false;
 
     if (ImGui::BeginCombo(
-        ("Texture##" + name).c_str(),
-        currentTextureId == -1 ? "None" : this->scene.textureNames[currentTextureId].c_str()))
+        "Tone mapping",
+        toneMapMode == Renderer::ToneMapMode::Reinhard ?
+        "Reinhard" :
+        toneMapMode == Renderer::ToneMapMode::ACES ?
+        "ACES" :
+        "ACES fitted"))
     {
-        if (ImGui::Selectable("None", currentTextureId == -1))
+        if (ImGui::Selectable("Reinhard", toneMapMode == Renderer::ToneMapMode::Reinhard))
         {
-            currentTextureId = -1;
             changed = true;
+            toneMapMode = Renderer::ToneMapMode::Reinhard;
         }
 
-        for (size_t textureId = 0; textureId < this->scene.textures.size(); textureId++)
+        if (ImGui::Selectable("ACES", toneMapMode == Renderer::ToneMapMode::ACES))
         {
-            const Image& texture = this->scene.textures[textureId];
-            const std::string& textureName = this->scene.textureNames[textureId];
-            if (ImGui::Selectable(
-                (textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(),
-                currentTextureId == textureId))
-            {
-                currentTextureId = textureId;
-                changed = true;
-            }
+            changed = true;
+            toneMapMode = Renderer::ToneMapMode::ACES;
+        }
+
+        if (ImGui::Selectable("ACES fitted", toneMapMode == Renderer::ToneMapMode::ACESfitted))
+        {
+            changed = true;
+            toneMapMode = Renderer::ToneMapMode::ACESfitted;
         }
 
         ImGui::EndCombo();
     }
 
-    if (currentTextureId != -1)
+    changed |= ImGui::DragFloat("Gamma", &app.renderer.gamma, 0.01f, 0, 1000);
+
+    if (changed)
     {
-        if (this->materialTexture.textureId != currentTextureId)
-        {
-            this->materialTexture.texture.update(this->scene.textures[currentTextureId]);
-            this->materialTexture.textureId = currentTextureId;
-        }
-
-        glm::vec2 imagePos, imageSize;
-        ImGui::BeginChild("viewMaterialTexture");
-        this->drawFillImage(this->materialTexture.texture.getHandler(), this->materialTexture.texture.size, imagePos, imageSize, tintColor);
-        ImGui::EndChild();
+        app.rendering.isPreview ? app.clear() : app.renderer.toneMap();
     }
-
-    return changed;
 }
 
-void Application::drawFillImage(GLint textureHandler, glm::vec2 srcSize, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor, glm::vec2 uvLo, glm::vec2 uvUp, bool flipY)
+void propertyControls(Application& app)
 {
-    if (flipY)
+    if (ImGui::Button(app.rendering.enable ? "Stop" : "Start", ImVec2(-1, 0)))
     {
-        uvLo.y = 1 - uvLo.y;
-        uvUp.y = 1 - uvUp.y;
+        app.rendering.enable = !app.rendering.enable;
     }
 
-    float srcAspectRatio = srcSize.x / srcSize.y;
+    if (ImGui::Button("Clear", ImVec2(-1, 0)))
+    {
+        app.clear();
+    }
 
-    glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
-    float dstAspectRatio = dstSize.x / dstSize.y;
+#ifdef TX_DENOISE
+    if (ImGui::Button("Denoise", ImVec2(-1, 0)))
+    {
+        try
+        {
+            app.renderer.denoise();
+        }
+        catch (const std::runtime_error& err)
+        {
+            std::cerr << err.what() << std::endl;
+            tinyfd_messageBox("Error", "Failed to denoise", "ok", "warning", 0);
+        }
+    }
+#endif
+}
 
-    imageSize = dstSize * (srcAspectRatio > dstAspectRatio ? glm::vec2(1, dstAspectRatio / srcAspectRatio) : glm::vec2(srcAspectRatio / dstAspectRatio, 1));
-    imagePos = (toVec2(ImGui::GetWindowSize()) - imageSize) * 0.5f;
+void propertyEditor(Application& app, Application::Property property)
+{
+    ImGui::BeginChild("propertyEditorMenu", ImVec2(-1, 0), ImGuiChildFlags_Border);
 
-    ImGui::SetCursorPos(toImVec2(imagePos));
-    ImGui::Image(
-        (void*)(intptr_t)textureHandler,
-        toImVec2(imageSize - 2.f),
-        toImVec2(uvLo),
-        toImVec2(uvUp),
-        ImVec4(tintColor.r, tintColor.g, tintColor.b, 1),
-        ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
+    switch (property.type)
+    {
+        case Application::Property::Type::Contorls:
+            propertyControls(app);
+            break;
+        case Application::Property::Type::ToneMapping:
+            propertyToneMapping(app, app.renderer.toneMapMode);
+            break;
+        case Application::Property::Type::Settings:
+            propertySettings(app);
+            break;
+        case Application::Property::Type::Camera:
+            propertyCamera(app, app.renderer.camera);
+            break;
+        case Application::Property::Type::Environment:
+            propertyEnvironment(app, app.renderer.environment);
+            break;
+        case Application::Property::Type::MeshInstance:
+            propertyMeshInstance(app, *static_cast<MeshInstance*>(property.target));
+            break;
+        case Application::Property::Type::Material:
+            propertyMaterial(app, *static_cast<Material*>(property.target));
+            break;
+    }
 
-    imagePos += toVec2(ImGui::GetWindowPos());
+    ImGui::EndChild();
+}
+
+void propertySelector(Application& app, Application::Property& property)
+{
+    ImGui::BeginChild(
+        "sceneMenu",
+        ImVec2(-1, ImGui::GetMainViewport()->WorkSize.y * .75f),
+        ImGuiChildFlags_ResizeY | ImGuiChildFlags_Border);
+
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Renderer"))
+    {
+        if (ImGui::Selectable("Controls", property.type == Application::Property::Type::Contorls))
+        {
+            property.type = Application::Property::Type::Contorls;
+        }
+
+        if (ImGui::Selectable("Tone mapping", property.type == Application::Property::Type::ToneMapping))
+        {
+            property.type = Application::Property::Type::ToneMapping;
+        }
+
+        if (ImGui::Selectable("Settings", property.type == Application::Property::Type::Settings))
+        {
+            property.type = Application::Property::Type::Settings;
+        }
+
+        ImGui::TreePop();
+    }
+
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    if (ImGui::TreeNode("Scene"))
+    {
+        if (ImGui::Selectable("Camera", property.type == Application::Property::Type::Camera))
+        {
+            property.type = Application::Property::Type::Camera;
+        }
+
+        if (ImGui::Selectable("Environment", property.type == Application::Property::Type::Environment))
+        {
+            property.type = Application::Property::Type::Environment;
+        }
+
+        if (ImGui::TreeNode("Meshes"))
+        {
+            for (size_t i = 0; i < app.scene.meshInstances.size(); i++)
+            {
+                MeshInstance& meshInstance = app.scene.meshInstances[i];
+                std::string name = app.scene.meshNames[meshInstance.meshId] + "##" + std::to_string(i);
+                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::MeshInstance && &meshInstance == property.target))
+                {
+                    property.type = Application::Property::Type::MeshInstance;
+                    property.target = &meshInstance;
+                }
+            }
+
+            ImGui::TreePop();
+        }
+
+        if (ImGui::TreeNode("Materials"))
+        {
+            for (size_t i = 0; i < app.scene.materials.size(); i++)
+            {
+                Material& material = app.scene.materials[i];
+                std::string name = app.scene.materialNames[i] + "##" + std::to_string(i);
+                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::Material && &material == property.target))
+                {
+                    property.type = Application::Property::Type::Material;
+                    property.target = &material;
+                }
+            }
+
+            ImGui::TreePop();
+        }
+
+        ImGui::TreePop();
+    }
+
+    ImGui::EndChild();
+}
+
+void viewRenderTexture(Application& app, GLint textureHandler)
+{
+    ImGui::BeginChild("viewTexture");
+
+    // Draw filled image
+    glm::vec2 lo, up;
+    app.renderTextureView.getUVRect(lo, up);
+    drawFillImage(textureHandler, app.renderer.getSize(), app.renderTextureView.pos, app.renderTextureView.size, glm::vec3(1), lo, up, true);
+
+    app.renderTextureView.isHover = ImGui::IsItemHovered();
+
+    if (app.renderTextureView.uvSize != glm::vec2(1))
+    {
+        // Draw zoom rectangle
+        app.renderTextureView.getRectFromUV(lo, up);
+        ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderStrong]));
+        ImGui::EndChild();
+        return;
+    }
+
+    // Draw tile rectangle
+    glm::uvec2 pos, size;
+    app.tiling.getTile(app.renderer.getSize(), pos, size);
+
+    lo = (glm::vec2)pos / (glm::vec2)app.renderer.getSize();
+    up = lo + (glm::vec2)size / (glm::vec2)app.renderer.getSize();
+    lo.y = 1 - lo.y;
+    up.y = 1 - up.y;
+
+    app.renderTextureView.getRectFromUV(lo, up);
+    ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
+
+    glm::mat4 view = app.renderer.camera.createView();
+    glm::mat4 projection = app.renderer.camera.createProjection(
+        app.renderer.getSize().x,
+        app.renderer.getSize().y,
+        app.renderer.minRenderDistance,
+        app.renderer.maxRenderDistance);
+
+    // Draw gizmos
+    ImGuizmo::SetRect(app.renderTextureView.pos.x, app.renderTextureView.pos.y, app.renderTextureView.size.x, app.renderTextureView.size.y);
+    ImGuizmo::SetDrawlist();
+
+    glm::vec3 snap(app.gizmo.snap);
+    switch (app.property.type)
+    {
+        case Application::Property::Type::MeshInstance:
+        {
+            MeshInstance& meshInstance = *static_cast<MeshInstance*>(app.property.target);
+            if (ImGuizmo::Manipulate(
+                glm::value_ptr(view),
+                glm::value_ptr(projection),
+                app.gizmo.operation,
+                app.gizmo.mode,
+                glm::value_ptr(meshInstance.transform),
+                nullptr,
+                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
+            {
+                app.clear();
+                app.renderer.updateSceneMeshInstances(app.scene);
+            }
+
+            break;
+        }
+        case Application::Property::Type::Environment:
+        {
+            glm::mat4 rotation(app.renderer.environment.rotation);
+            if (ImGuizmo::Manipulate(
+                glm::value_ptr(view),
+                glm::value_ptr(projection),
+                ImGuizmo::OPERATION::ROTATE,
+                ImGuizmo::MODE::LOCAL,
+                glm::value_ptr(rotation),
+                nullptr,
+                ImGui::IsKeyDown(ImGuiKey_LeftCtrl) ? glm::value_ptr(snap) : nullptr))
+            {
+                app.renderer.environment.rotation = rotation;
+                app.clear();
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+
+    ImGui::EndChild();
+}
+
+void sidePanel(Application& app)
+{
+    ImGui::BeginChild("sidePanelMenu", ImVec2(0, -1));
+    propertySelector(app, app.property);
+    propertyEditor(app, app.property);
+    ImGui::EndChild();
+}
+
+void drawingPanel(Application& app)
+{
+    ImGui::BeginChild(
+        "drawingPanelMenu",
+        ImVec2(ImGui::GetMainViewport()->WorkSize.x * .75f, -1),
+        ImGuiChildFlags_ResizeX | ImGuiChildFlags_Border,
+        ImGuiWindowFlags_NoScrollbar);
+
+    if (!ImGui::BeginTabBar("viewTextureTab"))
+    {
+        ImGui::EndChild();
+        return;
+    }
+
+    if (ImGui::BeginTabItem("View"))
+    {
+        viewRenderTexture(app, app.rendering.isPreview ? app.renderer.getAlbedoTextureHandler() : app.renderer.getTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Albedo"))
+    {
+        viewRenderTexture(app, app.renderer.getAlbedoTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Normal"))
+    {
+        viewRenderTexture(app, app.renderer.getNormalTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Depth"))
+    {
+        viewRenderTexture(app, app.renderer.getDepthTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Accumulator"))
+    {
+        viewRenderTexture(app, app.renderer.getAccumulatorTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Tonemapped"))
+    {
+        viewRenderTexture(app, app.renderer.getTextureHandler());
+        ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
+    ImGui::EndChild();
+}
+
+void mainWindow(Application& app)
+{
+    ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImGui::GetMainViewport()->WorkSize, ImGuiCond_Always);
+    if (!ImGui::Begin("mainWindowMenu", nullptr, ImGuiWindowFlags_NoDecoration))
+    {
+        return;
+    }
+
+    drawingPanel(app);
+    ImGui::SameLine();
+    sidePanel(app);
+
+    ImGui::End();
+}
+
+void mainMenuBar(Application& app)
+{
+    if (!ImGui::BeginMainMenuBar())
+    {
+        return;
+    }
+
+    if (ImGui::BeginMenu("File"))
+    {
+        if (ImGui::MenuItem("Open scene", "(glb/gltf)"))
+        {
+            const char* patterns[] = { "*.glb", "*.gltf" };
+            const char* path = tinyfd_openFileDialog(
+                "Open scene file",
+                Application::sceneFolder.string().c_str(),
+                2,
+                patterns,
+                nullptr,
+                0);
+            if (path != nullptr)
+            {
+                try
+                {
+                    app.loadScene(path);
+                    app.materialTextureView.textureId = -1;
+                    if (app.property.target != nullptr)
+                    {
+                        app.property.target = nullptr;
+                        app.property.type = Application::Property::Type::Contorls;
+                    }
+                }
+                catch (const std::runtime_error& err)
+                {
+                    std::cerr << err.what() << std::endl;
+                    tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
+                }
+            }
+        }
+
+        if (ImGui::MenuItem("Open environment", "(png/hdr/jpg)"))
+        {
+            const char* patterns[] = { "*.png", "*.hdr", "*.jpg" };
+            const char* fileName = tinyfd_openFileDialog(
+                "Open environment image",
+                Application::environmentFolder.string().c_str(),
+                3,
+                patterns,
+                nullptr,
+                0);
+            if (fileName != nullptr)
+            {
+                try
+                {
+                    app.renderer.environment.loadFromFile(fileName);
+                    app.clear();
+                }
+                catch (const std::runtime_error& err)
+                {
+                    std::cerr << err.what() << std::endl;
+                    tinyfd_messageBox("Error", "Invalid environment file", "ok", "warning", 0);
+                }
+            }
+        }
+
+        if (ImGui::MenuItem("Save", "(png)"))
+        {
+            const char* patterns[] = { "*.png" };
+            const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
+            if (fileName != nullptr)
+            {
+                try
+                {
+                    app.renderer.getImage().saveToFile(fileName);
+                }
+                catch (const std::runtime_error& err)
+                {
+                    std::cerr << err.what() << std::endl;
+                    tinyfd_messageBox("Error", "Failed to save the image", "ok", "warning", 0);
+                }
+            }
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Controls"))
+    {
+        ImGui::Text(
+            "Space - start/stop rendering\n"
+            "Mouse wheel - zoom in/out\n"
+            "Mouse drag - move view\n"
+        );
+
+        if (ImGui::BeginMenu("Camera"))
+        {
+            ImGui::Text(
+                "C - start/stop camera control mode\n"
+                "W, A, S, D - camera forward, left, backward, right movement\n"
+                "LShift, LCtrl - camera up, down movement\n"
+                "Mouse - camera rotation\n"
+                "Q, E - camera tilt\n"
+            );
+
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("About"))
+    {
+        ImGui::Text("Made by: Charlotte000");
+        ImGui::Text("Version: v3");
+        ImGui::EndMenu();
+    }
+
+    ImGui::Separator();
+    ImGui::Text("%4.0fms", 1000 * ImGui::GetIO().DeltaTime);
+
+    ImGui::Separator();
+    ImGui::Text("Samples: %u", app.renderer.getSampleCount());
+
+    ImGui::EndMainMenuBar();
+}
+#pragma endregion
+
+void Application::initUI()
+{
+    ImGui::CreateContext();
+    ImGui_ImplGlfw_InitForOpenGL(this->window, true);
+    ImGui_ImplOpenGL3_Init();
+
+    SetupImGuiStyle();
+
+    this->materialTextureView.texture.init(GL_RGBA32F);
+    this->materialTextureView.texture.update(Image::empty);
+}
+
+void Application::shutdownUI()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    this->materialTextureView.texture.shutdown();
+}
+
+void Application::renderUI()
+{
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGuizmo::BeginFrame();
+
+    mainMenuBar(*this);
+    mainWindow(*this);
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
