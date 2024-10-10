@@ -106,12 +106,19 @@ void SetupImGuiStyle()
 
 bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
 {
-    return ImGui::DragScalar(label, ImGuiDataType_U32, v, v_speed, &v_min, &v_max, format, flags);
+    int vTemp = *v;
+    bool changed = ImGui::DragInt(label, &vTemp, v_speed, v_min, v_max, format, flags);
+    *v = vTemp;
+    return changed;
 }
 
 bool DragUInt2(const char* label, unsigned int v[2], float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
 {
-    return ImGui::DragScalarN(label, ImGuiDataType_U32, v, 2, v_speed, &v_min, &v_max, format, flags);
+    int vTemp[2] { (int)v[0], (int)v[1] };
+    bool changed = ImGui::DragInt2(label, vTemp, v_speed, v_min, v_max, format, flags);
+    v[0] = (unsigned int)vTemp[0];
+    v[1] = (unsigned int)vTemp[1];
+    return changed;
 }
 
 void Tooltip(const std::string& content)
@@ -453,7 +460,7 @@ void propertyCamera(Application& app, Camera& camera)
     changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
 
     ImGui::Separator();
-    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179);
+    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179, "%.0f deg", ImGuiSliderFlags_AlwaysClamp);
 
     ImGui::Separator();
     changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
@@ -511,28 +518,27 @@ void propertySettings(Application& app)
     bool updated = false;
 
     glm::uvec2 size = app.renderer.getSize();
-    if (DragUInt2("Render size", glm::value_ptr(size), 10, 1, 10000))
+    if (DragUInt2("Render size", glm::value_ptr(size), 10, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp))
     {
-        size = glm::max(glm::uvec2(1), size);
         app.renderer.resize(size);
         updated = true;
     }
 
-    updated |= DragUInt("Tiling factor", &app.tiling.factor, .01f, 1, std::min(app.renderer.getSize().x, app.renderer.getSize().y)) & app.tiling.count != 0;
+    updated |= DragUInt2("Tiling factor", glm::value_ptr(app.tiling.factor), .01f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & app.tiling.count != 0;
     Tooltip("Reduces lags but increases the rendering time, intended for large images");
 
     ImGui::Separator();
-    DragUInt("Samples target", &app.rendering.sampleCountTarget, 1.f, 0, 100000);
+    DragUInt("Samples target", &app.rendering.sampleCountTarget, 1.f, 0, 100000, "%d", ImGuiSliderFlags_AlwaysClamp);
     Tooltip("Zero means unlimited samples");
 
-    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000) & app.tiling.count != 0;
+    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & app.tiling.count != 0;
     Tooltip("A high value can cause lags but the image quality improves faster");
 
-    updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000);
+    updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
 
     ImGui::Separator();
-    updated |= ImGui::DragFloat("Min render distance", &app.renderer.minRenderDistance, 0.01f, 0, app.renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic) |
-        ImGui::DragFloat("Max render distance", &app.renderer.maxRenderDistance, 1, app.renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic);
+    updated |= ImGui::DragFloat("Min render distance", &app.renderer.minRenderDistance, 0.01f, 0, app.renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp) |
+        ImGui::DragFloat("Max render distance", &app.renderer.maxRenderDistance, 1, app.renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
 
     if (updated)
     {
@@ -573,7 +579,7 @@ void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
         ImGui::EndCombo();
     }
 
-    changed |= ImGui::DragFloat("Gamma", &app.renderer.gamma, 0.01f, 0, 1000);
+    changed |= ImGui::DragFloat("Gamma", &app.renderer.gamma, 0.01f, 0, 1000, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 
     if (changed)
     {

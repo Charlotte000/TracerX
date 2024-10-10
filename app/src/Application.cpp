@@ -34,19 +34,19 @@ void Application::RenderTextureView::getRectFromUV(glm::vec2& lo, glm::vec2& up)
 
 void Application::Tiling::tick()
 {
-    this->count = (this->count + 1) % (this->factor * this->factor);
+    this->count = (this->count + 1) % (this->factor.x * this->factor.y);
 }
 
 bool Application::Tiling::isLastTick() const
 {
-    return this->count == this->factor * this->factor - 1;
+    return this->count == this->factor.x * this->factor.y - 1;
 }
 
 void Application::Tiling::getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::uvec2& size)
 {
-    this->factor = glm::clamp(this->factor, 1u, std::min(canvasSize.x, canvasSize.y));
+    this->factor = glm::clamp(this->factor, glm::uvec2(1), canvasSize);
     size = (glm::uvec2)glm::ceil((glm::vec2)canvasSize / glm::vec2(this->factor));
-    pos = glm::uvec2(this->count % this->factor, this->count / this->factor) * size;
+    pos = glm::uvec2(this->count % this->factor.x, (this->count / this->factor.x) % this->factor.y) * size;
 }
 #pragma endregion
 

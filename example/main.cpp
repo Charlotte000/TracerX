@@ -1,4 +1,3 @@
-#include <TracerX/Scene.h>
 #include <TracerX/Renderer.h>
 #include <TracerX/GLTFLoader.h>
 

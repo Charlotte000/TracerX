@@ -4,17 +4,10 @@
 #define ASSETS_PATH std::filesystem::current_path()
 #endif
 
-#include <TracerX/Mesh.h>
-#include <TracerX/Scene.h>
-#include <TracerX/Material.h>
 #include <TracerX/Renderer.h>
-#include <TracerX/core/GL/Texture.h>
 
-#include <string>
 #include <imgui.h>
 #include <ImGuizmo.h>
-#include <filesystem>
-#include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
 class Application
@@ -40,7 +33,7 @@ public:
     struct Tiling
     {
         unsigned int count = 0;
-        unsigned int factor = 1;
+        glm::uvec2 factor = glm::uvec2(1);
 
         void tick();
         bool isLastTick() const;
