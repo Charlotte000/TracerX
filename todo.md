@@ -9,7 +9,7 @@ redo the features (tone mapping, importance sampling (pdf),  image-based lightin
 | + ubo            | 35 ms |
 
 
-## box | 0.0 0.0 10.0 | 100 samples per frame
-| feature          | time  |
-|------------------|-------|
-| + ubo            | 62 ms |
+## sponza | 0 3 1
+| feature          | time   |
+|------------------|--------|
+| init             | 530 ms |

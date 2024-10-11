@@ -20,7 +20,7 @@ float RandomValue()
 float RandomValueNormalDistribution()
 {
     float theta = TWO_PI * RandomValue();
-    float rho = sqrt(-2.0 * log(RandomValue()));
+    float rho = sqrt(-2 * log(RandomValue()));
     return rho * cos(theta);
 }
 

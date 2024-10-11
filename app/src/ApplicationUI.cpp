@@ -758,14 +758,13 @@ void viewRenderTexture(Application& app, GLint textureHandler)
     app.renderTextureView.getRectFromUV(lo, up);
     ImGui::GetWindowDrawList()->AddRect(toImVec2(lo), toImVec2(up), ImColor(ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]));
 
+    // Draw gizmos
     glm::mat4 view = app.renderer.camera.createView();
     glm::mat4 projection = app.renderer.camera.createProjection(
         app.renderer.getSize().x,
         app.renderer.getSize().y,
         app.renderer.minRenderDistance,
         app.renderer.maxRenderDistance);
-
-    // Draw gizmos
     ImGuizmo::SetRect(app.renderTextureView.pos.x, app.renderTextureView.pos.y, app.renderTextureView.size.x, app.renderTextureView.size.y);
     ImGuizmo::SetDrawlist();
 

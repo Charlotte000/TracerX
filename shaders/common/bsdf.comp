@@ -11,8 +11,8 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     }
 
     // Fresnel
-    if (material.FresnelStrength > 0.0 &&
-        1.0 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
+    if (material.FresnelStrength > 0 &&
+        1 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
     {
         ray.Origin = manifold.Point;
         ray.Direction = specularDir;
@@ -23,7 +23,7 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     }
 
     // Density
-    if (material.Density > 0.0)
+    if (material.Density > 0)
     {
         float depth = -log(RandomValue()) / material.Density;
         if (manifold.IsFrontFace || depth >= manifold.Depth)
@@ -40,9 +40,9 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     }
 
     // Refract
-    if (material.IOR > 0.0)
+    if (material.IOR > 0)
     {
-        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1.0 / material.IOR : material.IOR);
+        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1 / material.IOR : material.IOR);
         if (refractedDir == vec3(0))
         {
             refractedDir = specularDir;

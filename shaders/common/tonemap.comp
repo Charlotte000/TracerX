@@ -1,6 +1,6 @@
 vec3 Reinhard(in vec3 color)
 {
-    return color / (color + vec3(1));
+    return color / (color + 1);
 }
 
 vec3 ACES(in vec3 color)
@@ -11,7 +11,7 @@ vec3 ACES(in vec3 color)
     const float d = 0.59;
     const float e = 0.14;
 
-    return clamp((color * (a * color + b)) / (color * (y * color + d) + e), 0.0, 1.0);
+    return clamp((color * (a * color + b)) / (color * (y * color + d) + e), 0, 1);
 }
 
 vec3 ACESfitted(in vec3 color)
@@ -39,7 +39,7 @@ vec3 ACESfitted(in vec3 color)
 
     color = color * ACESOutputMat;
 
-    return clamp(color, 0.0, 1.0);
+    return clamp(color, 0, 1);
 }
 
 vec3 GammaCorrection(in vec3 color, in float gamma)

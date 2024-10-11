@@ -27,14 +27,14 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec3 ao = ray.Origin - v1.PositionU.xyz;
     vec3 dao = cross(ao, ray.Direction);
 
-    float invDet = 1.0 / det;
-    
+    float invDet = 1 / det;
+
     float dst = dot(ao, normal) * invDet;
     float u = dot(edge13, dao) * invDet;
     float v = -dot(edge12, dao) * invDet;
-    float w = 1.0 - u - v;
+    float w = 1 - u - v;
 
-    if (u < 0.0 || v < 0.0 || w < 0.0 || dst <= minDistance || dst >= maxDistance)
+    if (u < 0 || v < 0 || w < 0 || dst <= minDistance || dst >= maxDistance)
     {
         return false;
     }
@@ -45,7 +45,7 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     
     vec2 edgeUV12 = uv2 - uv1;
     vec2 edgeUV13 = uv3 - uv1;
-    float invDetUV = 1.0 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
+    float invDetUV = 1 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
 
     manifold = CollisionManifold(
         dst,
