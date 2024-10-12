@@ -12,7 +12,7 @@ void swap(inout int a, inout int b)
     b = tmp;
 }
 
-bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, in float minDistance, in float maxDistance, out CollisionManifold manifold)
+bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, in float minDistance, in float maxDistance, inout CollisionManifold manifold)
 {
     vec3 edge12 = v2.PositionU.xyz - v1.PositionU.xyz;
     vec3 edge13 = v3.PositionU.xyz - v1.PositionU.xyz;
@@ -42,22 +42,26 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec2 uv1 = vec2(v1.PositionU.w, v1.NormalV.w);
     vec2 uv2 = vec2(v2.PositionU.w, v2.NormalV.w);
     vec2 uv3 = vec2(v3.PositionU.w, v3.NormalV.w);
-    
+
+    vec2 uv = uv1 * w + uv2 * u + uv3 * v;
+    if (!AlphaBlend(materialId, uv))
+    {
+        return false;
+    }
+
     vec2 edgeUV12 = uv2 - uv1;
     vec2 edgeUV13 = uv3 - uv1;
     float invDetUV = 1 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
-
     manifold = CollisionManifold(
         dst,
         ray.Origin + ray.Direction * dst,
-        uv1 * w + uv2 * u + uv3 * v,
+        uv,
         normalize(v1.NormalV.xyz * w + v2.NormalV.xyz * u + v3.NormalV.xyz * v),
         normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV),
         normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV),
         materialId,
         det >= 0);
-
-    return AlphaBlend(manifold);
+    return true;
 }
 
 bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNear, out float tFar)
@@ -86,36 +90,32 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
 
     float bbhits[4];
 
-    vec2 stack[64];
-    int stackptr = 0;
+    Stack[++StackPtr] = vec2(mesh.NodeOffset, -1);
 
-    stack[stackptr] = vec2(mesh.NodeOffset, -1);
-
-    while (stackptr >= 0)
+    while (StackPtr > 0)
     {
-        int ni = int(stack[stackptr].x);
-        float near = stack[stackptr].y;
-        stackptr--;
+        int ni = int(Stack[StackPtr].x);
+        float near = Stack[StackPtr--].y;
 
         Node node = BVH[ni];
 
-        if (near > manifold.Depth) continue;
+        if (near > manifold.Depth)
+        {
+            continue;
+        }
 
         if (node.RightOffset == 0)
         {
-            for (int o = 0; o < node.PrimitiveCount; ++o)
+            int o = node.Start + mesh.TriangleOffset;
+            int oMax = o + node.PrimitiveCount;
+            for (; o < oMax; ++o)
             {
-                Triangle triangle = Triangles[node.Start + o + mesh.TriangleOffset];
-
+                Triangle triangle = Triangles[o];
                 Vertex v1 = Vertices[triangle.V1];
                 Vertex v2 = Vertices[triangle.V2];
                 Vertex v3 = Vertices[triangle.V3];
 
-                CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, meshInstance.MaterialId, localMinDistance, manifold.Depth, current))
-                {
-                    manifold = current;
-                }
+                TriangleIntersection(ray, v1, v2, v3, meshInstance.MaterialId, localMinDistance, manifold.Depth, manifold);
             }
         }
         else
@@ -138,16 +138,16 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
                     swap(closer, other);
                 }
 
-                stack[++stackptr] = vec2(other, bbhits[2]);
-                stack[++stackptr] = vec2(closer, bbhits[0]);
+                Stack[++StackPtr] = vec2(other, bbhits[2]);
+                Stack[++StackPtr] = vec2(closer, bbhits[0]);
             }
             else if (hitc0)
             {
-                stack[++stackptr] = vec2(ni + 1, bbhits[0]);
+                Stack[++StackPtr] = vec2(ni + 1, bbhits[0]);
             }
             else if (hitc1)
             {
-                stack[++stackptr] = vec2(ni + node.RightOffset, bbhits[2]);
+                Stack[++StackPtr] = vec2(ni + node.RightOffset, bbhits[2]);
             }
         }
     }

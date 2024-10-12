@@ -1,15 +1,9 @@
 redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
 
-# perfomance test:
-## ajax | 0.0 0.5 0.5
-| feature          | time  |
-|------------------|-------|
-| texture buffer   | 38 ms |
-| + ssbo           | 33 ms |
-| + ubo            | 35 ms |
+- calculate tangent and bitangent only after finding the closest hit (in GetMaterial for example?)
 
-
-## sponza | 0 3 1
-| feature          | time   |
-|------------------|--------|
-| init             | 530 ms |
+# Benchmark
+| scene     | camera pos  | time, ms |
+|-----------|-------------|----------|
+| ajax      | 0.0 0.5 0.5 | 32       |
+| sponza    | 0.0 3.0 1.0 | 510      |

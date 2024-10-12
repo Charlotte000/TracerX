@@ -1,12 +1,12 @@
-bool AlphaBlend(in CollisionManifold manifold)
+bool AlphaBlend(in int materialId, in vec2 uv)
 {
-    Material material = Materials[manifold.MaterialId];
-    if (material.AlphaMode == OpaqueAlphaMode || material.AlbedoTextureId < 0)
+    Material material = Materials[materialId];
+    if (material.AlphaMode == OpaqueAlphaMode)
     {
         return true;
     }
 
-    float alpha = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId)).a;
+    float alpha = material.AlbedoTextureId >= 0 ? texture(Textures, vec3(uv, material.AlbedoTextureId)).a : 1;
     if (material.AlphaMode == BlendAlphaMode)
     {
         return alpha > RandomValue();

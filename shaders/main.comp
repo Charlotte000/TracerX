@@ -10,6 +10,9 @@ const float TWO_PI     = 6.28318530717958648;
 const float EPS = 0.001;
 const float INF = 1000000000;
 
+vec2 Stack[64];
+int StackPtr = 0;
+
 #include "common/structs.comp"
 #include "common/uniforms.comp"
 #include "common/random.comp"
