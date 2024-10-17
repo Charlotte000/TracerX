@@ -71,7 +71,7 @@ void Renderer::shutdown()
 
 void Renderer::render(unsigned int samples)
 {
-    this->renderRect(samples, glm::uvec2(0, 0), this->accumulationTexture.size);
+    this->renderRect(samples, glm::uvec2(0, 0), this->getSize());
 }
 
 void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount)
@@ -102,11 +102,11 @@ void Renderer::toneMap()
 {
     // Update UBOs
     this->bindData();
-    this->updateUniform(glm::ivec2(0), this->accumulationTexture.size, true);
+    this->updateUniform(glm::ivec2(0), this->getSize(), true);
 
     // Tone map
     this->shader.use();
-    Shader::dispatchCompute(Shader::getGroups(this->accumulationTexture.size));
+    Shader::dispatchCompute(Shader::getGroups(this->getSize()));
     Shader::stopUse();
 }
 
@@ -117,7 +117,7 @@ void Renderer::denoise()
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    glm::uvec2 size = this->accumulationTexture.size;
+    glm::uvec2 size = this->getSize();
 
     // Create color buffer
     Image colorImage = this->accumulationTexture.upload();

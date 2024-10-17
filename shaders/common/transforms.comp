@@ -6,7 +6,12 @@ vec3 Slerp(in vec3 a, in vec3 b, float t)
 
 vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
 {
-    return (matrix * vec4(v, translate ? 1 : 0)).xyz;
+    if (translate)
+    {
+        return (matrix * vec4(v, 1)).xyz;
+    }
+
+    return mat3(matrix) * v;
 }
 
 void JitterRay(inout Ray ray)

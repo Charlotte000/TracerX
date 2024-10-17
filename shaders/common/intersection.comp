@@ -52,15 +52,15 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec2 edgeUV12 = uv2 - uv1;
     vec2 edgeUV13 = uv3 - uv1;
     float invDetUV = 1 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
-    manifold = CollisionManifold(
-        dst,
-        ray.Origin + ray.Direction * dst,
-        uv,
-        normalize(v1.NormalV.xyz * w + v2.NormalV.xyz * u + v3.NormalV.xyz * v),
-        normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV),
-        normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV),
-        materialId,
-        det >= 0);
+
+    manifold.Depth = dst;
+    manifold.Point = ray.Origin + ray.Direction * dst;
+    manifold.TextureCoordinate = uv;
+    manifold.Normal = normalize(v1.NormalV.xyz * w + v2.NormalV.xyz * u + v3.NormalV.xyz * v);
+    manifold.Tangent = normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV);
+    manifold.Bitangent = normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV);
+    manifold.MaterialId = materialId;
+    manifold.IsFrontFace = det >= 0;
     return true;
 }
 
@@ -169,10 +169,10 @@ bool FindIntersection(in Ray ray, in float minDistance, in float maxDistance, ou
 {
     manifold.Depth = maxDistance;
 
-    int meshCount = MeshInstances.length();
-    for (int meshId = 0; meshId < meshCount; meshId++)
+    int meshInstanceCount = MeshInstances.length();
+    for (int meshInstanceId = 0; meshInstanceId < meshInstanceCount; meshInstanceId++)
     {
-        MeshInstance meshInstance = MeshInstances[meshId];
+        MeshInstance meshInstance = MeshInstances[meshInstanceId];
 
         CollisionManifold current;
         if (MeshInstanceIntersection(ray, meshInstance, minDistance, manifold.Depth, current))

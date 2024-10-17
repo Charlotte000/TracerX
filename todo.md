@@ -1,6 +1,6 @@
-redo the features (tone mapping, importance sampling (pdf),  image-based lighting )
-
-- calculate tangent and bitangent only after finding the closest hit (in GetMaterial for example?)
+- importance sampling (pdf)
+    - env map
+- Disney BSFD
 
 # Benchmark
 | scene     | camera pos  | time, ms |
