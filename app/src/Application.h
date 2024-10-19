@@ -26,9 +26,18 @@ public:
     } rendering;
     struct CameraControl
     {
-        bool enable = false;
-        float speed = 5;
-        float rotationSpeed = 1;
+        bool enableFree = false;
+        float movementSpeed = 5, rotationSpeed = 1;
+        enum class Mode
+        {
+            Free,
+            Orbit,
+            Zoom,
+        } mode = Mode::Free;
+        glm::vec3 orbitOrigin = glm::vec3(0);
+
+        bool controlFree(TracerX::Camera& camera);
+        bool controlOrbit(TracerX::Camera& camera);
     } cameraControl;
     struct Tiling
     {
@@ -49,8 +58,9 @@ public:
 
         void reset();
         void clamp();
-        void getUVRect(glm::vec2& lo, glm::vec2& up) const;
+        void getUV(glm::vec2& lo, glm::vec2& up) const;
         void getRectFromUV(glm::vec2& lo, glm::vec2& up) const;
+        void control();
     } renderTextureView;
     struct Property
     {
@@ -89,6 +99,8 @@ public:
     void loadAnyEnvironment();
     void control();
     float getLookAtDistance() const;
+    void setCameraMode(CameraControl::Mode mode);
+    void switchRendering();
     void clear();
     void initUI();
     void renderUI();

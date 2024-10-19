@@ -15,8 +15,6 @@
 
 using namespace TracerX;
 
-Image Image::empty;
-
 void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
 {
     stbi_flip_vertically_on_write(true);

@@ -127,7 +127,7 @@ void Tooltip(const std::string& content)
     ImGui::TextDisabled("(?)");
     if (ImGui::BeginItemTooltip())
     {
-        ImGui::Text(content.c_str());
+        ImGui::Text("%s", content.c_str());
         ImGui::EndTooltip();
     }
 }
@@ -332,6 +332,7 @@ void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
         if (ImGui::Button("Focus camera", ImVec2(-1, 0)))
         {
             app.renderer.camera.lookAt(meshInstance.transform[3]);
+            app.cameraControl.orbitOrigin = meshInstance.transform[3];
             app.clear();
         }
 
@@ -479,13 +480,59 @@ void propertyCamera(Application& app, Camera& camera)
     ImGui::Separator();
     ImGui::DragFloat(
         "Movement speed",
-        &app.cameraControl.speed,
+        &app.cameraControl.movementSpeed,
         1,
         0,
         10000,
         "%.3f",
         ImGuiSliderFlags_Logarithmic);
     ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+
+    if (ImGui::BeginCombo(
+        "Control mode",
+        app.cameraControl.mode == Application::CameraControl::Mode::Free ?
+        "Free" :
+        app.cameraControl.mode == Application::CameraControl::Mode::Orbit ?
+        "Orbit" :
+        "Zoom texture"))
+    {
+        if (ImGui::Selectable("Free", app.cameraControl.mode == Application::CameraControl::Mode::Free))
+        {
+            app.setCameraMode(Application::CameraControl::Mode::Free);
+        }
+
+        if (ImGui::Selectable("Orbit", app.cameraControl.mode == Application::CameraControl::Mode::Orbit))
+        {
+            app.setCameraMode(Application::CameraControl::Mode::Orbit);
+        }
+
+        if (ImGui::Selectable("Zoom texture", app.cameraControl.mode == Application::CameraControl::Mode::Zoom))
+        {
+            app.setCameraMode(Application::CameraControl::Mode::Zoom);
+        }
+
+        ImGui::EndCombo();
+    }
+
+    switch (app.cameraControl.mode)
+    {
+        case Application::CameraControl::Mode::Free:
+            Tooltip("C - start/stop camera control mode\n"
+                "W, A, S, D - camera forward, left, backward, right movement\n"
+                "LShift, LCtrl - camera up, down movement\n"
+                "Mouse - camera rotation\n"
+                "Q, E - camera tilt\n");
+            break;
+        case Application::CameraControl::Mode::Orbit:
+            Tooltip("Left mouse drag - camera rotation\n"
+                "Right mouse drag - camera zoom\n"
+                "Middle mouse drag - camera pan\n");
+            break;
+        case Application::CameraControl::Mode::Zoom:
+            Tooltip("Mouse wheel - zoom in/out\n"
+                "Left mouse drag - move view\n");
+            break;
+    }
 
     if (!app.scene.cameras.empty())
     {
@@ -589,9 +636,9 @@ void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
 
 void propertyControls(Application& app)
 {
-    if (ImGui::Button(app.rendering.enable ? "Stop" : "Start", ImVec2(-1, 0)))
+    if (ImGui::Button(app.rendering.enable ? "Stop rendering" : "Start rendering", ImVec2(-1, 0)))
     {
-        app.rendering.enable = !app.rendering.enable;
+        app.switchRendering();
     }
 
     if (ImGui::Button("Clear", ImVec2(-1, 0)))
@@ -732,7 +779,7 @@ void viewRenderTexture(Application& app, GLint textureHandler)
 
     // Draw filled image
     glm::vec2 lo, up;
-    app.renderTextureView.getUVRect(lo, up);
+    app.renderTextureView.getUV(lo, up);
     drawFillImage(textureHandler, app.renderer.getSize(), app.renderTextureView.pos, app.renderTextureView.size, glm::vec3(1), lo, up, true);
 
     app.renderTextureView.isHover = ImGui::IsItemHovered();
@@ -977,30 +1024,6 @@ void mainMenuBar(Application& app)
         ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu("Controls"))
-    {
-        ImGui::Text(
-            "Space - start/stop rendering\n"
-            "Mouse wheel - zoom in/out\n"
-            "Mouse drag - move view\n"
-        );
-
-        if (ImGui::BeginMenu("Camera"))
-        {
-            ImGui::Text(
-                "C - start/stop camera control mode\n"
-                "W, A, S, D - camera forward, left, backward, right movement\n"
-                "LShift, LCtrl - camera up, down movement\n"
-                "Mouse - camera rotation\n"
-                "Q, E - camera tilt\n"
-            );
-
-            ImGui::EndMenu();
-        }
-
-        ImGui::EndMenu();
-    }
-
     if (ImGui::BeginMenu("About"))
     {
         ImGui::Text("Made by: Charlotte000");
@@ -1027,7 +1050,6 @@ void Application::initUI()
     SetupImGuiStyle();
 
     this->materialTextureView.texture.init(GL_RGBA32F);
-    this->materialTextureView.texture.update(Image::empty);
 }
 
 void Application::shutdownUI()
@@ -1044,6 +1066,8 @@ void Application::renderUI()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGuizmo::BeginFrame();
+
+    this->control();
 
     mainMenuBar(*this);
     mainWindow(*this);

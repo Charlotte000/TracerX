@@ -8,6 +8,120 @@
 using namespace TracerX;
 
 #pragma region Application Helper Functions
+bool Application::CameraControl::controlFree(Camera& camera)
+{
+    ImGuiIO io = ImGui::GetIO();
+    float elapsedTime = io.DeltaTime;
+    glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
+
+    bool updated = false;
+
+    // Keyboard
+    float elapsedMove = this->movementSpeed * elapsedTime;
+    glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+    if (ImGui::IsKeyDown(ImGuiKey_W))
+    {
+        camera.position += camera.forward * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_S))
+    {
+        camera.position += -camera.forward * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_A))
+    {
+        camera.position += -right * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_D))
+    {
+        camera.position += right * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+    {
+        camera.position += camera.up * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+    {
+        camera.position += -camera.up * elapsedMove;
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_Q))
+    {
+        camera.up = glm::rotate(camera.up, -this->rotationSpeed * 2 * elapsedTime, camera.forward);
+        updated = true;
+    }
+
+    if (ImGui::IsKeyDown(ImGuiKey_E))
+    {
+        camera.up = glm::rotate(camera.up, this->rotationSpeed * 2 * elapsedTime, camera.forward);
+        updated = true;
+    }
+
+    // Mouse
+    if (mouseDelta != glm::vec2(0))
+    {
+        camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
+        camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
+        camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
+        updated = true;
+    }
+
+    return updated;
+}
+
+bool Application::CameraControl::controlOrbit(Camera& camera)
+{
+    ImGuiIO io = ImGui::GetIO();
+    float elapsedTime = io.DeltaTime;
+    glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
+    if (mouseDelta == glm::vec2(0))
+    {
+        return false;
+    }
+
+    float orbitRadius = glm::length(camera.position - this->orbitOrigin);
+    glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+
+    // Camera rotation
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    {
+        camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
+        camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
+
+        camera.position = this->orbitOrigin - camera.forward * orbitRadius;
+        right = glm::normalize(glm::cross(camera.forward, glm::vec3(0, 1, 0)));
+        camera.up = glm::normalize(glm::cross(right, camera.forward));
+        return true;
+    }
+
+    // Camera zoom
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+    {
+        camera.position -= camera.forward * mouseDelta.y;
+        return true;
+    }
+
+    // Camera pan
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Middle))
+    {
+        this->orbitOrigin += camera.up * mouseDelta.y - right * mouseDelta.x;
+        camera.position = this->orbitOrigin - camera.forward * orbitRadius;
+        return true;
+    }
+
+    return false;
+}
+
 void Application::RenderTextureView::reset()
 {
     this->uvCenter = glm::vec2(.5);
@@ -20,7 +134,7 @@ void Application::RenderTextureView::clamp()
     this->uvCenter = glm::clamp(this->uvCenter, this->uvSize * .5f, 1.f - this->uvSize * .5f);
 }
 
-void Application::RenderTextureView::getUVRect(glm::vec2& lo, glm::vec2& up) const
+void Application::RenderTextureView::getUV(glm::vec2& lo, glm::vec2& up) const
 {
     lo = this->uvCenter - this->uvSize * .5f;
     up = this->uvCenter + this->uvSize * .5f;
@@ -30,6 +144,28 @@ void Application::RenderTextureView::getRectFromUV(glm::vec2& lo, glm::vec2& up)
 {
     lo = lo * this->size + this->pos;
     up = up * this->size + this->pos;
+}
+
+void Application::RenderTextureView::control()
+{
+    ImGuiIO io = ImGui::GetIO();
+
+    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && this->uvSize != glm::vec2(1))
+    {
+        this->uvCenter -= toVec2(io.MouseDelta) * this->uvSize / this->size;
+        this->clamp();
+    }
+
+    if (io.MouseWheel > 0)
+    {
+        this->uvSize *= .9f;
+        this->clamp();
+    }
+    else if (io.MouseWheel < 0)
+    {
+        this->uvSize *= 1.1f;
+        this->clamp();
+    }
 }
 
 void Application::Tiling::tick()
@@ -72,57 +208,7 @@ void Application::init(glm::uvec2 size)
     }
 
     glfwMakeContextCurrent(this->window);
-    glfwSetWindowUserPointer(this->window, this);
     glfwSwapInterval(0);
-
-    // Key listener
-    glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int scancode, int action, int mode)
-    {
-        Application* app = (Application*)glfwGetWindowUserPointer(window);
-        if (action == GLFW_PRESS)
-        {
-            switch (key)
-            {
-                case GLFW_KEY_C:
-                    app->cameraControl.enable = !app->cameraControl.enable;
-                    glfwSetInputMode(window, GLFW_CURSOR, app->cameraControl.enable ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-                    app->renderTextureView.reset();
-                    break;
-                case GLFW_KEY_SPACE:
-                    app->rendering.enable = !app->rendering.enable;
-                    if (app->rendering.enable)
-                    {
-                        if (app->rendering.isPreview)
-                        {
-                            app->renderer.clear();
-                            app->tiling.count = 0;
-                        }
-
-                        app->rendering.isPreview = false;
-                    }
-
-                    break;
-            }
-        }
-    });
-
-    glfwSetScrollCallback(this->window, [](GLFWwindow* window, double xOffset, double yOffset)
-    {
-        Application* app = (Application*)glfwGetWindowUserPointer(window);
-        if (app->renderTextureView.isHover && !app->cameraControl.enable)
-        {
-            if (yOffset > 0)
-            {
-                app->renderTextureView.uvSize *= .9f;
-                app->renderTextureView.clamp();
-            }
-            else if (yOffset < 0)
-            {
-                app->renderTextureView.uvSize *= 1.1f;
-                app->renderTextureView.clamp();
-            }
-        }
-    });
 
     // Init components
     this->renderer.init(size);
@@ -152,10 +238,6 @@ void Application::run()
             this->rendering.needClear = false;
         }
 
-        glfwPollEvents();
-
-        this->control();
-
         // Render
         if (this->rendering.isPreview)
         {
@@ -182,10 +264,9 @@ void Application::run()
             }
         }
 
-        // UI
+        // Render UI
+        glfwPollEvents();
         this->renderUI();
-
-        // Display
         glfwSwapBuffers(this->window);
     }
 
@@ -220,88 +301,40 @@ void Application::loadAnyEnvironment()
 
 void Application::control()
 {
-    ImGuiIO io = ImGui::GetIO();
-    float elapsedTime = io.DeltaTime;
-    glm::vec2 mouseDelta = toVec2(io.MouseDelta);
-
-    if (this->renderTextureView.isHover && !this->cameraControl.enable && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+    if (ImGui::IsKeyPressed(ImGuiKey_Space, false))
     {
-        this->renderTextureView.uvCenter -= mouseDelta * this->renderTextureView.uvSize / this->renderTextureView.size;
-        this->renderTextureView.clamp();
+        this->switchRendering();
     }
 
-    if (!this->cameraControl.enable)
+    switch (this->cameraControl.mode)
     {
-        return;
-    }
+        case Application::CameraControl::Mode::Free:
+            if (this->cameraControl.enableFree && this->cameraControl.controlFree(this->renderer.camera))
+            {
+                this->clear();
+            }
 
-    bool updated = false;
-    Camera& camera = this->renderer.camera;
+            if (ImGui::IsKeyPressed(ImGuiKey_C, false))
+            {
+                this->cameraControl.enableFree = !this->cameraControl.enableFree;
+                glfwSetInputMode(window, GLFW_CURSOR, this->cameraControl.enableFree ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+            }
 
-    // Keyboard
-    float elapsedMove = this->cameraControl.speed * elapsedTime;
-    glm::vec3 right = glm::cross(camera.forward, camera.up);
-    if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        camera.position += camera.forward * elapsedMove;
-        updated = true;
-    }
+            break;
+        case Application::CameraControl::Mode::Orbit:
+            if (this->renderTextureView.isHover && !ImGuizmo::IsOver() && this->cameraControl.controlOrbit(this->renderer.camera))
+            {
+                this->clear();
+            }
 
-    if (glfwGetKey(this->window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        camera.position += -camera.forward * elapsedMove;
-        updated = true;
-    }
+            break;
+        case Application::CameraControl::Mode::Zoom:
+            if (this->renderTextureView.isHover)
+            {
+                this->renderTextureView.control();
+            }
 
-    if (glfwGetKey(this->window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        camera.position += -right * elapsedMove;
-        updated = true;
-    }
-
-    if (glfwGetKey(this->window, GLFW_KEY_D) == GLFW_PRESS)
-    {
-        camera.position += right * elapsedMove;
-        updated = true;
-    }
-
-    if (glfwGetKey(this->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-    {
-        camera.position += camera.up * elapsedMove;
-        updated = true;
-    }
-
-    if (glfwGetKey(this->window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-    {
-        camera.position += -camera.up * elapsedMove;
-        updated = true;
-    }
-
-    if (glfwGetKey(this->window, GLFW_KEY_Q) == GLFW_PRESS)
-    {
-        camera.up = glm::rotate(camera.up, -this->cameraControl.rotationSpeed * 2 * elapsedTime, camera.forward);
-        updated = true;
-    }
-
-    if (glfwGetKey(this->window, GLFW_KEY_E) == GLFW_PRESS)
-    {
-        camera.up = glm::rotate(camera.up, this->cameraControl.rotationSpeed * 2 * elapsedTime, camera.forward);
-        updated = true;
-    }
-
-    // Mouse
-    if (mouseDelta != glm::vec2(0))
-    {
-        mouseDelta *= this->cameraControl.rotationSpeed / 200.f;
-        camera.forward = glm::rotate(camera.forward, -mouseDelta.y, right);
-        camera.up = glm::rotate(camera.up, -mouseDelta.y, right);
-        camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
-        updated = true;
-    }
-
-    if (updated)
-    {
-        this->clear();
+            break;
     }
 }
 
@@ -315,6 +348,29 @@ float Application::getLookAtDistance() const
     float max = this->renderer.maxRenderDistance;
     float linear = 2 * min * max / (max + min - nonLinear * (max - min));
     return linear;
+}
+
+void Application::setCameraMode(CameraControl::Mode mode)
+{
+    this->cameraControl.mode = mode;
+    this->cameraControl.enableFree = false;
+    glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    this->renderTextureView.reset();
+}
+
+void Application::switchRendering()
+{
+    this->rendering.enable = !this->rendering.enable;
+    if (this->rendering.enable)
+    {
+        if (this->rendering.isPreview)
+        {
+            this->renderer.clear();
+            this->tiling.count = 0;
+        }
+
+        this->rendering.isPreview = false;
+    }
 }
 
 void Application::clear()

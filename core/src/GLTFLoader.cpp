@@ -18,8 +18,8 @@ using namespace TracerX::core;
 std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::Model& model)
 {
     std::map<int, std::vector<glm::ivec2>> meshMap;
-    scene.meshes.reserve(model.meshes.size());
-    scene.meshNames.reserve(model.meshes.size());
+    scene.meshes.reserve(scene.meshes.size() + model.meshes.size());
+    scene.meshNames.reserve(scene.meshes.size() + model.meshes.size());
 
     for (size_t gltfMeshId = 0; gltfMeshId < model.meshes.size(); gltfMeshId++)
     {
@@ -54,6 +54,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             size_t uvStride = tinygltf::GetComponentSizeInBytes(uvAccessor.componentType) * tinygltf::GetNumComponentsInType(uvAccessor.type);
 
             size_t vertexOffset = scene.vertices.size();
+            scene.vertices.reserve(vertexOffset + positionAccessor.count);
             for (size_t i = 0; i < positionAccessor.count; i++)
             {
                 Vertex v;
@@ -84,6 +85,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
                 const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
                 size_t indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
 
+                scene.triangles.reserve(triangleOffset + indexAccessor.count / 3);
                 for (size_t i = 0; i < indexAccessor.count; i += 3)
                 {
                     const uint8_t* data = indexData + (i * indexStride);
@@ -123,6 +125,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             }
             else
             {
+                scene.triangles.reserve(triangleOffset + (scene.vertices.size() - vertexOffset) / 3);
                 for (size_t i = vertexOffset; i < scene.vertices.size(); i += 3)
                 {
                     scene.triangles.push_back(Triangle { .v1 = (int)(i + 0), .v2 = (int)(i + 1), .v3 = (int)(i + 2) });
@@ -135,7 +138,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             mesh.triangleSize = scene.triangles.size() - triangleOffset;
             int meshId = scene.addMesh(mesh, gltfMesh.name);
 
-            meshMap[gltfMeshId].push_back(glm::ivec2(meshId, primitive.material));
+            meshMap[gltfMeshId].emplace_back(meshId, primitive.material);
         }
     }
 
@@ -144,6 +147,8 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
 
 void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
 {
+    scene.textures.reserve(scene.textures.size() + textures.size());
+    scene.textureNames.reserve(scene.textures.size() + textures.size());
     for (const tinygltf::Texture& gltfTexture : textures)
     {
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
@@ -166,6 +171,8 @@ void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, 
 
 void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& materials)
 {
+    scene.materials.reserve(scene.materials.size() + materials.size());
+    scene.materialNames.reserve(scene.materials.size() + materials.size());
     for (const tinygltf::Material& gltfMaterial : materials)
     {
         const tinygltf::PbrMetallicRoughness& pbr = gltfMaterial.pbrMetallicRoughness;
@@ -227,6 +234,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
 
 void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf::Node& node, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& globalTransform)
 {
+    // Get transform
     glm::mat4 localTransform(1);
     if (!node.matrix.empty())
     {
@@ -273,6 +281,7 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
 
     const glm::mat4 transform = globalTransform * localTransform;
 
+    // Get mesh instances
     if (node.mesh >= 0)
     {
         for (glm::ivec2 pair : meshMap.at(node.mesh))
@@ -285,6 +294,7 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
         }
     }
 
+    // Get cameras
     if (node.camera >= 0)
     {
         Camera c;
@@ -294,6 +304,7 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
         scene.cameras.push_back(c);
     }
 
+    // Traverse children
     for (int child : node.children)
     {
         GLTFtraverseNode(scene, model, model.nodes[child], meshMap, transform);

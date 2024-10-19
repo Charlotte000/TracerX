@@ -11,24 +11,24 @@ using namespace TracerX::core;
 
 int Scene::addTexture(const Image& texture, const std::string& name)
 {
+    int index = this->textures.size();
     this->textures.push_back(texture);
-    int index = this->textures.size() - 1;
     this->textureNames.push_back(name.empty() ? "Untitled texture " + std::to_string(index) : name);
     return index;
 }
 
 int Scene::addMaterial(const Material& material, const std::string& name)
 {
+    int index = this->materials.size();
     this->materials.push_back(material);
-    int index = this->materials.size() - 1;
     this->materialNames.push_back(name.empty() ? "Untitled material " + std::to_string(index) : name);
     return index;
 }
 
 int Scene::addMesh(const Mesh& mesh, const std::string& name)
 {
+    int index = this->meshes.size();
     this->meshes.push_back(mesh);
-    int index = this->meshes.size() - 1;
     this->meshNames.push_back(name.empty() ? "Untitled mesh " + std::to_string(index) : name);
     this->buildBVH(this->meshes.back());
     return index;
@@ -63,6 +63,7 @@ void Scene::buildBVH(Mesh& mesh)
 
     // Convert to our format
     mesh.nodeOffset = this->bvh.size();
+    this->bvh.reserve(mesh.nodeOffset + bvh.getNodes().size());
     for (const FastBVH::Node<float>& node : bvh.getNodes())
     {
         BvhNode myNode;

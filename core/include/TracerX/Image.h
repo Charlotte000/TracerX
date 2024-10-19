@@ -30,11 +30,6 @@ public:
     std::vector<float> pixels;
 
     /**
-     * @brief An empty image.
-     */
-    static Image empty;
-
-    /**
      * @brief Saves the image to a file.
      * @param path The path of the file to save the image to.
      * @param isHDR Whether to save the image as a high dynamic range (HDR) image. If not, the image is saved as a PNG image.
