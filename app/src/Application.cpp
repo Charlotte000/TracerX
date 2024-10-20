@@ -306,32 +306,33 @@ void Application::control()
         this->switchRendering();
     }
 
+    if (this->renderTextureView.isHover && ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+    {
+        this->renderTextureView.control();
+    }
+
     switch (this->cameraControl.mode)
     {
         case Application::CameraControl::Mode::Free:
             if (this->cameraControl.enableFree && this->cameraControl.controlFree(this->renderer.camera))
             {
                 this->clear();
+                this->renderTextureView.reset();
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_C, false))
             {
                 this->cameraControl.enableFree = !this->cameraControl.enableFree;
                 glfwSetInputMode(window, GLFW_CURSOR, this->cameraControl.enableFree ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+                this->renderTextureView.reset();
             }
 
             break;
         case Application::CameraControl::Mode::Orbit:
-            if (this->renderTextureView.isHover && !ImGuizmo::IsOver() && this->cameraControl.controlOrbit(this->renderer.camera))
+            if (this->renderTextureView.isHover && !ImGuizmo::IsOver() && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && this->cameraControl.controlOrbit(this->renderer.camera))
             {
                 this->clear();
-            }
-
-            break;
-        case Application::CameraControl::Mode::Zoom:
-            if (this->renderTextureView.isHover)
-            {
-                this->renderTextureView.control();
+                this->renderTextureView.reset();
             }
 
             break;

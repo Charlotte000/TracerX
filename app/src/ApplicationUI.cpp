@@ -488,13 +488,7 @@ void propertyCamera(Application& app, Camera& camera)
         ImGuiSliderFlags_Logarithmic);
     ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
 
-    if (ImGui::BeginCombo(
-        "Control mode",
-        app.cameraControl.mode == Application::CameraControl::Mode::Free ?
-        "Free" :
-        app.cameraControl.mode == Application::CameraControl::Mode::Orbit ?
-        "Orbit" :
-        "Zoom texture"))
+    if (ImGui::BeginCombo("Control mode", app.cameraControl.mode == Application::CameraControl::Mode::Free ? "Free" : "Orbit"))
     {
         if (ImGui::Selectable("Free", app.cameraControl.mode == Application::CameraControl::Mode::Free))
         {
@@ -504,11 +498,6 @@ void propertyCamera(Application& app, Camera& camera)
         if (ImGui::Selectable("Orbit", app.cameraControl.mode == Application::CameraControl::Mode::Orbit))
         {
             app.setCameraMode(Application::CameraControl::Mode::Orbit);
-        }
-
-        if (ImGui::Selectable("Zoom texture", app.cameraControl.mode == Application::CameraControl::Mode::Zoom))
-        {
-            app.setCameraMode(Application::CameraControl::Mode::Zoom);
         }
 
         ImGui::EndCombo();
@@ -527,10 +516,6 @@ void propertyCamera(Application& app, Camera& camera)
             Tooltip("Left mouse drag - camera rotation\n"
                 "Right mouse drag - camera zoom\n"
                 "Middle mouse drag - camera pan\n");
-            break;
-        case Application::CameraControl::Mode::Zoom:
-            Tooltip("Mouse wheel - zoom in/out\n"
-                "Left mouse drag - move view\n");
             break;
     }
 
@@ -662,7 +647,7 @@ void propertyControls(Application& app)
 #endif
 }
 
-void propertyEditor(Application& app, Application::Property property)
+void propertyEditor(Application& app, Application::Property& property)
 {
     ImGui::BeginChild("propertyEditorMenu", ImVec2(-1, 0), ImGuiChildFlags_Border);
 
@@ -1021,6 +1006,15 @@ void mainMenuBar(Application& app)
             }
         }
 
+        ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Controls"))
+    {
+        ImGui::Text("Space - start/stop rendering");
+        ImGui::Separator();
+        ImGui::Text("LCtrl + mouse wheel - zoom in/out");
+        ImGui::Text("LCtrl + left mouse drag - move view");
         ImGui::EndMenu();
     }
 

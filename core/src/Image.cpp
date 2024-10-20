@@ -75,7 +75,7 @@ Image Image::loadFromFile(const std::filesystem::path& path)
     return img;
 }
 
-Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float> pixels)
+Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels)
 {
     assert(size.x * size.y * 4 == pixels.size());
     Image img;

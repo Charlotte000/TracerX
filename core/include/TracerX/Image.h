@@ -60,7 +60,7 @@ public:
      * @remark The size of the array must be size.x * size.y * 4.
      * @return The loaded image.
      */
-    static Image loadFromMemory(glm::uvec2 size, const std::vector<float> pixels);
+    static Image loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels);
 private:
     Image();
 };

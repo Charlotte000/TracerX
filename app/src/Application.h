@@ -32,7 +32,6 @@ public:
         {
             Free,
             Orbit,
-            Zoom,
         } mode = Mode::Free;
         glm::vec3 orbitOrigin = glm::vec3(0);
 
