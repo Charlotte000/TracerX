@@ -23,11 +23,15 @@ void TextureArray::bind(unsigned int binding)
 void TextureArray::update(const std::vector<Image>& images)
 {
     glm::uvec2 size = TextureArray::getMaxSize(images);
-    std::vector<float> data = TextureArray::resizeImages(images, size);
+    glm::uvec3 size3(size, images.size());
+    if (this->size == size3 && this->size == glm::uvec3(0))
+    {
+        return;
+    }
 
+    std::vector<float> data = TextureArray::resizeImages(images, size);
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
     {
-        glm::uvec3 size3(size, images.size());
         if (this->size != size3)
         {
             this->size = size3;

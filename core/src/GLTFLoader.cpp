@@ -89,38 +89,35 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
                 for (size_t i = 0; i < indexAccessor.count; i += 3)
                 {
                     const uint8_t* data = indexData + (i * indexStride);
-
-                    Triangle triangle;
-                    if (indexStride == 1)
+                    switch (indexStride)
                     {
-                        glm::vec<3, uint8_t> index;
-                        std::memcpy(glm::value_ptr(index), data, sizeof(uint8_t) * 3);
-                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
+                        case 1:
+                            glm::vec<3, uint8_t> index8;
+                            std::memcpy(glm::value_ptr(index8), data, sizeof(uint8_t) * 3);
+                            scene.triangles.push_back(
+                                Triangle { .v1 = (int)(index8.x + vertexOffset), .v2 = (int)(index8.y + vertexOffset), .v3 = (int)(index8.z + vertexOffset) });
+                            break;
+                        case 2:
+                            glm::vec<3, uint16_t> index16;
+                            std::memcpy(glm::value_ptr(index16), data, sizeof(uint16_t) * 3);
+                            scene.triangles.push_back(
+                                Triangle { .v1 = (int)(index16.x + vertexOffset), .v2 = (int)(index16.y + vertexOffset), .v3 = (int)(index16.z + vertexOffset) });
+                            break;
+                        case 4:
+                            glm::vec<3, uint32_t> index32;
+                            std::memcpy(glm::value_ptr(index32), data, sizeof(uint32_t) * 3);
+                            scene.triangles.push_back(
+                                Triangle { .v1 = (int)(index32.x + vertexOffset), .v2 = (int)(index32.y + vertexOffset), .v3 = (int)(index32.z + vertexOffset) });
+                            break;
+                        case 8:
+                            glm::vec<3, uint64_t> index64;
+                            std::memcpy(glm::value_ptr(index64), data, sizeof(uint64_t) * 3);
+                            scene.triangles.push_back(
+                                Triangle { .v1 = (int)(index64.x + vertexOffset), .v2 = (int)(index64.y + vertexOffset), .v3 = (int)(index64.z + vertexOffset) });
+                            break;
+                        default:
+                            throw std::runtime_error("Unsupported index stride");
                     }
-                    else if (indexStride == 2)
-                    {
-                        glm::vec<3, uint16_t> index;
-                        std::memcpy(glm::value_ptr(index), data, sizeof(uint16_t) * 3);
-                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
-                    }
-                    else if (indexStride == 4)
-                    {
-                        glm::vec<3, uint32_t> index;
-                        std::memcpy(glm::value_ptr(index), data, sizeof(uint32_t) * 3);
-                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
-                    }
-                    else if (indexStride == 8)
-                    {
-                        glm::vec<3, uint64_t> index;
-                        std::memcpy(glm::value_ptr(index), data, sizeof(uint64_t) * 3);
-                        triangle = { .v1 = (int)(index.x + vertexOffset), .v2 = (int)(index.y + vertexOffset), .v3 = (int)(index.z + vertexOffset) };
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Unsupported index stride");
-                    }
-
-                    scene.triangles.push_back(triangle);
                 }
             }
             else
@@ -134,11 +131,11 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
 
             // Mesh
             Mesh mesh;
-            mesh.triangleOffset = triangleOffset;
-            mesh.triangleSize = scene.triangles.size() - triangleOffset;
+            mesh.triangleOffset = (int)triangleOffset;
+            mesh.triangleSize = (int)(scene.triangles.size() - triangleOffset);
             int meshId = scene.addMesh(mesh, gltfMesh.name);
 
-            meshMap[gltfMeshId].emplace_back(meshId, primitive.material);
+            meshMap[(int)gltfMeshId].emplace_back(meshId, primitive.material);
         }
     }
 
@@ -183,7 +180,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
         material.roughness = std::sqrt((float)pbr.roughnessFactor);
         material.emissionColor = glm::vec3(gltfMaterial.emissiveFactor[0], gltfMaterial.emissiveFactor[1], gltfMaterial.emissiveFactor[2]);
         material.emissionStrength = 1;
-        material.metalness = pbr.metallicFactor;
+        material.metalness = (float)pbr.metallicFactor;
 
         material.albedoTextureId = pbr.baseColorTexture.index;
         material.metalnessTextureId = pbr.metallicRoughnessTexture.index;
@@ -191,7 +188,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
         material.roughnessTextureId = pbr.metallicRoughnessTexture.index;
         material.normalTextureId = gltfMaterial.normalTexture.index;
 
-        material.alphaCutoff = gltfMaterial.alphaCutoff;
+        material.alphaCutoff = (float)gltfMaterial.alphaCutoff;
         if (gltfMaterial.alphaMode == "BLEND")
         {
             material.alphaMode = Material::AlphaMode::Blend;
@@ -210,7 +207,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
             const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_ior")->second;
             if (ext.Has("ior"))
             {
-                material.ior = ext.Get("ior").Get<double>();
+                material.ior = (float)ext.Get("ior").Get<double>();
             }
         }
 
@@ -224,7 +221,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
             const tinygltf::Value& ext = gltfMaterial.extensions.find("KHR_materials_emissive_strength")->second;
             if (ext.Has("emissiveStrength"))
             {
-                material.emissionStrength = ext.Get("emissiveStrength").Get<double>();
+                material.emissionStrength = (float)ext.Get("emissiveStrength").Get<double>();
             }
         }
 
@@ -238,25 +235,25 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
     glm::mat4 localTransform(1);
     if (!node.matrix.empty())
     {
-        localTransform[0][0] = node.matrix[0];
-        localTransform[0][1] = node.matrix[1];
-        localTransform[0][2] = node.matrix[2];
-        localTransform[0][3] = node.matrix[3];
+        localTransform[0][0] = (float)node.matrix[0];
+        localTransform[0][1] = (float)node.matrix[1];
+        localTransform[0][2] = (float)node.matrix[2];
+        localTransform[0][3] = (float)node.matrix[3];
 
-        localTransform[1][0] = node.matrix[4];
-        localTransform[1][1] = node.matrix[5];
-        localTransform[1][2] = node.matrix[6];
-        localTransform[1][3] = node.matrix[7];
+        localTransform[1][0] = (float)node.matrix[4];
+        localTransform[1][1] = (float)node.matrix[5];
+        localTransform[1][2] = (float)node.matrix[6];
+        localTransform[1][3] = (float)node.matrix[7];
 
-        localTransform[2][0] = node.matrix[8];
-        localTransform[2][1] = node.matrix[9];
-        localTransform[2][2] = node.matrix[10];
-        localTransform[2][3] = node.matrix[11];
+        localTransform[2][0] = (float)node.matrix[8];
+        localTransform[2][1] = (float)node.matrix[9];
+        localTransform[2][2] = (float)node.matrix[10];
+        localTransform[2][3] = (float)node.matrix[11];
 
-        localTransform[3][0] = node.matrix[12];
-        localTransform[3][1] = node.matrix[13];
-        localTransform[3][2] = node.matrix[14];
-        localTransform[3][3] = node.matrix[15];
+        localTransform[3][0] = (float)node.matrix[12];
+        localTransform[3][1] = (float)node.matrix[13];
+        localTransform[3][2] = (float)node.matrix[14];
+        localTransform[3][3] = (float)node.matrix[15];
     }
     else
     {
@@ -268,7 +265,7 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
 
         if (!node.rotation.empty())
         {
-            rotate = (glm::mat4)glm::quat(node.rotation[3], node.rotation[0], node.rotation[1], node.rotation[2]);
+            rotate = (glm::mat4)glm::quat((float)node.rotation[3], (float)node.rotation[0], (float)node.rotation[1], (float)node.rotation[2]);
         }
 
         if (!node.translation.empty())

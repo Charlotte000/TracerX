@@ -182,7 +182,7 @@ bool materialTextureSelector(Application& app, const std::string& name, int& cur
                 (textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(),
                 currentTextureId == textureId))
             {
-                currentTextureId = textureId;
+                currentTextureId = (int)textureId;
                 changed = true;
             }
         }
@@ -390,7 +390,7 @@ void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
                     (app.scene.materialNames[index] + "##meshMaterial" + std::to_string(index)).c_str(),
                     index == meshInstance.materialId))
                 {
-                    meshInstance.materialId = index;
+                    meshInstance.materialId = (int)index;
                     changed = true;
                 }
             }
@@ -565,14 +565,14 @@ void propertySettings(Application& app)
         updated = true;
     }
 
-    updated |= DragUInt2("Tiling factor", glm::value_ptr(app.tiling.factor), .01f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & app.tiling.count != 0;
+    updated |= DragUInt2("Tiling factor", glm::value_ptr(app.tiling.factor), .01f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & (app.tiling.count != 0);
     Tooltip("Reduces lags but increases the rendering time, intended for large images");
 
     ImGui::Separator();
     DragUInt("Samples target", &app.rendering.sampleCountTarget, 1.f, 0, 100000, "%d", ImGuiSliderFlags_AlwaysClamp);
     Tooltip("Zero means unlimited samples");
 
-    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & app.tiling.count != 0;
+    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & (app.tiling.count != 0);
     Tooltip("A high value can cause lags but the image quality improves faster");
 
     updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
@@ -801,8 +801,8 @@ void viewRenderTexture(Application& app, GLint textureHandler)
     // Draw gizmos
     glm::mat4 view = app.renderer.camera.createView();
     glm::mat4 projection = app.renderer.camera.createProjection(
-        app.renderer.getSize().x,
-        app.renderer.getSize().y,
+        (float)app.renderer.getSize().x,
+        (float)app.renderer.getSize().y,
         app.renderer.minRenderDistance,
         app.renderer.maxRenderDistance);
     ImGuizmo::SetRect(app.renderTextureView.pos.x, app.renderTextureView.pos.y, app.renderTextureView.size.x, app.renderTextureView.size.y);

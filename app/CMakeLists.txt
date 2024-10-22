@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(App)
+set(CMAKE_CXX_STANDARD 20)
 
 set(TX_ASSETS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "Assets folder" FORCE)
 

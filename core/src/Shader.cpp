@@ -50,23 +50,20 @@ GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderTy
 {
     // Create shader
     GLuint handler = glCreateShader(shaderType);
-    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), bin.size());
+    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), (GLsizei)bin.size());
     glSpecializeShader(handler, "main", 0, nullptr, nullptr);
 
     // Check shader status
-    GLint status = 0;
+    GLint status;
     glGetShaderiv(handler, GL_COMPILE_STATUS, &status);
     if (status != GL_TRUE)
     {
-        std::string msg;
-        GLint logSize = 0;
+        GLint logSize;
         glGetShaderiv(handler, GL_INFO_LOG_LENGTH, &logSize);
-        char* info = new char[logSize + 1];
-        glGetShaderInfoLog(handler, logSize, NULL, info);
-        msg += info;
-        delete[] info;
+        std::string log(logSize, ' ');
+        glGetShaderInfoLog(handler, logSize, nullptr, log.data());
         glDeleteShader(handler);
-        throw std::runtime_error(msg);
+        throw std::runtime_error(log);
     }
 
     return handler;
@@ -80,19 +77,17 @@ GLuint Shader::initProgram(GLuint shaderHandler)
     glLinkProgram(handler);
 
     // Check program status
-    GLint status = 0;
+    GLint status;
     glGetProgramiv(handler, GL_LINK_STATUS, &status);
     if (status != GL_TRUE)
     {
-        std::string msg;
-        GLint logSize = 0;
+        GLint logSize;
         glGetProgramiv(handler, GL_INFO_LOG_LENGTH, &logSize);
-        char* info = new char[logSize + 1];
-        glGetProgramInfoLog(handler, logSize, NULL, info);
-        msg += info;
-        delete[] info;
+        std::string log(logSize, ' ');
+        glGetProgramInfoLog(handler, logSize, nullptr, log.data());
+        glDeleteShader(shaderHandler);
         glDeleteProgram(handler);
-        throw std::runtime_error(msg);
+        throw std::runtime_error(log);
     }
 
     return handler;

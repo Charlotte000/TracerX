@@ -2,6 +2,7 @@
 
 #include <TracerX/GLTFLoader.h>
 
+#include <iostream>
 #include <stdexcept>
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -191,11 +192,13 @@ void Application::init(glm::uvec2 size)
     // Init GLFW
     glfwSetErrorCallback([](int, const char* err)
     {
+        std::cerr << "GLFW Error: " << err << std::endl;
         throw std::runtime_error(err);
     });
 
     if (glfwInit() == GL_FALSE)
     {
+        std::cerr << "GLFW Init Error" << std::endl;
         throw std::runtime_error("GLFW Init Error");
     }
 
@@ -204,6 +207,7 @@ void Application::init(glm::uvec2 size)
     this->window = glfwCreateWindow(size.x, size.y, "TracerX", nullptr, nullptr);
     if (this->window == nullptr)
     {
+        std::cerr << "GLFW Create Window Error" << std::endl;
         throw std::runtime_error("GLFW Create Window Error");
     }
 
@@ -211,7 +215,16 @@ void Application::init(glm::uvec2 size)
     glfwSwapInterval(0);
 
     // Init components
-    this->renderer.init(size);
+    try
+    {
+        this->renderer.init(size);
+    }
+    catch(const std::runtime_error& err)
+    {
+        std::cerr << "Renderer Init Error: " << err.what() << std::endl;
+        throw err;
+    }
+    
     this->initUI();
     this->loadAnyEnvironment();
 
