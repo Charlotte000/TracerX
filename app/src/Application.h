@@ -73,7 +73,7 @@ public:
             MeshInstance,
             Material,
         } type = Type::Contorls;
-        void* target = nullptr;
+        size_t id = 0;
     } property;
     struct MaterialTextureView
     {

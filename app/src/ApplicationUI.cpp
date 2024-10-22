@@ -401,7 +401,7 @@ void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
         ImGui::BeginDisabled(meshInstance.materialId == -1);
         if (ImGui::Button("Edit", ImVec2(-1, 0)))
         {
-            app.property.target = &app.scene.materials[meshInstance.materialId];
+            app.property.id = meshInstance.materialId;
             app.property.type = Application::Property::Type::Material;
         }
 
@@ -478,16 +478,6 @@ void propertyCamera(Application& app, Camera& camera)
     Tooltip("Can be used for anti-aliasing");
 
     ImGui::Separator();
-    ImGui::DragFloat(
-        "Movement speed",
-        &app.cameraControl.movementSpeed,
-        1,
-        0,
-        10000,
-        "%.3f",
-        ImGuiSliderFlags_Logarithmic);
-    ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
-
     if (ImGui::BeginCombo("Control mode", app.cameraControl.mode == Application::CameraControl::Mode::Free ? "Free" : "Orbit"))
     {
         if (ImGui::Selectable("Free", app.cameraControl.mode == Application::CameraControl::Mode::Free))
@@ -511,11 +501,30 @@ void propertyCamera(Application& app, Camera& camera)
                 "LShift, LCtrl - camera up, down movement\n"
                 "Mouse - camera rotation\n"
                 "Q, E - camera tilt\n");
+            ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+            ImGui::DragFloat(
+                "Movement speed",
+                &app.cameraControl.movementSpeed,
+                1,
+                0,
+                10000,
+                "%.3f",
+                ImGuiSliderFlags_Logarithmic);
             break;
         case Application::CameraControl::Mode::Orbit:
             Tooltip("Left mouse drag - camera rotation\n"
                 "Right mouse drag - camera zoom\n"
                 "Middle mouse drag - camera pan\n");
+            
+            float orbitRadius = glm::length(app.cameraControl.orbitOrigin - camera.position);
+            ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+            if (ImGui::DragFloat3("Orbit origin", glm::value_ptr(app.cameraControl.orbitOrigin), .01f) |
+                ImGui::DragFloat("Orbit radius", &orbitRadius, .01f))
+            {
+                changed = true;
+                app.renderer.camera.position = app.cameraControl.orbitOrigin - camera.forward * orbitRadius;
+            }
+
             break;
     }
 
@@ -669,10 +678,10 @@ void propertyEditor(Application& app, Application::Property& property)
             propertyEnvironment(app, app.renderer.environment);
             break;
         case Application::Property::Type::MeshInstance:
-            propertyMeshInstance(app, *static_cast<MeshInstance*>(property.target));
+            propertyMeshInstance(app, app.scene.meshInstances[property.id]);
             break;
         case Application::Property::Type::Material:
-            propertyMaterial(app, *static_cast<Material*>(property.target));
+            propertyMaterial(app, app.scene.materials[property.id]);
             break;
     }
 
@@ -722,14 +731,14 @@ void propertySelector(Application& app, Application::Property& property)
 
         if (ImGui::TreeNode("Meshes"))
         {
-            for (size_t i = 0; i < app.scene.meshInstances.size(); i++)
+            for (size_t id = 0; id < app.scene.meshInstances.size(); id++)
             {
-                MeshInstance& meshInstance = app.scene.meshInstances[i];
-                std::string name = app.scene.meshNames[meshInstance.meshId] + "##" + std::to_string(i);
-                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::MeshInstance && &meshInstance == property.target))
+                const MeshInstance& meshInstance = app.scene.meshInstances[id];
+                std::string name = app.scene.meshNames[meshInstance.meshId] + "##" + std::to_string(id);
+                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::MeshInstance && id == property.id))
                 {
                     property.type = Application::Property::Type::MeshInstance;
-                    property.target = &meshInstance;
+                    property.id = id;
                 }
             }
 
@@ -738,14 +747,13 @@ void propertySelector(Application& app, Application::Property& property)
 
         if (ImGui::TreeNode("Materials"))
         {
-            for (size_t i = 0; i < app.scene.materials.size(); i++)
+            for (size_t id = 0; id < app.scene.materials.size(); id++)
             {
-                Material& material = app.scene.materials[i];
-                std::string name = app.scene.materialNames[i] + "##" + std::to_string(i);
-                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::Material && &material == property.target))
+                const std::string name = app.scene.materialNames[id] + "##" + std::to_string(id);
+                if (ImGui::Selectable(name.c_str(), property.type == Application::Property::Type::Material && id == property.id))
                 {
                     property.type = Application::Property::Type::Material;
-                    property.target = &material;
+                    property.id = id;
                 }
             }
 
@@ -805,7 +813,7 @@ void viewRenderTexture(Application& app, GLint textureHandler)
     {
         case Application::Property::Type::MeshInstance:
         {
-            MeshInstance& meshInstance = *static_cast<MeshInstance*>(app.property.target);
+            MeshInstance& meshInstance = app.scene.meshInstances[app.property.id];
             if (ImGuizmo::Manipulate(
                 glm::value_ptr(view),
                 glm::value_ptr(projection),
@@ -949,9 +957,9 @@ void mainMenuBar(Application& app)
                 {
                     app.loadScene(path);
                     app.materialTextureView.textureId = -1;
-                    if (app.property.target != nullptr)
+                    if (app.property.type == Application::Property::Type::MeshInstance ||
+                        app.property.type == Application::Property::Type::Material)
                     {
-                        app.property.target = nullptr;
                         app.property.type = Application::Property::Type::Contorls;
                     }
                 }
