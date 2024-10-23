@@ -3,14 +3,12 @@
  */
 #include "TracerX/Renderer.h"
 
+#include <iostream>
 #include <stdexcept>
-#ifdef TX_DENOISE
+#if TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
 #endif
 
-#ifndef NDEBUG
-#include <iostream>
-#endif
 
 using namespace TracerX;
 using namespace TracerX::core;
@@ -166,7 +164,7 @@ void Renderer::toneMap()
     Shader::stopUse();
 }
 
-#ifdef TX_DENOISE
+#if TX_DENOISE
 void Renderer::denoise()
 {
     // Create device
@@ -225,6 +223,14 @@ void Renderer::denoise()
     colorBuf.release();
     albedoBuf.release();
     normalBuf.release();
+}
+#endif
+
+#if !TX_SPIRV
+void Renderer::reloadShaders()
+{
+    this->shader.shutdown();
+    this->shader.init(Renderer::shaderFolder / "main.comp");
 }
 #endif
 
@@ -332,7 +338,11 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
 void Renderer::initData()
 {
     // Shader
-    this->shader.init(Renderer::shaderSrc);
+#if TX_SPIRV
+    this->shader.init(Renderer::shaderBin);
+#else
+    this->shader.init(Renderer::shaderFolder / "main.comp");
+#endif
 
     // Textures
     this->accumulationTexture.init(GL_RGBA32F, GL_NEAREST);

@@ -42,8 +42,8 @@ Additional assets can be downloaded here and installed in the directory:
 | Name             | Description                   | Default value |
 |------------------|-------------------------------|---------------|
 | TX_DENOISE       | Include denoise functionality | ON            |
+| TX_SPIRV         | Use SPIR-V shaders            | ON            |
 | TX_BUILD_EDITOR  | Build graphic editor          | ON            |
-| TX_ASSETS_PATH   | Assets folder                 | "app/assets"  |
 | TX_BUILD_EXAMPLE | Build example                 | OFF           |
 
 ## Building
@@ -65,10 +65,14 @@ doxygen
 
 ## Debugging the shaders
 The source shader code can be found in the `shaders` directory.
+
+If the __TX_SPIRV__ option is enabled, the shaders will be compiled into SPIR-V format.
 You can modify and rebuild the shaders by running the `scripts/build_shaders.py` python script.
 In order to run the script, you need to have Python 3 and the **glslc** compiler installed on your system.
 By running this script, the shaders will be compiled into **SPIR-V** format and saved in the `core/src/RendererShaderSrc.cpp` file.
 Each time you rebuild the shaders, you need to rebuild the project to see the changes.
+
+If the __TX_SPIRV__ option is disabled, the shaders will be used directly from the source code. So you can modify the shaders in the `shaders` directory and see the changes without rebuilding the project by pressing the __Reload shaders__ button.
 
 # External
 ## Libraries

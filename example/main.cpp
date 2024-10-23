@@ -42,7 +42,7 @@ int main()
     std::cout << "Ajax white" << std::endl;
     renderer.render(100);
 
-#ifdef TX_DENOISE
+#if TX_DENOISE
     std::cout << "Denoising" << std::endl;
     renderer.denoise();
 #endif
@@ -62,7 +62,7 @@ int main()
     std::cout << "Ajax gold" << std::endl;
     renderer.render(100);
 
-#ifdef TX_DENOISE
+#if TX_DENOISE
     std::cout << "Denoising" << std::endl;
     renderer.denoise();
 #endif

@@ -1,9 +1,5 @@
 #pragma once
 
-#ifndef ASSETS_PATH
-#define ASSETS_PATH std::filesystem::current_path()
-#endif
-
 #include <TracerX/Renderer.h>
 
 #include <imgui.h>
@@ -87,7 +83,7 @@ public:
         float snap = 1;
     } gizmo;
 
-    static inline const std::filesystem::path assetsFolder = std::filesystem::relative(ASSETS_PATH).string();
+    static inline const std::filesystem::path assetsFolder = std::filesystem::relative(std::filesystem::path(TX_HOME) / "app" / "assets" / "");
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
     static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 

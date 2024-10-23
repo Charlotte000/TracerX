@@ -170,7 +170,7 @@ public:
      */
     void toneMap();
 
-#ifdef TX_DENOISE
+#if TX_DENOISE
     /**
      * @brief Applies denoising to the rendered image.
      * 
@@ -179,6 +179,18 @@ public:
      * @throws std::runtime_error Thrown if the denoising fails.
      */
     void denoise();
+#endif
+
+#if !TX_SPIRV
+    /**
+     * @brief Reloads the shaders.
+     * 
+     * Use this method after changing the shader source code.
+     * For debugging purposes only.
+     * 
+     * @throws std::runtime_error Thrown if the shaders fail to reload.
+     */
+    void reloadShaders();
 #endif
 
     /**
@@ -366,7 +378,11 @@ private:
     core::GL::UniformBuffer environmentBuffer;
     core::GL::UniformBuffer paramBuffer;
 
-    static const std::vector<unsigned char> shaderSrc;
+#if TX_SPIRV
+    static const std::vector<unsigned char> shaderBin;
+#else
+    static inline const std::filesystem::path shaderFolder = std::filesystem::relative(std::filesystem::path(TX_HOME) / "shaders" / "");
+#endif
 
     void initData();
     void bindData();

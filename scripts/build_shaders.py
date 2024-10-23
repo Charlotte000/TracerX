@@ -22,9 +22,11 @@ def write_shader(path: str, shaderBin: bytes) -> bool:
     newData = (
         "#include <TracerX/Renderer.h>\n\n"
         + "using namespace TracerX;\n\n"
-        + "const std::vector<unsigned char> Renderer::shaderSrc =\n{\n    "
+        + "#if TX_SPIRV\n"
+        + "const std::vector<unsigned char> Renderer::shaderBin =\n{\n    "
         + ",\n    ".join(list(map(str, shaderBin)))
         + "\n};\n"
+        + "#endif\n"
     )
 
     with open(path, "r") as file:

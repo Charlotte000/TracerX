@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(App)
 set(CMAKE_CXX_STANDARD 20)
 
-set(TX_ASSETS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/assets" CACHE PATH "Assets folder" FORCE)
-
 add_executable(
     ${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
@@ -22,7 +20,6 @@ add_executable(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/tinyfiledialogs/tinyfiledialogs.cpp
 )
 
-add_compile_definitions(ASSETS_PATH="${TX_ASSETS_PATH}")
 find_package(OpenGL REQUIRED)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/glfw)
 target_include_directories(

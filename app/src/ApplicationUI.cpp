@@ -640,7 +640,7 @@ void propertyControls(Application& app)
         app.clear();
     }
 
-#ifdef TX_DENOISE
+#if TX_DENOISE
     if (ImGui::Button("Denoise", ImVec2(-1, 0)))
     {
         try
@@ -652,6 +652,14 @@ void propertyControls(Application& app)
             std::cerr << err.what() << std::endl;
             tinyfd_messageBox("Error", "Failed to denoise", "ok", "warning", 0);
         }
+    }
+#endif
+
+#if !TX_SPIRV
+    if (ImGui::Button("Reload shaders", ImVec2(-1, 0)))
+    {
+        app.renderer.reloadShaders();
+        app.clear();
     }
 #endif
 }

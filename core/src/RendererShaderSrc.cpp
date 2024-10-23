@@ -2,7 +2,8 @@
 
 using namespace TracerX;
 
-const std::vector<unsigned char> Renderer::shaderSrc =
+#if TX_SPIRV
+const std::vector<unsigned char> Renderer::shaderBin =
 {
     3,
     2,
@@ -56977,3 +56978,4 @@ const std::vector<unsigned char> Renderer::shaderSrc =
     1,
     0
 };
+#endif
