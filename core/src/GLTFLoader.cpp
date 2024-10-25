@@ -37,21 +37,21 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             const tinygltf::Buffer& positionBuffer = model.buffers[positionBufferView.buffer];
             const uint8_t* positionBufferAddress = positionBuffer.data.data();
             const uint8_t* positionData = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset;
-            size_t positionStride = tinygltf::GetComponentSizeInBytes(positionAccessor.componentType) * tinygltf::GetNumComponentsInType(positionAccessor.type);
+            size_t positionStride = positionAccessor.ByteStride(positionBufferView);
 
             const tinygltf::Accessor& normalAccessor = model.accessors[primitive.attributes["NORMAL"]];
             const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
             const tinygltf::Buffer& normalBuffer = model.buffers[normalBufferView.buffer];
             const uint8_t* normalBufferAddress = normalBuffer.data.data();
             const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset;
-            size_t normalStride = tinygltf::GetComponentSizeInBytes(normalAccessor.componentType) * tinygltf::GetNumComponentsInType(normalAccessor.type);
+            size_t normalStride = normalAccessor.ByteStride(normalBufferView);
 
             const tinygltf::Accessor& uvAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
             const tinygltf::BufferView& uvBufferView = model.bufferViews[uvAccessor.bufferView];
             const tinygltf::Buffer& uvBuffer = model.buffers[uvBufferView.buffer];
             const uint8_t* uvBufferAddress = uvBuffer.data.data();
             const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset;
-            size_t uvStride = tinygltf::GetComponentSizeInBytes(uvAccessor.componentType) * tinygltf::GetNumComponentsInType(uvAccessor.type);
+            size_t uvStride = uvAccessor.ByteStride(uvBufferView);
 
             size_t vertexOffset = scene.vertices.size();
             scene.vertices.reserve(vertexOffset + positionAccessor.count);
@@ -83,7 +83,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
                 const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
                 const uint8_t* indexBufferAddress = indexBuffer.data.data();
                 const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
-                size_t indexStride = tinygltf::GetComponentSizeInBytes(indexAccessor.componentType) * tinygltf::GetNumComponentsInType(indexAccessor.type);
+                size_t indexStride = indexAccessor.ByteStride(indexBufferView);
 
                 scene.triangles.reserve(triangleOffset + indexAccessor.count / 3);
                 for (size_t i = 0; i < indexAccessor.count; i += 3)
