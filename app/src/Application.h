@@ -96,6 +96,9 @@ public:
     float getLookAtDistance() const;
     void setCameraMode(CameraControl::Mode mode);
     void switchRendering();
+#if !TX_SPIRV
+    void reloadShaders();
+#endif
     void clear();
     void initUI();
     void renderUI();

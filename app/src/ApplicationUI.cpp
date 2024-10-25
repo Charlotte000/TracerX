@@ -658,8 +658,7 @@ void propertyControls(Application& app)
 #if !TX_SPIRV
     if (ImGui::Button("Reload shaders", ImVec2(-1, 0)))
     {
-        app.renderer.reloadShaders();
-        app.clear();
+        app.reloadShaders();
     }
 #endif
 }

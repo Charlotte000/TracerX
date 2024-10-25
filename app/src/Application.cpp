@@ -319,6 +319,13 @@ void Application::control()
         this->switchRendering();
     }
 
+#if !TX_SPIRV
+    if (ImGui::IsKeyPressed(ImGuiKey_R, false))
+    {
+        this->reloadShaders();
+    }
+#endif
+
     if (this->renderTextureView.isHover && ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
     {
         this->renderTextureView.control();
@@ -386,6 +393,21 @@ void Application::switchRendering()
         this->rendering.isPreview = false;
     }
 }
+
+#if !TX_SPIRV
+void Application::reloadShaders()
+{
+    try
+    {
+        this->renderer.reloadShaders();
+        this->clear();
+    }
+    catch(const std::runtime_error& err)
+    {
+        std::cerr << err.what() << std::endl;
+    }
+}
+#endif
 
 void Application::clear()
 {
