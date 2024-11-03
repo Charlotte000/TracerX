@@ -1,6 +1,6 @@
 import subprocess
 from os import remove
-from os.path import dirname, join
+from os.path import dirname, join, exists
 
 
 def compile_shader(mainPath: str) -> bytes:
@@ -29,8 +29,11 @@ def write_shader(path: str, shaderBin: bytes) -> bool:
         + "#endif\n"
     )
 
-    with open(path, "r") as file:
-        oldData = file.read()
+    if exists(path):
+        with open(path, "r") as file:
+            oldData = file.read()
+    else:
+        oldData = ""
 
     if oldData == newData:
         return False
@@ -49,7 +52,7 @@ try:
     print("[Info] Compilation completed")
 
     override = write_shader(
-        join(project, "core", "src", "RendererShaderSrc.cpp"),
+        join(project, "core", "src", "RendererShaderBin.cpp"),
         shaderBin,
     )
 
