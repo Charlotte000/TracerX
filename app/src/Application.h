@@ -13,6 +13,7 @@ public:
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
     GLFWwindow* threadContext = nullptr;
+    const glm::uvec2 maxTextureArraySize;
     bool isSceneLoaded = true;
     struct Rendering
     {
@@ -89,11 +90,10 @@ public:
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
     static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 
-    void init(glm::uvec2 size);
+    Application(glm::uvec2 initSize, const TracerX::Scene& initScene, const TracerX::Image& initEnvironment, glm::uvec2 maxTextureArraySize);
     void shutdown();
     void run();
     void loadScene(const std::filesystem::path& path);
-    void loadAnyEnvironment();
     void control();
     float getLookAtDistance() const;
     void setCameraMode(CameraControl::Mode mode);

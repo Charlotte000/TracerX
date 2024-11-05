@@ -20,9 +20,9 @@ void TextureArray::bind(unsigned int binding)
     glBindTextureUnit(binding, this->handler);
 }
 
-void TextureArray::update(const std::vector<Image>& images)
+void TextureArray::update(const std::vector<Image>& images, glm::uvec2 maxSize)
 {
-    glm::uvec2 size = TextureArray::getMaxSize(images);
+    glm::uvec2 size = TextureArray::getMaxSize(images, maxSize);
     glm::uvec3 size3(size, images.size());
     if (this->size == size3 && this->size == glm::uvec3(0))
     {
@@ -50,7 +50,7 @@ void TextureArray::shutdown()
     glDeleteTextures(1, &this->handler);
 }
 
-glm::uvec2 TextureArray::getMaxSize(const std::vector<Image>& images)
+glm::uvec2 TextureArray::getMaxSize(const std::vector<Image>& images, glm::uvec2 maxSize)
 {
     glm::uvec2 size(0, 0);
     for (const Image& image : images)
@@ -58,7 +58,7 @@ glm::uvec2 TextureArray::getMaxSize(const std::vector<Image>& images)
         size = glm::max(size, image.size);
     }
 
-    return size;
+    return glm::min(size, maxSize);
 }
 
 std::vector<float> TextureArray::resizeImages(const std::vector<Image>& images, glm::uvec2 size)

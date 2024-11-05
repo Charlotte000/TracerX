@@ -39,6 +39,12 @@ public:
      * @param path The path of the file to load the image from.
      */
     void loadFromFile(const std::filesystem::path& path);
+
+    /**
+     * @brief Loads environment image from an image.
+     * @param image The image to load the environment from.
+     */
+    void loadFromImage(const Image& image);
 private:
     core::GL::Texture texture;
 

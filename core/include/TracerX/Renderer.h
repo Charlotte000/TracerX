@@ -335,10 +335,11 @@ public:
      * Keep in mind that this method builds the BVH tree of the scene, which may be time-consuming.
      * 
      * @param scene The scene to load.
+     * @param maxTextureArraySize The maximum size of the textures used in the scene. For low-end devices.
      * @see Renderer::updateSceneMaterials to update only the materials.
      * @see Renderer::updateSceneMeshes to update only the meshes.
      */
-    void loadScene(Scene& scene);
+    void loadScene(Scene& scene, glm::uvec2 maxTextureArraySize = glm::uvec2(-1));
 
     /**
      * @brief Updates the materials in the scene.

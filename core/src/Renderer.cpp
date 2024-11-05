@@ -305,10 +305,10 @@ unsigned int Renderer::getSampleCount() const
     return this->sampleCount;
 }
 
-void Renderer::loadScene(Scene& scene)
+void Renderer::loadScene(Scene& scene, glm::uvec2 maxTextureArraySize)
 {
     // Textures
-    this->textureArray.update(scene.textures);
+    this->textureArray.update(scene.textures, maxTextureArraySize);
 
     // SSBOs
     this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));

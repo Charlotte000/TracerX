@@ -189,7 +189,8 @@ void Application::Tiling::getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::u
 }
 #pragma endregion
 
-void Application::init(glm::uvec2 size)
+Application::Application(glm::uvec2 initSize, const TracerX::Scene& initScene, const TracerX::Image& initEnvironment, glm::uvec2 maxTextureArraySize)
+    : maxTextureArraySize(maxTextureArraySize), scene(initScene)
 {
     // Init GLFW
     glfwSetErrorCallback([](int, const char* err)
@@ -206,13 +207,14 @@ void Application::init(glm::uvec2 size)
 
     // Create window
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    this->window = glfwCreateWindow(size.x, size.y, "TracerX", nullptr, nullptr);
+    this->window = glfwCreateWindow(initSize.x, initSize.y, "TracerX", nullptr, nullptr);
     if (this->window == nullptr)
     {
         std::cerr << "GLFW Create Window Error" << std::endl;
         throw std::runtime_error("GLFW Create Window Error");
     }
 
+    // Create thread context
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     this->threadContext = glfwCreateWindow(1, 1, "", nullptr, this->window);
     if (this->threadContext == nullptr)
@@ -224,10 +226,10 @@ void Application::init(glm::uvec2 size)
     glfwMakeContextCurrent(this->window);
     glfwSwapInterval(0);
 
-    // Init components
+    // Init renderer
     try
     {
-        this->renderer.init(size);
+        this->renderer.init(initSize);
     }
     catch(const std::runtime_error& err)
     {
@@ -235,10 +237,11 @@ void Application::init(glm::uvec2 size)
         throw err;
     }
     
-    this->initUI();
-    this->loadAnyEnvironment();
+    this->renderer.environment.loadFromImage(initEnvironment);
+    this->renderer.loadScene(this->scene, this->maxTextureArraySize);
 
-    this->renderer.loadScene(this->scene);
+    // Init UI
+    this->initUI();
 }
 
 void Application::shutdown()
@@ -310,9 +313,11 @@ void Application::loadScene(const std::filesystem::path& path)
         }
         catch (const std::runtime_error& err)
         {
+            glfwMakeContextCurrent(nullptr);
+            this->isSceneLoaded = true;
+
             std::cerr << err.what() << std::endl;
             tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
-            this->isSceneLoaded = true;
             return;
         }
 
@@ -323,29 +328,11 @@ void Application::loadScene(const std::filesystem::path& path)
             this->property.type = Application::Property::Type::Contorls;
         }
 
-        this->renderer.loadScene(this->scene);
+        this->renderer.loadScene(this->scene, this->maxTextureArraySize);
         this->clear();
+        glfwMakeContextCurrent(nullptr);
         this->isSceneLoaded = true;
     }).detach();
-}
-
-void Application::loadAnyEnvironment()
-{
-    for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(Application::environmentFolder))
-    {
-        if (!entry.is_regular_file())
-        {
-            continue;
-        }
-
-        std::filesystem::path path = entry.path();
-        std::filesystem::path ext = path.extension();
-        if (ext == ".hdr" || ext == ".png" || ext == ".jpg")
-        {
-            this->renderer.environment.loadFromFile(path);
-            return;
-        }
-    }
 }
 
 void Application::control()
