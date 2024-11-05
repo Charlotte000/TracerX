@@ -326,7 +326,6 @@ void Application::loadScene(const std::filesystem::path& path)
         this->renderer.loadScene(this->scene);
         this->clear();
         this->isSceneLoaded = true;
-
     }).detach();
 }
 

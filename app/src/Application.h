@@ -85,7 +85,7 @@ public:
         float snap = 1;
     } gizmo;
 
-    static inline const std::filesystem::path assetsFolder = std::filesystem::relative(std::filesystem::path(TX_HOME) / "app" / "assets" / "");
+    static inline const std::filesystem::path assetsFolder = std::filesystem::canonical(TX_HOME) / "app" / "assets" / "";
     static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
     static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
 
