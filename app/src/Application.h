@@ -12,6 +12,8 @@ public:
     TracerX::Renderer renderer;
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
+    GLFWwindow* threadContext = nullptr;
+    bool isSceneLoaded = true;
     struct Rendering
     {
         unsigned int sampleCountTarget = 0;

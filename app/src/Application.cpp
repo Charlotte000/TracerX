@@ -2,8 +2,10 @@
 
 #include <TracerX/GLTFLoader.h>
 
+#include <thread>
 #include <iostream>
 #include <stdexcept>
+#include <tinyfiledialogs.h>
 #include <glm/gtx/rotate_vector.hpp>
 
 using namespace TracerX;
@@ -211,6 +213,14 @@ void Application::init(glm::uvec2 size)
         throw std::runtime_error("GLFW Create Window Error");
     }
 
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    this->threadContext = glfwCreateWindow(1, 1, "", nullptr, this->window);
+    if (this->threadContext == nullptr)
+    {
+        std::cerr << "GLFW Create Window Error" << std::endl;
+        throw std::runtime_error("GLFW Create Window Error");
+    }
+
     glfwMakeContextCurrent(this->window);
     glfwSwapInterval(0);
 
@@ -235,6 +245,7 @@ void Application::shutdown()
 {
     this->shutdownUI();
     this->renderer.shutdown();
+    glfwDestroyWindow(this->threadContext);
     glfwDestroyWindow(this->window);
     glfwTerminate();
 }
@@ -288,9 +299,35 @@ void Application::run()
 
 void Application::loadScene(const std::filesystem::path& path)
 {
-    this->scene = loadGLTF(path);
-    this->clear();
-    this->renderer.loadScene(this->scene);
+    std::thread([&, path]()
+    {
+        this->isSceneLoaded = false;
+        glfwMakeContextCurrent(this->threadContext);
+
+        try
+        {
+            this->scene = loadGLTF(path);
+        }
+        catch (const std::runtime_error& err)
+        {
+            std::cerr << err.what() << std::endl;
+            tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
+            this->isSceneLoaded = true;
+            return;
+        }
+
+        this->materialTextureView.textureId = -1;
+        if (this->property.type == Application::Property::Type::MeshInstance ||
+            this->property.type == Application::Property::Type::Material)
+        {
+            this->property.type = Application::Property::Type::Contorls;
+        }
+
+        this->renderer.loadScene(this->scene);
+        this->clear();
+        this->isSceneLoaded = true;
+
+    }).detach();
 }
 
 void Application::loadAnyEnvironment()

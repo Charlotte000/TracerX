@@ -104,6 +104,34 @@ void SetupImGuiStyle()
     style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.1450980454683304f, 0.1450980454683304f, 0.1490196138620377f, 1.0f);
 }
 
+// https://www.unknowncheats.me/forum/direct3d/601535-imgui-simple-spinner.html
+void Im_Spinner(const char* label, float radius, float thickness, ImU32 color) {
+    ImGuiStyle* style = &ImGui::GetStyle();
+    ImVec2 pos = ImGui::GetCursorScreenPos();
+    ImVec2 size = ImVec2(radius * 2, radius * 2); 
+ 
+    ImGui::Dummy(size);
+ 
+    ImDrawList* DrawList = ImGui::GetForegroundDrawList();
+    DrawList->PathClear();
+ 
+    int num_segments = 30;
+    float start = fabsf(sinf(ImGui::GetTime() * 1.8f) * (num_segments - 5));
+ 
+    float a_min = 3.14159265358979323846f * 2.0f * start / num_segments;
+    float a_max = 3.14159265358979323846f * 2.0f * (num_segments - 3) / num_segments;
+ 
+    
+    ImVec2 centre = ImVec2(pos.x + size.x * 0.5f, pos.y + size.y * 0.5f);
+ 
+    for (int i = 0; i <= num_segments; i++) {
+        float a = a_min + (i / (float)num_segments) * (a_max - a_min);
+        DrawList->PathLineTo(ImVec2(centre.x + cosf(a + ImGui::GetTime() * 8) * radius, centre.y + sinf(a + ImGui::GetTime() * 8) * radius));
+    }
+ 
+    DrawList->PathStroke(color, false, thickness);
+}
+
 bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
 {
     int vTemp = *v;
@@ -454,84 +482,97 @@ void propertyEnvironment(Application& app, Environment& environment)
 
 void propertyCamera(Application& app, Camera& camera)
 {
+    if (!ImGui::BeginTabBar("propertyCamera"))
+    {
+        return;
+    }
+
     bool changed = false;
 
-    changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
-    changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
-    changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
-
-    ImGui::Separator();
-    changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179, "%.0f deg", ImGuiSliderFlags_AlwaysClamp);
-
-    ImGui::Separator();
-    changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
-    changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
-
-    if (ImGui::Button("Focus on look at", ImVec2(-1, 0)))
+    if (ImGui::BeginTabItem("Info"))
     {
-        camera.focalDistance = app.getLookAtDistance();
-        changed = true;
-    }
+        changed |= ImGui::DragFloat3("Position", glm::value_ptr(camera.position), .01f);
+        changed |= ImGui::DragFloat3("Forward", glm::value_ptr(camera.forward), .01f);
+        changed |= ImGui::DragFloat3("Up", glm::value_ptr(camera.up), .01f);
 
-    ImGui::Separator();
-    changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
-    Tooltip("Can be used for anti-aliasing");
+        ImGui::Separator();
+        changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179, "%.0f deg", ImGuiSliderFlags_AlwaysClamp);
 
-    ImGui::Separator();
-    if (ImGui::BeginCombo("Control mode", app.cameraControl.mode == Application::CameraControl::Mode::Free ? "Free" : "Orbit"))
-    {
-        if (ImGui::Selectable("Free", app.cameraControl.mode == Application::CameraControl::Mode::Free))
+        ImGui::Separator();
+        changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
+        Tooltip("Can be used for anti-aliasing");
+
+        ImGui::Separator();
+        changed |= ImGui::DragFloat("Focal distance", &camera.focalDistance, .001f, 0, 1000, "%.5f");
+        changed |= ImGui::DragFloat("Aperture", &camera.aperture, .0001f, 0, 1000, "%.5f");
+
+        if (ImGui::Button("Focus on look at", ImVec2(-1, 0)))
         {
-            app.setCameraMode(Application::CameraControl::Mode::Free);
+            camera.focalDistance = app.getLookAtDistance();
+            changed = true;
         }
 
-        if (ImGui::Selectable("Orbit", app.cameraControl.mode == Application::CameraControl::Mode::Orbit))
-        {
-            app.setCameraMode(Application::CameraControl::Mode::Orbit);
-        }
-
-        ImGui::EndCombo();
+        ImGui::EndTabItem();
     }
 
-    switch (app.cameraControl.mode)
+    if (ImGui::BeginTabItem("Control"))
     {
-        case Application::CameraControl::Mode::Free:
-            Tooltip("C - start/stop camera control mode\n"
-                "W, A, S, D - camera forward, left, backward, right movement\n"
-                "LShift, LCtrl - camera up, down movement\n"
-                "Mouse - camera rotation\n"
-                "Q, E - camera tilt\n");
-            ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
-            ImGui::DragFloat(
-                "Movement speed",
-                &app.cameraControl.movementSpeed,
-                1,
-                0,
-                10000,
-                "%.3f",
-                ImGuiSliderFlags_Logarithmic);
-            break;
-        case Application::CameraControl::Mode::Orbit:
-            Tooltip("Left mouse drag - camera rotation\n"
-                "Right mouse drag - camera zoom\n"
-                "Middle mouse drag - camera pan\n");
-            
-            float orbitRadius = glm::length(app.cameraControl.orbitOrigin - camera.position);
-            ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
-            if (ImGui::DragFloat3("Orbit origin", glm::value_ptr(app.cameraControl.orbitOrigin), .01f) |
-                ImGui::DragFloat("Orbit radius", &orbitRadius, .01f))
+        if (ImGui::BeginCombo("Control mode", app.cameraControl.mode == Application::CameraControl::Mode::Free ? "Free" : "Orbit"))
+        {
+            if (ImGui::Selectable("Free", app.cameraControl.mode == Application::CameraControl::Mode::Free))
             {
-                changed = true;
-                app.renderer.camera.position = app.cameraControl.orbitOrigin - camera.forward * orbitRadius;
+                app.setCameraMode(Application::CameraControl::Mode::Free);
             }
 
-            break;
+            if (ImGui::Selectable("Orbit", app.cameraControl.mode == Application::CameraControl::Mode::Orbit))
+            {
+                app.setCameraMode(Application::CameraControl::Mode::Orbit);
+            }
+
+            ImGui::EndCombo();
+        }
+
+        switch (app.cameraControl.mode)
+        {
+            case Application::CameraControl::Mode::Free:
+                Tooltip("C - start/stop camera control mode\n"
+                    "W, A, S, D - camera forward, left, backward, right movement\n"
+                    "LShift, LCtrl - camera up, down movement\n"
+                    "Mouse - camera rotation\n"
+                    "Q, E - camera tilt\n");
+                ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+                ImGui::DragFloat(
+                    "Movement speed",
+                    &app.cameraControl.movementSpeed,
+                    1,
+                    0,
+                    10000,
+                    "%.3f",
+                    ImGuiSliderFlags_Logarithmic);
+                break;
+            case Application::CameraControl::Mode::Orbit:
+                Tooltip("Left mouse drag - camera rotation\n"
+                    "Right mouse drag - camera zoom\n"
+                    "Middle mouse drag - camera pan\n");
+                
+                float orbitRadius = glm::length(app.cameraControl.orbitOrigin - camera.position);
+                ImGui::SliderFloat("Rotation speed", &app.cameraControl.rotationSpeed, .001f, 1);
+                if (ImGui::DragFloat3("Orbit origin", glm::value_ptr(app.cameraControl.orbitOrigin), .01f) |
+                    ImGui::DragFloat("Orbit radius", &orbitRadius, .01f, 0, 10000))
+                {
+                    changed = true;
+                    app.renderer.camera.position = app.cameraControl.orbitOrigin - camera.forward * orbitRadius;
+                }
+
+                break;
+        }
+
+        ImGui::EndTabItem();
     }
 
     if (!app.scene.cameras.empty())
     {
-        ImGui::Separator();
-        if (ImGui::TreeNode("Default cameras"))
+        if (ImGui::BeginTabItem("Default cameras"))
         {
             for (size_t i = 0; i < app.scene.cameras.size(); i++)
             {
@@ -542,9 +583,11 @@ void propertyCamera(Application& app, Camera& camera)
                 }
             }
 
-            ImGui::TreePop();
+            ImGui::EndTabItem();
         }
     }
+
+    ImGui::EndTabBar();
 
     if (changed)
     {
@@ -960,21 +1003,7 @@ void mainMenuBar(Application& app)
                 0);
             if (path != nullptr)
             {
-                try
-                {
-                    app.loadScene(path);
-                    app.materialTextureView.textureId = -1;
-                    if (app.property.type == Application::Property::Type::MeshInstance ||
-                        app.property.type == Application::Property::Type::Material)
-                    {
-                        app.property.type = Application::Property::Type::Contorls;
-                    }
-                }
-                catch (const std::runtime_error& err)
-                {
-                    std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
-                }
+                app.loadScene(path);
             }
         }
 
@@ -1045,6 +1074,13 @@ void mainMenuBar(Application& app)
 
     ImGui::Separator();
     ImGui::Text("Samples: %u", app.renderer.getSampleCount());
+    ImGui::Separator();
+
+    if (!app.isSceneLoaded)
+    {
+        ImGui::SetCursorPosY(ImGui::GetWindowHeight() / 2 - 5);
+        Im_Spinner("Spinner", 5, 1.5f, IM_COL32(255, 255, 255, 255));
+    }
 
     ImGui::EndMainMenuBar();
 }
