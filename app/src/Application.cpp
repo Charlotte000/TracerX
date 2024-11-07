@@ -229,7 +229,11 @@ Application::Application(glm::uvec2 initSize, const TracerX::Scene& initScene, c
     // Init renderer
     try
     {
+#if TX_SPIRV
         this->renderer.init(initSize);
+#else
+        this->renderer.init(initSize, Application::shaderPath);
+#endif
     }
     catch(const std::runtime_error& err)
     {
@@ -422,7 +426,7 @@ void Application::reloadShaders()
 {
     try
     {
-        this->renderer.reloadShaders();
+        this->renderer.reloadShaders(Application::shaderPath);
         this->clear();
     }
     catch(const std::runtime_error& err)

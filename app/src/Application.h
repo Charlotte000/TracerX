@@ -86,9 +86,11 @@ public:
         float snap = 1;
     } gizmo;
 
-    static inline const std::filesystem::path assetsFolder = std::filesystem::canonical(TX_HOME) / "app" / "assets" / "";
-    static inline const std::filesystem::path environmentFolder = Application::assetsFolder / "environments" / "";
-    static inline const std::filesystem::path sceneFolder = Application::assetsFolder / "scenes" / "";
+    static inline std::filesystem::path environmentDir;
+    static inline std::filesystem::path sceneDir;
+#if !TX_SPIRV
+    static inline std::filesystem::path shaderPath;
+#endif
 
     Application(glm::uvec2 initSize, const TracerX::Scene& initScene, const TracerX::Image& initEnvironment, glm::uvec2 maxTextureArraySize);
     void shutdown();

@@ -112,6 +112,7 @@ public:
      */
     toneMapMode = ToneMapMode::Reinhard;
 
+#if TX_SPIRV
     /**
      * @brief Initializes the renderer with the specified size.
      * 
@@ -121,6 +122,18 @@ public:
      * @throws std::runtime_error Thrown if GLEW fails to initialize.
      */
     void init(glm::uvec2 size);
+#else
+    /**
+     * @brief Initializes the renderer with the specified size.
+     * 
+     * Must be called before any other method. Initializes GLEW and OpenGL.
+     * 
+     * @param size The size of the renderer.
+     * @param shaderPath The path to the shader source code.
+     * @throws std::runtime_error Thrown if GLEW fails to initialize.
+     */
+    void init(glm::uvec2 size, const std::filesystem::path& shaderPath);
+#endif
 
     /**
      * @brief Resizes the rendered image to the specified size.
@@ -188,9 +201,10 @@ public:
      * Use this method after changing the shader source code.
      * For debugging purposes only.
      * 
+     * @param shaderPath The path to the shader source code.
      * @throws std::runtime_error Thrown if the shaders fail to reload.
      */
-    void reloadShaders();
+    void reloadShaders(const std::filesystem::path& shaderPath);
 #endif
 
     /**
@@ -382,11 +396,11 @@ private:
 
 #if TX_SPIRV
     static const std::vector<unsigned char> shaderBin;
-#else
-    static inline const std::filesystem::path shaderFolder = std::filesystem::relative(std::filesystem::path(TX_HOME) / "shaders" / "");
-#endif
 
     void initData();
+#else
+    void initData(const std::filesystem::path& shaderPath);
+#endif
     void bindData();
     void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping);
 };

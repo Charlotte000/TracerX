@@ -5,9 +5,12 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/matrix_transform.hpp>
 
-const std::filesystem::path assetsFolder = std::filesystem::canonical(TX_HOME) / "app" / "assets" / "";
-const std::filesystem::path environmentFolder = assetsFolder / "environments" / "";
-const std::filesystem::path sceneFolder = assetsFolder / "scenes" / "";
+const std::filesystem::path homeDir = std::filesystem::canonical(TX_HOME);
+const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
+const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes" / "";
+#if !TX_SPIRV
+const std::filesystem::path shaderPath = homeDir / "shaders" / "main.comp";
+#endif
 
 GLFWwindow* createWindow()
 {
@@ -40,7 +43,7 @@ int main()
     GLFWwindow* window = createWindow();
 
     // Loading the scene
-    TracerX::Scene scene = TracerX::loadGLTF(sceneFolder / "Ajax.glb");
+    TracerX::Scene scene = TracerX::loadGLTF(sceneDir / "Ajax.glb");
 
     // Move the mesh
     TracerX::MeshInstance& ajaxMesh = scene.meshInstances[0];
@@ -48,8 +51,12 @@ int main()
 
     // Setting up the renderer
     TracerX::Renderer renderer;
+#if TX_SPIRV
     renderer.init(glm::uvec2(1000, 1000));
-    renderer.environment.loadFromFile(environmentFolder / "konzerthaus_2k.hdr");
+#else
+    renderer.init(glm::uvec2(1000, 1000), shaderPath);
+#endif
+    renderer.environment.loadFromFile(environmentDir / "konzerthaus_2k.hdr");
     renderer.loadScene(scene);
 
     // Setting up the camera
