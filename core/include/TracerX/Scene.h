@@ -117,9 +117,10 @@ public:
      */
     int addMesh(const Mesh& mesh, const std::string& name);
 private:
-    std::vector<core::BvhNode> bvh;
+    std::vector<core::BvhNode> blas;
 
-    void buildBVH(Mesh& mesh);
+    void buildBLAS(Mesh& mesh);
+    void buildTLAS(std::vector<core::BvhNode>& tlas, std::vector<size_t>& permutation);
 
     friend class Renderer;
 };

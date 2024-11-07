@@ -112,7 +112,8 @@ void Renderer::shutdown()
     this->meshBuffer.shutdown();
     this->meshInstanceBuffer.shutdown();
     this->materialBuffer.shutdown();
-    this->bvhBuffer.shutdown();
+    this->blasBuffer.shutdown();
+    this->tlasBuffer.shutdown();
 
     // UBOs
     this->cameraBuffer.shutdown();
@@ -316,7 +317,7 @@ void Renderer::loadScene(Scene& scene, glm::uvec2 maxTextureArraySize)
     this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
     this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);
-    this->bvhBuffer.update(scene.bvh.data(), scene.bvh.size() * sizeof(BvhNode));
+    this->blasBuffer.update(scene.blas.data(), scene.blas.size() * sizeof(BvhNode));
 }
 
 void Renderer::updateSceneMaterials(const Scene& scene)
@@ -326,13 +327,35 @@ void Renderer::updateSceneMaterials(const Scene& scene)
 
 void Renderer::updateSceneMeshInstances(Scene& scene)
 {
-    // Update transformInv first
-    for (MeshInstance& meshInstance : scene.meshInstances)
+    struct Payload
     {
-        meshInstance.transformInv = glm::inverse(meshInstance.transform);
+        glm::mat4 transform = glm::mat4(1);
+        glm::mat4 transformInv = glm::mat4(1);
+        int materialId = -1;
+        int meshId = -1;
+        int padding1 = 0;
+        int padding2 = 0;
+    };
+
+    std::vector<BvhNode> tlas;
+    std::vector<size_t> permutation;
+    scene.buildTLAS(tlas, permutation);
+
+    std::vector<Payload> meshInstancesPayload;
+    for (size_t meshInstanceId : permutation)
+    {
+        const MeshInstance& meshInstance = scene.meshInstances[meshInstanceId];
+
+        Payload payload;
+        payload.transform = meshInstance.transform;
+        payload.transformInv = glm::inverse(meshInstance.transform);
+        payload.materialId = meshInstance.materialId;
+        payload.meshId = meshInstance.meshId;
+        meshInstancesPayload.push_back(payload);
     }
 
-    this->meshInstanceBuffer.update(scene.meshInstances.data(), scene.meshInstances.size() * sizeof(MeshInstance));
+    this->meshInstanceBuffer.update(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(Payload));
+    this->tlasBuffer.update(tlas.data(), tlas.size() * sizeof(BvhNode));
 }
 
 void Renderer::initData()
@@ -359,7 +382,8 @@ void Renderer::initData()
     this->meshBuffer.init();
     this->meshInstanceBuffer.init();
     this->materialBuffer.init();
-    this->bvhBuffer.init();
+    this->blasBuffer.init();
+    this->tlasBuffer.init();
 
     // UBOs
     this->cameraBuffer.init();
@@ -386,7 +410,8 @@ void Renderer::bindData()
     this->meshBuffer.bind(2);
     this->meshInstanceBuffer.bind(3);
     this->materialBuffer.bind(4);
-    this->bvhBuffer.bind(5);
+    this->blasBuffer.bind(5);
+    this->tlasBuffer.bind(6);
 
     // UBOs
     this->cameraBuffer.bind(0);

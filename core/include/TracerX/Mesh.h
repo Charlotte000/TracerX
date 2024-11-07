@@ -48,14 +48,11 @@ private:
  */
 struct MeshInstance
 {
-public:
     /**
      * @brief The transformation matrix for the mesh instance.
      */
     glm::mat4 transform = glm::mat4(1);
-private:
-    glm::mat4 transformInv = glm::mat4(1);
-public:
+
     /**
      * @brief The material ID of the mesh instance.
      * 
@@ -69,11 +66,6 @@ public:
      * The mesh ID is the index of the Scene::meshes list.
      */
     int meshId = -1;
-private:
-    int padding1;
-    int padding2;
-
-    friend class Renderer;
 };
 
 }

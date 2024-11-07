@@ -374,7 +374,8 @@ private:
     core::GL::StorageBuffer meshBuffer;
     core::GL::StorageBuffer meshInstanceBuffer;
     core::GL::StorageBuffer materialBuffer;
-    core::GL::StorageBuffer bvhBuffer;
+    core::GL::StorageBuffer blasBuffer;
+    core::GL::StorageBuffer tlasBuffer;
     core::GL::UniformBuffer cameraBuffer;
     core::GL::UniformBuffer environmentBuffer;
     core::GL::UniformBuffer paramBuffer;

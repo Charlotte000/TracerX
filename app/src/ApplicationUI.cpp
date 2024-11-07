@@ -561,7 +561,7 @@ void propertyCamera(Application& app, Camera& camera)
                     ImGui::DragFloat("Orbit radius", &orbitRadius, .01f, 0, 10000))
                 {
                     changed = true;
-                    app.renderer.camera.position = app.cameraControl.orbitOrigin - camera.forward * orbitRadius;
+                    camera.position = app.cameraControl.orbitOrigin - camera.forward * orbitRadius;
                 }
 
                 break;
