@@ -1,77 +1,77 @@
 // https://github.com/brandonpelfrey/Fast-BVH/blob/master/include/FastBVH/Traverser.h#L61
-#define Traverse(BVH, NODE_OFFSET, PRIMITIVE_OFFSET, LEAF) \
-{ \
-    /* Bounding box min-t/max-t for left/right children at some point in the tree */ \
-    vec4 bbhits; \
-    ivec2 range; \
-     \
-    int stackOffset = StackPtr; \
-     \
-    /* "Push" on the root node to the working set */ \
-    Stack[++StackPtr] = vec2(NODE_OFFSET, -1); \
-     \
-    while (StackPtr > stackOffset) \
-    { \
-        /* Pop off the next node to work on. */ \
-        int ni = int(Stack[StackPtr].x); \
-        float near = Stack[StackPtr--].y; \
-         \
-        Node node = BVH[ni]; \
-         \
-        /* If this node is further than the closest found intersection, continue */ \
-        if (near > manifold.Depth) continue; \
-         \
-        /* Is leaf -> Intersect */ \
-        if (node.RightOffset == 0) \
-        { \
-            int o = node.Start + PRIMITIVE_OFFSET; \
-            int oMax = o + node.PrimitiveCount; \
-            for (; o < oMax; ++o) \
-            { \
-                LEAF; \
-            } \
-        } \
-        else /* Not a leaf */ \
-        { \
-            Node c0 = BVH[ni + 1]; \
-            Node c1 = BVH[ni + node.RightOffset]; \
-             \
-            bool hitc0 = AABBIntersection(ray, c0.BboxMin.xyz, c0.BboxMax.xyz, bbhits.x, bbhits.y); \
-            bool hitc1 = AABBIntersection(ray, c1.BboxMin.xyz, c1.BboxMax.xyz, bbhits.z, bbhits.w); \
-             \
-            /* Did we hit both nodes? */ \
-            if (hitc0 && hitc1) \
-            { \
-                /* We assume that the left child is a closer hit... */ \
-                range = ivec2(ni + 1, ni + node.RightOffset); \
-                 \
-                /* ... If the right child was actually closer, swap the relavent values. */ \
-                if (bbhits.z < bbhits.x) \
-                { \
-                    bbhits.xz = bbhits.zx; \
-                    bbhits.yw = bbhits.wy; \
-                    range.xy = range.yx; \
-                } \
-                 \
-                /* It's possible that the nearest object is still in the other side, but */ \
-                /* we'll check the further-awar node later... */ \
-                 \
-                /* Push the farther first */ \
-                Stack[++StackPtr] = vec2(range.y, bbhits.z); \
-                 \
-                /* And now the closer (with overlap test) */ \
-                Stack[++StackPtr] = vec2(range.x, bbhits.x); \
-            } \
-            else if (hitc0) \
-            { \
-                Stack[++StackPtr] = vec2(ni + 1, bbhits.x); \
-            } \
-            else if (hitc1) \
-            { \
-                Stack[++StackPtr] = vec2(ni + node.RightOffset, bbhits.z); \
-            } \
-        } \
-    } \
+#define Traverse(BVH, NODE_OFFSET, PRIMITIVE_OFFSET, LEAF)                                              \
+{                                                                                                       \
+    /* Bounding box min-t/max-t for left/right children at some point in the tree */                    \
+    vec4 bbhits;                                                                                        \
+    ivec2 range;                                                                                        \
+                                                                                                        \
+    int stackOffset = StackPtr;                                                                         \
+                                                                                                        \
+    /* "Push" on the root node to the working set */                                                    \
+    Stack[++StackPtr] = vec2(NODE_OFFSET, -1);                                                          \
+                                                                                                        \
+    while (StackPtr > stackOffset)                                                                      \
+    {                                                                                                   \
+        /* Pop off the next node to work on. */                                                         \
+        int ni = int(Stack[StackPtr].x);                                                                \
+        float near = Stack[StackPtr--].y;                                                               \
+                                                                                                        \
+        Node node = BVH[ni];                                                                            \
+                                                                                                        \
+        /* If this node is further than the closest found intersection, continue */                     \
+        if (near > manifold.Depth) continue;                                                            \
+                                                                                                        \
+        /* Is leaf -> Intersect */                                                                      \
+        if (node.RightOffset == 0)                                                                      \
+        {                                                                                               \
+            int o = node.Start + PRIMITIVE_OFFSET;                                                      \
+            int oMax = o + node.PrimitiveCount;                                                         \
+            for (; o < oMax; ++o)                                                                       \
+            {                                                                                           \
+                LEAF;                                                                                   \
+            }                                                                                           \
+        }                                                                                               \
+        else /* Not a leaf */                                                                           \
+        {                                                                                               \
+            Node c0 = BVH[ni + 1];                                                                      \
+            Node c1 = BVH[ni + node.RightOffset];                                                       \
+                                                                                                        \
+            bool hitc0 = AABBIntersection(ray, c0.BboxMin.xyz, c0.BboxMax.xyz, bbhits.x, bbhits.y);     \
+            bool hitc1 = AABBIntersection(ray, c1.BboxMin.xyz, c1.BboxMax.xyz, bbhits.z, bbhits.w);     \
+                                                                                                        \
+            /* Did we hit both nodes? */                                                                \
+            if (hitc0 && hitc1)                                                                         \
+            {                                                                                           \
+                /* We assume that the left child is a closer hit... */                                  \
+                range = ivec2(ni + 1, ni + node.RightOffset);                                           \
+                                                                                                        \
+                /* ... If the right child was actually closer, swap the relavent values. */             \
+                if (bbhits.z < bbhits.x)                                                                \
+                {                                                                                       \
+                    bbhits.xz = bbhits.zx;                                                              \
+                    bbhits.yw = bbhits.wy;                                                              \
+                    range.xy = range.yx;                                                                \
+                }                                                                                       \
+                                                                                                        \
+                /* It's possible that the nearest object is still in the other side, but */             \
+                /* we'll check the further-awar node later... */                                        \
+                                                                                                        \
+                /* Push the farther first */                                                            \
+                Stack[++StackPtr] = vec2(range.y, bbhits.z);                                            \
+                                                                                                        \
+                /* And now the closer (with overlap test) */                                            \
+                Stack[++StackPtr] = vec2(range.x, bbhits.x);                                            \
+            }                                                                                           \
+            else if (hitc0)                                                                             \
+            {                                                                                           \
+                Stack[++StackPtr] = vec2(ni + 1, bbhits.x);                                             \
+            }                                                                                           \
+            else if (hitc1)                                                                             \
+            {                                                                                           \
+                Stack[++StackPtr] = vec2(ni + node.RightOffset, bbhits.z);                              \
+            }                                                                                           \
+        }                                                                                               \
+    }                                                                                                   \
 }
 
 bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, in float minDistance, in float maxDistance, inout CollisionManifold manifold)
