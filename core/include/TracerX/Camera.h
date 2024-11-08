@@ -16,18 +16,10 @@ namespace TracerX
  */
 struct Camera
 {
-public:
     /**
      * @brief The position of the camera.
      */
     glm::vec3 position = glm::vec3(0, 0, 10);
-
-    /**
-     * @brief The horizontal field of view of the camera in radians.
-     * 
-     * Should be in the range (0, pi) exclusive.
-     */
-    float fov = glm::half_pi<float>();
 
     /**
      * @brief The forward direction of the camera.
@@ -37,6 +29,20 @@ public:
     glm::vec3 forward = glm::vec3(0, 0, -1);
 
     /**
+     * @brief The up direction of the camera.
+     * 
+     * The up direction should be normalized and orthogonal to the Camera::forward direction.
+     */
+    glm::vec3 up = glm::vec3(0, 1, 0);
+
+    /**
+     * @brief The horizontal field of view of the camera in radians.
+     * 
+     * Should be in the range (0, pi) exclusive.
+     */
+    float fov = glm::half_pi<float>();
+
+    /**
      * @brief The focal distance of the camera.
      * 
      * The focal distance and the Camera::aperture are used for depth of field effects.
@@ -44,13 +50,6 @@ public:
      * @see Camera::aperture for the size of the aperture.
      */
     float focalDistance = 1;
-
-    /**
-     * @brief The up direction of the camera.
-     * 
-     * The up direction should be normalized and orthogonal to the Camera::forward direction.
-     */
-    glm::vec3 up = glm::vec3(0, 1, 0);
 
     /**
      * @brief The aperture of the camera.
@@ -95,10 +94,6 @@ public:
      * @return The projection matrix.
      */
     glm::mat4 createProjection(float width, float height, float zNear, float zFar) const;
-private:
-    int padding1;
-    int padding2;
-    int padding3;
 };
 
 }

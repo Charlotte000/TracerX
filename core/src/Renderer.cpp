@@ -434,7 +434,32 @@ void Renderer::bindData()
 void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
 {
     // cameraBuffer
-    this->cameraBuffer.update(&this->camera, sizeof(this->camera));
+    struct
+    {
+        glm::vec3 position;
+        float fov;
+        glm::vec3 forward;
+        float focalDistance;
+        glm::vec3 up;
+        float aperture;
+        float blur;
+        int padding1;
+        int padding2;
+        int padding3;
+    } camera
+    {
+        this->camera.position,
+        this->camera.fov,
+        this->camera.forward,
+        this->camera.focalDistance,
+        this->camera.up,
+        this->camera.aperture,
+        this->camera.blur,
+        0,
+        0,
+        0,
+    };
+    this->cameraBuffer.update(&camera, sizeof(camera));
 
     // environmentBuffer
     struct

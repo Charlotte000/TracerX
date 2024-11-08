@@ -13,8 +13,14 @@ public:
     TracerX::Scene scene;
     GLFWwindow* window = nullptr;
     GLFWwindow* threadContext = nullptr;
-    const glm::uvec2 maxTextureArraySize;
     bool isSceneLoaded = true;
+    const glm::uvec2 maxTextureArraySize;
+#if !TX_SPIRV
+    const std::filesystem::path shaderPath;
+#endif
+    const std::filesystem::path sceneDir;
+    const std::filesystem::path environmentDir;
+
     struct Rendering
     {
         unsigned int sampleCountTarget = 0;
@@ -86,13 +92,16 @@ public:
         float snap = 1;
     } gizmo;
 
-    static inline std::filesystem::path environmentDir;
-    static inline std::filesystem::path sceneDir;
+    Application(
+        glm::uvec2 initSize,
+        glm::uvec2 maxTextureArraySize,
+        const std::filesystem::path sceneDir,
+        const std::filesystem::path environmentDir,
 #if !TX_SPIRV
-    static inline std::filesystem::path shaderPath;
+        const std::filesystem::path shaderPath,
 #endif
-
-    Application(glm::uvec2 initSize, const TracerX::Scene& initScene, const TracerX::Image& initEnvironment, glm::uvec2 maxTextureArraySize);
+        const TracerX::Scene& initScene,
+        const TracerX::Image& initEnvironment);
     void shutdown();
     void run();
     void loadScene(const std::filesystem::path& path);

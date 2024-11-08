@@ -189,8 +189,24 @@ void Application::Tiling::getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::u
 }
 #pragma endregion
 
-Application::Application(glm::uvec2 initSize, const TracerX::Scene& initScene, const TracerX::Image& initEnvironment, glm::uvec2 maxTextureArraySize)
-    : maxTextureArraySize(maxTextureArraySize), scene(initScene)
+Application::Application(
+    glm::uvec2 initSize,
+    glm::uvec2 maxTextureArraySize,
+    const std::filesystem::path sceneDir,
+    const std::filesystem::path environmentDir,
+#if !TX_SPIRV
+    const std::filesystem::path shaderPath,
+#endif
+    const Scene& initScene,
+    const Image& initEnvironment)
+    :
+    maxTextureArraySize(maxTextureArraySize),
+    sceneDir(sceneDir),
+    environmentDir(environmentDir),
+#if !TX_SPIRV
+    shaderPath(shaderPath),
+#endif
+    scene(initScene)
 {
     // Init GLFW
     glfwSetErrorCallback([](int, const char* err)
@@ -232,7 +248,7 @@ Application::Application(glm::uvec2 initSize, const TracerX::Scene& initScene, c
 #if TX_SPIRV
         this->renderer.init(initSize);
 #else
-        this->renderer.init(initSize, Application::shaderPath);
+        this->renderer.init(initSize, this->shaderPath);
 #endif
     }
     catch(const std::runtime_error& err)
@@ -426,7 +442,7 @@ void Application::reloadShaders()
 {
     try
     {
-        this->renderer.reloadShaders(Application::shaderPath);
+        this->renderer.reloadShaders(this->shaderPath);
         this->clear();
     }
     catch(const std::runtime_error& err)
