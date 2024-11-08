@@ -84,8 +84,7 @@ Material GetMaterial(inout CollisionManifold manifold)
 
     if (material.AlbedoTextureId >= 0)
     {
-        vec4 texAlbedo = texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
-        material.AlbedoColor *= texAlbedo.rgb;
+        material.AlbedoColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
     }
 
     if (material.MetalnessTextureId >= 0)

@@ -176,7 +176,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
 
         Material material;
 
-        material.albedoColor = glm::vec3(pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2]);
+        material.albedoColor = glm::vec4(pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2], pbr.baseColorFactor[3]);
         material.roughness = std::sqrt((float)pbr.roughnessFactor);
         material.emissionColor = glm::vec3(gltfMaterial.emissiveFactor[0], gltfMaterial.emissiveFactor[1], gltfMaterial.emissiveFactor[2]);
         material.emissionStrength = 1;

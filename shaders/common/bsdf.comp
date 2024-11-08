@@ -1,6 +1,25 @@
+bool AlphaBlend(in Material material)
+{
+    switch (material.AlphaMode)
+    {
+        case OpaqueAlphaMode:
+            return true;
+        case BlendAlphaMode:
+            return material.AlbedoColor.a > RandomValue();
+        case MaskAlphaMode:
+            return material.AlbedoColor.a > material.AlphaCutoff;
+    }
+
+    return true;
+}
+
 bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold);
+    if (!AlphaBlend(material))
+    {
+        return false;
+    }
 
     vec3 specularDir = reflect(ray.Direction, manifold.Normal);
     vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
@@ -35,7 +54,7 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
         ray.Direction = RandomVector3();
 
         radiance += material.EmissionColor * throughput;
-        throughput *= material.AlbedoColor;
+        throughput *= material.AlbedoColor.rgb;
         return true;
     }
 
@@ -52,7 +71,7 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
         ray.Direction = refractedDir;
 
         radiance += material.EmissionColor * throughput;
-        throughput *= material.AlbedoColor;
+        throughput *= material.AlbedoColor.rgb;
         return true;
     }
 
@@ -61,6 +80,6 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     ray.Direction = Slerp(specularDir, diffuseDir, material.Roughness);
 
     radiance += material.EmissionColor * throughput;
-    throughput *= material.AlbedoColor;
+    throughput *= material.AlbedoColor.rgb;
     return true;
 }

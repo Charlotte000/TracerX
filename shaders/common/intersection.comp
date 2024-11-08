@@ -106,11 +106,6 @@ bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, 
     vec2 uv3 = vec2(v3.PositionU.w, v3.NormalV.w);
 
     vec2 uv = uv1 * w + uv2 * u + uv3 * v;
-    if (!AlphaBlend(materialId, uv))
-    {
-        return false;
-    }
-
     vec2 edgeUV12 = uv2 - uv1;
     vec2 edgeUV13 = uv3 - uv1;
     float invDetUV = 1 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);

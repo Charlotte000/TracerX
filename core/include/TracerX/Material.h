@@ -18,14 +18,7 @@ struct Material
      * 
      * The albedo is the base color of the material.
      */
-    glm::vec3 albedoColor = glm::vec3(1);
-
-    /**
-     * @brief The roughness of the material's surface.
-     * 
-     * The roughness is a value between 0 and 1, where 0 is a perfectly smooth surface and 1 is a perfectly rough surface.
-     */
-    float roughness = 0;
+    glm::vec4 albedoColor = glm::vec4(1);
 
     /**
      * @brief The color of the material's emission.
@@ -52,6 +45,13 @@ struct Material
      * The fresnel effect is the reflection of light off of a surface at a shallow angle.
      */
     float fresnelStrength = 0;
+
+    /**
+     * @brief The roughness of the material's surface.
+     * 
+     * The roughness is a value between 0 and 1, where 0 is a perfectly smooth surface and 1 is a perfectly rough surface.
+     */
+    float roughness = 0;
 
     /**
      * @brief The metalness of the material.
@@ -152,7 +152,6 @@ struct Material
     float alphaCutoff = .5f;
 private:
     int padding1;
-    int padding2;
 };
 
 }

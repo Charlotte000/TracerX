@@ -69,7 +69,7 @@ int main()
 
     // Setting up the mesh material
     TracerX::Material& axajMaterial = scene.materials[ajaxMesh.materialId];
-    axajMaterial.albedoColor = glm::vec3(.3f, .3f, .001f);
+    axajMaterial.albedoColor = glm::vec4(.3f, .3f, .001f, 1);
     axajMaterial.metalness = 1;
     axajMaterial.roughness = .1f;
     renderer.updateSceneMaterials(scene);

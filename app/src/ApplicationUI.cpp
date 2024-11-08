@@ -246,9 +246,9 @@ void propertyMaterial(Application& app, Material& material)
 
     if (ImGui::BeginTabItem("Albedo"))
     {
-        glm::vec3 albedoColor = glm::pow(material.albedoColor, glm::vec3(1 / app.renderer.gamma));
-        changed |= ImGui::ColorEdit3("Color (gamma corrected)##albedo", glm::value_ptr(albedoColor), ImGuiColorEditFlags_Float);
-        material.albedoColor = glm::pow(albedoColor, glm::vec3(app.renderer.gamma));
+        glm::vec4 albedoColor = glm::vec4(glm::pow(glm::vec3(material.albedoColor), glm::vec3(1 / app.renderer.gamma)), material.albedoColor.a);
+        changed |= ImGui::ColorEdit4("Color (gamma corrected)##albedo", glm::value_ptr(albedoColor), ImGuiColorEditFlags_Float | ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_AlphaPreview);
+        material.albedoColor = glm::vec4(glm::pow(glm::vec3(albedoColor), glm::vec3(app.renderer.gamma)), albedoColor.a);
 
         changed |= materialTextureSelector(app, "albedo", material.albedoTextureId, material.albedoColor);
         ImGui::EndTabItem();

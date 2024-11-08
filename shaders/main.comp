@@ -17,7 +17,6 @@ int StackPtr = 0;
 #include "common/uniforms.comp"
 #include "common/random.comp"
 #include "common/transforms.comp"
-#include "common/alphaBlend.comp"
 #include "common/intersection.comp"
 #include "common/bsdf.comp"
 #include "common/tonemap.comp"
@@ -30,46 +29,43 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
     vec3 throughput = vec3(1);
     vec3 radiance = vec3(0);
 
-    bool isFirstHit = true;
-    uint bounce = 0;
-    while (bounce <= MaxBounceCount)
+    bool isSampled = false;
+    for (uint bounce = 0; bounce <= MaxBounceCount; bounce++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, isFirstHit ? MinRenderDistance : EPS, isFirstHit ? MaxRenderDistance : INF, manifold))
+        if (!FindIntersection(ray, bounce == 0 ? MinRenderDistance : EPS, bounce == 0 ? MaxRenderDistance : INF, manifold))
         {
             radiance += GetEnvironment(ray) * throughput;
-            if (bounce == 0)
+            if (!isSampled)
             {
                 albedo = radiance;
                 normal = -ray.Direction;
                 depth = MaxRenderDistance;
             }
 
-            return vec4(radiance, bounce == 0 && Environment.Transparent ? 0 : 1);
+            return vec4(radiance, !isSampled && Environment.Transparent ? 0 : 1);
         }
 
         if (BSDF(ray, throughput, radiance, manifold))
         {
             ray.InvDirection = 1 / ray.Direction;
-            if (bounce == 0)
+            if (!isSampled)
             {
                 albedo = throughput;
                 normal = manifold.Normal;
                 depth += manifold.Depth;
             }
 
-            bounce++;
+            isSampled = true;
         }
         else
         {
             ray.Origin = manifold.Point;
-            if (bounce == 0)
+            if (!isSampled)
             {
                 depth += manifold.Depth;
             }
         }
-
-        isFirstHit = false;
     }
 
     return vec4(radiance, 1);

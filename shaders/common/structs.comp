@@ -25,12 +25,12 @@ struct Cam
 
 struct Material
 {
-    vec3 AlbedoColor;
-    float Roughness;
+    vec4 AlbedoColor;
     vec3 EmissionColor;
     float EmissionStrength;
     vec3 FresnelColor;
     float FresnelStrength;
+    float Roughness;
     float Metalness;
     float IOR;
     float Density;
@@ -42,7 +42,6 @@ struct Material
     uint AlphaMode;
     float AlphaCutoff;
     int Padding1;
-    int Padding2;
 };
 
 struct Vertex
