@@ -33,14 +33,14 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float depth)
     for (uint bounce = 0; bounce <= MaxBounceCount; bounce++)
     {
         CollisionManifold manifold;
-        if (!FindIntersection(ray, bounce == 0 ? MinRenderDistance : EPS, bounce == 0 ? MaxRenderDistance : INF, manifold))
+        if (!FindIntersection(ray, bounce == 0 ? Camera.ZNear : EPS, bounce == 0 ? Camera.ZFar : INF, manifold))
         {
             radiance += GetEnvironment(ray) * throughput;
             if (!isSampled)
             {
                 albedo = radiance;
                 normal = -ray.Direction;
-                depth = MaxRenderDistance;
+                depth = Camera.ZFar;
             }
 
             return vec4(radiance, !isSampled && Environment.Transparent ? 0 : 1);

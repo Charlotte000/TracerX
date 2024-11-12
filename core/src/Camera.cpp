@@ -19,7 +19,7 @@ glm::mat4 Camera::createView() const
     return glm::lookAt(this->position, this->position + this->forward, this->up);
 }
 
-glm::mat4 Camera::createProjection(float width, float height, float zNear, float zFar) const
+glm::mat4 Camera::createProjection(float width, float height) const
 {
-    return glm::perspectiveFov(this->fov, width, height, zNear, zFar);
+    return glm::perspectiveFov(this->fov, width, height, this->zNear, this->zFar);
 }

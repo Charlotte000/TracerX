@@ -499,6 +499,10 @@ void propertyCamera(Application& app, Camera& camera)
         changed |= ImGui::SliderAngle("FOV", &camera.fov, 1, 179, "%.0f deg", ImGuiSliderFlags_AlwaysClamp);
 
         ImGui::Separator();
+        changed |= ImGui::DragFloat("Min render distance", &camera.zNear, 0.01f, 0, camera.zFar, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
+        changed |= ImGui::DragFloat("Max render distance", &camera.zFar, 1, camera.zNear, 10000, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
+
+        ImGui::Separator();
         changed |= ImGui::DragFloat("Blur", &camera.blur, .000001f, 0, 1000, "%.5f");
         Tooltip("Can be used for anti-aliasing");
 
@@ -619,10 +623,6 @@ void propertySettings(Application& app)
     Tooltip("A high value can cause lags but the image quality improves faster");
 
     updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
-
-    ImGui::Separator();
-    updated |= ImGui::DragFloat("Min render distance", &app.renderer.minRenderDistance, 0.01f, 0, app.renderer.maxRenderDistance, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp) |
-        ImGui::DragFloat("Max render distance", &app.renderer.maxRenderDistance, 1, app.renderer.minRenderDistance, 10000, "%.4f", ImGuiSliderFlags_Logarithmic | ImGuiSliderFlags_AlwaysClamp);
 
     if (updated)
     {
@@ -850,11 +850,7 @@ void viewRenderTexture(Application& app, GLint textureHandler)
 
     // Draw gizmos
     glm::mat4 view = app.renderer.camera.createView();
-    glm::mat4 projection = app.renderer.camera.createProjection(
-        (float)app.renderer.getSize().x,
-        (float)app.renderer.getSize().y,
-        app.renderer.minRenderDistance,
-        app.renderer.maxRenderDistance);
+    glm::mat4 projection = app.renderer.camera.createProjection((float)app.renderer.getSize().x, (float)app.renderer.getSize().y);
     ImGuizmo::SetRect(app.renderTextureView.pos.x, app.renderTextureView.pos.y, app.renderTextureView.size.x, app.renderTextureView.size.y);
     ImGuizmo::SetDrawlist();
 

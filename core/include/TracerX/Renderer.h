@@ -62,16 +62,6 @@ public:
     float gamma = 2.2f;
 
     /**
-     * @brief The minimum distance for rendering objects.
-     */
-    float minRenderDistance = .1f;
-
-    /**
-     * @brief The maximum distance for rendering objects.
-     */
-    float maxRenderDistance = 1000;
-
-    /**
      * @brief The environment settings for the scene.
      * @see Environment::loadFromFile to load an environment from a file.
      */

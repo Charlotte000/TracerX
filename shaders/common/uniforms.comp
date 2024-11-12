@@ -58,8 +58,6 @@ layout(std140, binding=2) uniform ParamsUBO
     ivec2 FrameSize;
     uint SampleCount;
     uint MaxBounceCount;
-    float MinRenderDistance;
-    float MaxRenderDistance;
     float Gamma;
     bool OnlyToneMapping;
     uint ToneMapMode;

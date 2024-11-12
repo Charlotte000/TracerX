@@ -36,6 +36,6 @@ vec4 NormalToColor(in vec3 normal)
 
 vec4 DepthToColor(in float depth)
 {
-    float nonLinear = (1 / depth - 1 / MinRenderDistance) / (1 / MaxRenderDistance - 1 / MinRenderDistance);
+    float nonLinear = (1 / depth - 1 / Camera.ZNear) / (1 / Camera.ZFar - 1 / Camera.ZNear);
     return vec4(vec3(nonLinear), 1);
 }

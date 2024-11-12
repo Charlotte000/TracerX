@@ -71,6 +71,16 @@ struct Camera
     float blur = 0;
 
     /**
+     * @brief The minimum distance for rendering objects.
+     */
+    float zNear = .1f;
+
+    /**
+     * @brief The maximum distance for rendering objects.
+     */
+    float zFar = 1000;
+
+    /**
      * @brief Sets the camera to look at the specified position.
      * 
      * Sets Camera::focalDistance to the distance between the camera and the position.
@@ -89,11 +99,9 @@ struct Camera
      * @brief Creates a projection matrix for the camera.
      * @param width The width of the viewport.
      * @param height The height of the viewport.
-     * @param zNear The near clipping plane.
-     * @param zFar The far clipping plane.
      * @return The projection matrix.
      */
-    glm::mat4 createProjection(float width, float height, float zNear, float zFar) const;
+    glm::mat4 createProjection(float width, float height) const;
 };
 
 }

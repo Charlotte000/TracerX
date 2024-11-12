@@ -21,6 +21,9 @@ struct Cam
     vec3 Up;
     float Aperture;
     float Blur;
+    float ZNear;
+    float ZFar;
+    int Padding1;
 };
 
 struct Material
@@ -93,7 +96,7 @@ struct Node
     int Start;
     int PrimitiveCount;
     int RightOffset;
-    int Padding;
+    int Padding1;
 };
 
 const uint ReinhardToneMap = 0;

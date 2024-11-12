@@ -294,11 +294,28 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
     // Get cameras
     if (node.camera >= 0)
     {
-        Camera c;
-        c.position = glm::vec3(transform[3]);
-        c.forward = -glm::normalize(glm::vec3(transform[2]));
-        c.up = glm::normalize(glm::vec3(transform[1]));
-        scene.cameras.push_back(c);
+        const tinygltf::Camera& camera = model.cameras[node.camera];
+        if (camera.type == "perspective")
+        {
+            Camera c;
+            c.position = glm::vec3(transform[3]);
+            c.forward = -glm::normalize(glm::vec3(transform[2]));
+            c.up = glm::normalize(glm::vec3(transform[1]));
+            c.zNear = (float)camera.perspective.znear;
+            c.zFar = (float)camera.perspective.zfar;
+            c.fov = 2.f * atanf(tanf((float)camera.perspective.yfov * .5f) * (camera.perspective.aspectRatio == 0 ? 1 : (float)camera.perspective.aspectRatio));
+            scene.cameras.push_back(c);
+        }
+        else if (camera.type == "orthographic")
+        {
+            Camera c;
+            c.position = glm::vec3(transform[3]);
+            c.forward = -glm::normalize(glm::vec3(transform[2]));
+            c.up = glm::normalize(glm::vec3(transform[1]));
+            c.zNear = (float)camera.orthographic.znear;
+            c.zFar = (float)camera.orthographic.zfar;
+            scene.cameras.push_back(c);
+        }
     }
 
     // Traverse children

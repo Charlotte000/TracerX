@@ -408,8 +408,8 @@ float Application::getLookAtDistance() const
     size_t centerIndex = image.size.x / 2 * (1 + image.size.y) * 4;
     float nonLinear = image.pixels[centerIndex] * 2 - 1;
 
-    float min = this->renderer.minRenderDistance;
-    float max = this->renderer.maxRenderDistance;
+    float min = this->renderer.camera.zNear;
+    float max = this->renderer.camera.zFar;
     float linear = 2 * min * max / (max + min - nonLinear * (max - min));
     return linear;
 }

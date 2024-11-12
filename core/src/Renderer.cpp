@@ -443,9 +443,9 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         glm::vec3 up;
         float aperture;
         float blur;
+        float zNear;
+        float zFar;
         int padding1;
-        int padding2;
-        int padding3;
     } camera
     {
         this->camera.position,
@@ -455,8 +455,8 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         this->camera.up,
         this->camera.aperture,
         this->camera.blur,
-        0,
-        0,
+        this->camera.zNear,
+        this->camera.zFar,
         0,
     };
     this->cameraBuffer.update(&camera, sizeof(camera));
@@ -490,22 +490,24 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         glm::ivec2 rectSize;
         unsigned int sampleCount;
         unsigned int maxBounceCount;
-        float minRenderDistance;
-        float maxRenderDistance;
         float gamma;
         unsigned int onlyToneMapping;
         unsigned int toneMapMode;
+        int padding1;
+        int padding2;
+        int padding3;
     } params
     {
         rectPosition,
         rectSize,
         this->sampleCount,
         this->maxBounceCount,
-        this->minRenderDistance,
-        this->maxRenderDistance,
         this->gamma,
         onlyToneMapping,
         static_cast<unsigned int>(this->toneMapMode),
+        0,
+        0,
+        0,
     };
     this->paramBuffer.update(&params, sizeof(params));
 }
