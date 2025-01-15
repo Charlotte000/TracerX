@@ -69,7 +69,6 @@ public:
 
     /**
      * @brief Determines how the renderer maps the colors to the display.
-     * 
      */
     enum class ToneMapMode : unsigned int
     {
@@ -96,11 +95,7 @@ public:
          * This algorithm is faster than the full ACES algorithm but still produces good results.
          */
         ACESfitted = 2,
-    }
-    /**
-     * @brief The tone mapping mode used by the renderer.
-     */
-    toneMapMode = ToneMapMode::Reinhard;
+    } toneMapMode = ToneMapMode::Reinhard;
 
 #if TX_SPIRV
     /**

@@ -1,6 +1,6 @@
 # TracerX
 This path tracing app is a computer graphics program that simulates the behavior of light in a virtual environment.
-It is written in **C++** and uses **OpenGL** compute shaders for rendering.
+It is written in **C++** and uses **OpenGL** compute shaders for rendering. The CMake build system is used to compile the project.
 TracerX is based on the principles of the microfacet model and uses the Bidirectional Scattering Distribution Function (BSDF) to simulate the interaction of light with materials.
 
 This repository contains three main projects:
@@ -11,6 +11,8 @@ This repository contains three main projects:
 Additional assets can be downloaded here and installed in the directory:
 - `app/assets/environments`: [Poly Haven](https://polyhaven.com/hdris)
 - `app/assets/scenes`: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com)
+
+Be aware that the project uses CMake [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html) to download required libraries, so an internet connection is required to build the project.
 
 # Renders
 ![](imgs/UI.jpg)

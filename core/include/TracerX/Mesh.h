@@ -32,7 +32,7 @@ private:
     /**
      * @brief The offset of the nodes in the BVH tree in the Scene.
      * 
-     * Set by the Scene::buildBVH method.
+     * Set by the Scene::buildBLAS method.
      */
     int nodeOffset = 0;
 
