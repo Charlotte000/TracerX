@@ -54,7 +54,15 @@ public:
     /**
      * @brief The maximum number of times a ray can bounce in the scene.
      */
-    unsigned int maxBounceCount = 5;
+    unsigned int maxDepth = 5;
+
+    /**
+     * @brief The maximum number of times a ray can bounce in the scene before Russian roulette is applied.
+     * 
+     * If a ray bounces more than the specified depth, it has a chance to terminate early.
+     * If the value is 0, Russian roulette is disabled.
+     */
+    unsigned int russianRouletteDepth = 0;
 
     /**
      * @brief The gamma correction value used in tone mapping.

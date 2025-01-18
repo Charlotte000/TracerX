@@ -57,10 +57,11 @@ layout(std140, binding=2) uniform ParamsUBO
     ivec2 FramePosition;
     ivec2 FrameSize;
     uint SampleCount;
-    uint MaxBounceCount;
-    float Gamma;
+    uint MaxDepth;
+    uint RussianRouletteDepth;
     bool OnlyToneMapping;
     uint ToneMapMode;
+    float Gamma;
 };
 
 ivec2 Size = imageSize(AccumulatorImage);

@@ -9,6 +9,35 @@
 using namespace TracerX;
 using namespace TracerX::core;
 
+void transformBbox(glm::vec3 vMin, glm::vec3 vMax, const glm::mat4& transform, glm::vec3& tMin, glm::vec3& tMax)
+{
+    // Get 8 corners of the bounding box
+    glm::vec3 pos = (vMax + vMin) * 0.5f;
+    glm::vec3 hSize = (vMax - vMin) * 0.5f;
+    glm::vec3 v1 = pos + glm::vec3(-1, -1, -1) * hSize;
+    glm::vec3 v2 = pos + glm::vec3(-1, -1,  1) * hSize;
+    glm::vec3 v3 = pos + glm::vec3(-1,  1, -1) * hSize;
+    glm::vec3 v4 = pos + glm::vec3(-1,  1,  1) * hSize;
+    glm::vec3 v5 = pos + glm::vec3( 1, -1, -1) * hSize;
+    glm::vec3 v6 = pos + glm::vec3( 1, -1,  1) * hSize;
+    glm::vec3 v7 = pos + glm::vec3( 1,  1, -1) * hSize;
+    glm::vec3 v8 = pos + glm::vec3( 1,  1,  1) * hSize;
+
+    // Transform
+    v1 = transform * glm::vec4(v1, 1);
+    v2 = transform * glm::vec4(v2, 1);
+    v3 = transform * glm::vec4(v3, 1);
+    v4 = transform * glm::vec4(v4, 1);
+    v5 = transform * glm::vec4(v5, 1);
+    v6 = transform * glm::vec4(v6, 1);
+    v7 = transform * glm::vec4(v7, 1);
+    v8 = transform * glm::vec4(v8, 1);
+
+    // Get bounding box
+    tMin = glm::min(glm::min(glm::min(v1, v2, v3, v4), v5, v6, v7), v8);
+    tMax = glm::max(glm::max(glm::max(v1, v2, v3, v4), v5, v6, v7), v8);
+}
+
 BvhNode toNode(const FastBVH::Node<float>& node)
 {
     BvhNode myNode;
@@ -101,31 +130,9 @@ void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& permutati
             const Mesh& mesh = this->meshes->at(meshInstance.meshId);
             const BvhNode& node = this->blas->at(mesh.nodeOffset);
 
-            // Get 8 corners of the bounding box
-            glm::vec3 pos = (node.bboxMax + node.bboxMin) * 0.5f;
-            glm::vec3 hSize = (node.bboxMax - node.bboxMin) * 0.5f;
-
-            glm::vec3 v1 = pos + glm::vec3(-1, -1, -1) * hSize;
-            glm::vec3 v2 = pos + glm::vec3(-1, -1,  1) * hSize;
-            glm::vec3 v3 = pos + glm::vec3(-1,  1, -1) * hSize;
-            glm::vec3 v4 = pos + glm::vec3(-1,  1,  1) * hSize;
-            glm::vec3 v5 = pos + glm::vec3( 1, -1, -1) * hSize;
-            glm::vec3 v6 = pos + glm::vec3( 1, -1,  1) * hSize;
-            glm::vec3 v7 = pos + glm::vec3( 1,  1, -1) * hSize;
-            glm::vec3 v8 = pos + glm::vec3( 1,  1,  1) * hSize;
-
-            v1 = meshInstance.transform * glm::vec4(v1, 1);
-            v2 = meshInstance.transform * glm::vec4(v2, 1);
-            v3 = meshInstance.transform * glm::vec4(v3, 1);
-            v4 = meshInstance.transform * glm::vec4(v4, 1);
-            v5 = meshInstance.transform * glm::vec4(v5, 1);
-            v6 = meshInstance.transform * glm::vec4(v6, 1);
-            v7 = meshInstance.transform * glm::vec4(v7, 1);
-            v8 = meshInstance.transform * glm::vec4(v8, 1);
-
-            glm::vec3 minV = glm::min(glm::min(glm::min(v1, v2, v3, v4), v5, v6, v7), v8);
-            glm::vec3 maxV = glm::max(glm::max(glm::max(v1, v2, v3, v4), v5, v6, v7), v8);
-            return FastBVH::BBox<float>(minV, maxV);
+            glm::vec3 vMin, vMax;
+            transformBbox(node.bboxMin, node.bboxMax, meshInstance.transform, vMin, vMax);
+            return FastBVH::BBox<float>(vMin, vMax);
         }
     } meshInstanceBuilder(&this->meshInstances, &this->meshes, &this->blas);
     FastBVH::DefaultBuilder<float> bvhBuilder;

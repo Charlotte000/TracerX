@@ -489,11 +489,11 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         glm::ivec2 rectPosition;
         glm::ivec2 rectSize;
         unsigned int sampleCount;
-        unsigned int maxBounceCount;
-        float gamma;
+        unsigned int maxDepth;
+        unsigned int russianRouletteDepth;
         unsigned int onlyToneMapping;
         unsigned int toneMapMode;
-        int padding1;
+        float gamma;
         int padding2;
         int padding3;
     } params
@@ -501,11 +501,11 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         rectPosition,
         rectSize,
         this->sampleCount,
-        this->maxBounceCount,
-        this->gamma,
+        this->maxDepth,
+        this->russianRouletteDepth,
         onlyToneMapping,
         static_cast<unsigned int>(this->toneMapMode),
-        0,
+        this->gamma,
         0,
         0,
     };

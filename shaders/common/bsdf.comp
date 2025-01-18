@@ -1,4 +1,4 @@
-bool AlphaBlend(in Material material)
+bool AlphaTest(in Material material)
 {
     switch (material.AlphaMode)
     {
@@ -16,7 +16,7 @@ bool AlphaBlend(in Material material)
 bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in CollisionManifold manifold)
 {
     Material material = GetMaterial(manifold);
-    if (!AlphaBlend(material))
+    if (!AlphaTest(material))
     {
         return false;
     }

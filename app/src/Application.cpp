@@ -290,10 +290,10 @@ void Application::run()
         {
             if (this->renderer.getSampleCount() == 0)
             {
-                unsigned int maxBounceCount = this->renderer.maxBounceCount;
-                this->renderer.maxBounceCount = 0;
+                unsigned int maxDepth = this->renderer.maxDepth;
+                this->renderer.maxDepth = 0;
                 this->renderer.render(1);
-                this->renderer.maxBounceCount = maxBounceCount;
+                this->renderer.maxDepth = maxDepth;
             }
         }
         else if (this->rendering.enable)

@@ -331,7 +331,7 @@ void propertyMaterial(Application& app, Material& material)
     {
         changed |= ImGui::DragFloat("Density", &material.density, .001f, 0, 100);
         changed |= ImGui::DragFloat("IOR", &material.ior, .001f, 0, 100);
-        Tooltip("If you notice black spots, try to increase the max bounce count");
+        Tooltip("If you notice black spots, try to increase the max depth in the renderer settings");
 
         ImGui::EndTabItem();
     }
@@ -619,10 +619,13 @@ void propertySettings(Application& app)
     DragUInt("Samples target", &app.rendering.sampleCountTarget, 1.f, 0, 100000, "%d", ImGuiSliderFlags_AlwaysClamp);
     Tooltip("Zero means unlimited samples");
 
-    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .1f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & (app.tiling.count != 0);
+    updated |= DragUInt("Samples per frame", &app.rendering.samplesPerFrame, .01f, 1, 10000, "%d", ImGuiSliderFlags_AlwaysClamp) & (app.tiling.count != 0);
     Tooltip("A high value can cause lags but the image quality improves faster");
 
-    updated |= DragUInt("Max bounce count", &app.renderer.maxBounceCount, .01f, 0, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+    updated |= DragUInt("Max depth", &app.renderer.maxDepth, .01f, 0, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+
+    updated |= DragUInt("Russian roulette depth", &app.renderer.russianRouletteDepth, .01f, 0, app.renderer.maxDepth, "%d", ImGuiSliderFlags_AlwaysClamp);
+    Tooltip("Zero means no russian roulette");
 
     if (updated)
     {
@@ -1053,8 +1056,8 @@ void mainMenuBar(Application& app)
     {
         ImGui::Text("Space - start/stop rendering");
         ImGui::Separator();
-        ImGui::Text("LCtrl + mouse wheel - zoom in/out");
-        ImGui::Text("LCtrl + left mouse drag - move view");
+        ImGui::Text("LCtrl + mouse wheel - zoom image");
+        ImGui::Text("LCtrl + left mouse drag - move image");
         ImGui::EndMenu();
     }
 

@@ -1,5 +1,5 @@
 // https://github.com/brandonpelfrey/Fast-BVH/blob/master/include/FastBVH/Traverser.h#L61
-#define Traverse(BVH, NODE_OFFSET, PRIMITIVE_OFFSET, LEAF)                                              \
+#define Traverse(BVH, NODE_OFFSET, LEAF)                                                                \
 {                                                                                                       \
     /* Bounding box min-t/max-t for left/right children at some point in the tree */                    \
     vec4 bbhits;                                                                                        \
@@ -24,9 +24,9 @@
         /* Is leaf -> Intersect */                                                                      \
         if (node.RightOffset == 0)                                                                      \
         {                                                                                               \
-            int o = node.Start + PRIMITIVE_OFFSET;                                                      \
-            int oMax = o + node.PrimitiveCount;                                                         \
-            for (; o < oMax; ++o)                                                                       \
+            int i = node.Start;                                                                         \
+            int iMax = i + node.PrimitiveCount;                                                         \
+            for (; i < iMax; ++i)                                                                       \
             {                                                                                           \
                 LEAF;                                                                                   \
             }                                                                                           \
@@ -148,9 +148,8 @@ bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float
     Traverse(
         BLAS,
         mesh.NodeOffset,
-        mesh.TriangleOffset,
         {
-            Triangle triangle = Triangles[o];
+            Triangle triangle = Triangles[i + mesh.TriangleOffset];
             Vertex v1 = Vertices[triangle.V1];
             Vertex v2 = Vertices[triangle.V2];
             Vertex v3 = Vertices[triangle.V3];
@@ -179,9 +178,8 @@ bool FindIntersection(in Ray ray, in float minDistance, in float maxDistance, ou
     Traverse(
         TLAS,
         0,
-        0,
         {
-            MeshInstance meshInstance = MeshInstances[o];
+            MeshInstance meshInstance = MeshInstances[i];
             CollisionManifold current;
             if (MeshInstanceIntersection(ray, meshInstance, minDistance, manifold.Depth, current))
             {

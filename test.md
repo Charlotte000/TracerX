@@ -1,308 +1,227 @@
-```c++
-size_t prim_id = invalid_id;
-float u, v;
-
-// index: first_id(), prim_count()
-// node: min, max, index
-
-// == traverse_top_down ==
-stack.push(bvh.get_root().index);
-restart:
-while (!stack.is_empty())
+```glsl
+struct ScatterSampleRec
 {
-    auto top = stack.pop();
-    while (top.prim_count() == 0)
-    {
-        auto& left  = nodes[top.first_id()];
-        auto& right = nodes[top.first_id() + 1];
+    vec3 L;
+    vec3 f;
+    float pdf;
+};
+```
 
-        // == inner_fn ==
-        std::pair<Scalar, Scalar> intr_left, intr_right;
-        intr_left  =  left.intersect_fast(ray, inv_dir, inv_org, octant); // AABBIntersection -> hit_left and (t0, t1)
-        intr_right = right.intersect_fast(ray, inv_dir, inv_org, octant); // AABBIntersection -> hit_right and (t0, t1)
-
-        bool hit_left = intr_left.first <= intr_left.second;
-        bool hit_right = intr_right.first <= intr_right.second;
-        bool should_swap = intr_left.first > intr_right.first;
-        // == inner_fn ==
-
-        if (hit_left)
-        {
-            auto near_index = left.index;
-            if (hit_right)
-            {
-                auto far_index = right.index;
-                if (should_swap)
-                    std::swap(near_index, far_index);
-                stack.push(far_index);
-            }
-
-            top = near_index;
-        }
-        else if (hit_right)
-        {
-            top = right.index;
-        }
-        else [[unlikely]]
-        {
-            goto restart;
-        }
-    }
-
-    // == leaf_fn ==
-    size_t begin = top.first_id();
-    size_t end = top.first_id() + top.prim_count()
-    for (size_t i = begin; i < end; ++i)
-    {
-        if (auto hit = precomputed_tris[i].intersect(ray)) // TriangleIntersection
-        {
-            prim_id = i;
-            std::tie(u, v) = *hit;
-        }
-    }
-
-    bool was_hit = prim_id != invalid_id;
-    // == leaf_fn ==
-
-    if constexpr (IsAnyHit) {
-        if (was_hit) return;
-    }
-}
-
-// == traverse_top_down ==
-
-if (prim_id != invalid_id) {
-    std::cout
-        << "Intersection found\n"
-        << "  primitive: " << prim_id << "\n"
-        << "  distance: " << ray.tmax << "\n"
-        << "  barycentric coords.: " << u << ", " << v << std::endl;
-    return 0;
-} else {
-    std::cout << "No intersection found" << std::endl;
-    return 1;
+```glsl
+float Luminance(vec3 c)
+{
+    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
 }
 ```
 
 ```glsl
-bool FindIntersection_orig(in Ray ray, in bool firstHit, out CollisionManifold manifold)
+vec4 EvalEnvMap(Ray r)
 {
-    manifold.Depth = MaxRenderDistance;
+    float theta = acos(clamp(r.direction.y, -1.0, 1.0));
+    vec2 uv = vec2((PI + atan(r.direction.z, r.direction.x)) * INV_TWO_PI, theta * INV_PI) + vec2(envMapRot, 0.0);
+    
+    vec3 color = texture(envMapTex, uv).rgb;
+    float pdf = Luminance(color) / envMapTotalSum;
 
-    ivec2 stack[64];
-    int stackPtr = 0;
+    return vec4(color, (pdf * envMapRes.x * envMapRes.y) / (TWO_PI * PI * sin(theta)));
+}
+```
 
-    stack[stackPtr] = ivec2(1, 0);
+```glsl
+float PowerHeuristic(float a, float b)
+{
+    float t = a * a;
+    return t / (b * b + t);
+}
+```
 
-    while (stackPtr >= 0)
+```glsl
+vec4 PathTrace(Ray r)
+{
+    vec3 radiance = vec3(0.0);
+    vec3 throughput = vec3(1.0);
+    State state;
+    LightSampleRec lightSample;
+    ScatterSampleRec scatterSample;
+
+    // FIXME: alpha from material opacity/medium density
+    float alpha = 1.0;
+
+    // For medium tracking
+    bool inMedium = false;
+    bool mediumSampled = false;
+    bool surfaceScatter = false;
+
+    for (state.depth = 0;; state.depth++)
     {
-        ivec2 top = stack[stackPtr];
-        stackPtr--;
+// <--------------------------------------------------------------->
+        bool hit = ClosestHit(r, state, lightSample);
 
-        bool breakFlag = false;
-        while (top.y == 0)
+        if (!hit)
         {
-            Node left = GetNode(top.x);
-            ivec2 leftIndex = ivec2(left.FirstId, left.PrimCount);
-            Node right = GetNode(top.x + 1);
-            ivec2 rightIndex = ivec2(right.FirstId, right.PrimCount);
+#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND)
+            if (state.depth == 0)
+                alpha = 0.0;
+#endif
 
-            float leftNear, leftFar, rightNear, rightFar;
-            bool hitLeft = AABBIntersection(ray, left.BboxMin, left.BboxMax, leftNear, leftFar);
-            bool hitRight = AABBIntersection(ray, right.BboxMin, right.BboxMax, rightNear, rightFar);
-            bool shouldSwap = leftNear > rightNear;
-
-            if (hitLeft)
+#ifdef OPT_HIDE_EMITTERS
+            if(state.depth > 0)
+#endif
             {
-                ivec2 nearIndex = leftIndex;
-                if (hitRight)
-                {
-                    ivec2 farIndex = rightIndex;
-                    if (shouldSwap)
-                    {
-                        swap(nearIndex, farIndex);
-                    }
+                vec4 envMapColPdf = EvalEnvMap(r);
 
-                    stackPtr++;
-                    stack[stackPtr] = farIndex;
-                }
+                float misWeight = 1.0;
 
-                top = nearIndex;
-                continue;
-            }
+                // Gather radiance from envmap and use scatterSample.pdf from previous bounce for MIS
+                if (state.depth > 0)
+                    misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
 
-            if (hitRight)
-            {
-                top = rightIndex;
-                continue;
-            }
+#if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
+                if(!surfaceScatter)
+                    misWeight = 1.0f;
+#endif
 
-            breakFlag = true;
+                if(misWeight > 0)
+                    radiance += misWeight * envMapColPdf.rgb * throughput * envMapIntensity;
+             }
+             break;
+        }
+
+// <--------------------------------------------------------------->
+
+        GetMaterial(state, r);
+
+        // Gather radiance from emissive objects. Emission from meshes is not importance sampled
+        radiance += state.mat.emission * throughput;
+        
+#ifdef OPT_LIGHTS
+
+        // Gather radiance from light and use scatterSample.pdf from previous bounce for MIS
+        if (state.isEmitter)
+        {
+            float misWeight = 1.0;
+
+            if (state.depth > 0)
+                misWeight = PowerHeuristic(scatterSample.pdf, lightSample.pdf);
+
+#if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
+            if(!surfaceScatter)
+                misWeight = 1.0f;
+#endif
+
+            radiance += misWeight * lightSample.emission * throughput;
+
             break;
         }
+#endif
+        // Stop tracing ray if maximum depth was reached
+        if(state.depth == maxDepth)
+            break;
 
-        if (breakFlag)
+#ifdef OPT_MEDIUM
+
+        mediumSampled = false;
+        surfaceScatter = false;
+
+        // Handle absorption/emission/scattering from medium
+        // TODO: Handle light sources placed inside medium
+        if(inMedium)
         {
-            continue;
-        }
-
-        int begin = top.x;
-        int end = top.x + top.y;
-        for (int i = begin; i < end; i++)
-        {
-            Triangle triangle = GetTriangle(i);
-            Mesh mesh = GetMesh(triangle.MeshId);
-
-            Vertex v1 = GetVertex(triangle.V1, mesh.Transform);
-            Vertex v2 = GetVertex(triangle.V2, mesh.Transform);
-            Vertex v3 = GetVertex(triangle.V3, mesh.Transform);
-
-            CollisionManifold current;
-            if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= MinRenderDistance))
+            if(state.medium.type == MEDIUM_ABSORB)
             {
-                manifold = current;
+                throughput *= exp(-(1.0 - state.medium.color) * state.hitDist * state.medium.density);
             }
-        }
-    }
-
-    return manifold.Depth < MaxRenderDistance;
-}
-```
-
-```glsl
-bool FindIntersection_FastBVH_Like(in Ray ray, in bool firstHit, out CollisionManifold manifold)
-{
-    manifold.Depth = MaxRenderDistance;
-
-    ivec2 stack[64];
-    int stackPtr = 0;
-
-    stack[stackPtr] = ivec2(1, 0);
-
-    while (stackPtr >= 0)
-    {
-        ivec2 top = stack[stackPtr];
-        stackPtr--;
-
-        if (top.y != 0)
-        {
-            int begin = top.x;
-            int end = top.x + top.y;
-            for (int i = begin; i < end; i++)
+            else if(state.medium.type == MEDIUM_EMISSIVE)
             {
-                Triangle triangle = GetTriangle(i);
-                Mesh mesh = GetMesh(triangle.MeshId);
+                radiance += state.medium.color * state.hitDist * state.medium.density * throughput;
+            }
+            else
+            {
+                // Sample a distance in the medium
+                float scatterDist = min(-log(rand()) / state.medium.density, state.hitDist);
+                mediumSampled = scatterDist < state.hitDist;
 
-                Vertex v1 = GetVertex(triangle.V1, mesh.Transform);
-                Vertex v2 = GetVertex(triangle.V2, mesh.Transform);
-                Vertex v3 = GetVertex(triangle.V3, mesh.Transform);
-
-                CollisionManifold current;
-                if (TriangleIntersection(ray, v1, v2, v3, mesh.MaterialId, current) && current.Depth < manifold.Depth && (!firstHit || current.Depth >= MinRenderDistance))
+                if (mediumSampled)
                 {
-                    manifold = current;
+                    throughput *= state.medium.color;
+
+                    // Move ray origin to scattering position
+                    r.origin += r.direction * scatterDist;
+                    state.fhp = r.origin;
+
+                    // Transmittance Evaluation
+                    radiance += DirectLight(r, state, false) * throughput;
+
+                    // Pick a new direction based on the phase function
+                    vec3 scatterDir = SampleHG(-r.direction, state.medium.anisotropy, rand(), rand());
+                    scatterSample.pdf = PhaseHG(dot(-r.direction, scatterDir), state.medium.anisotropy);
+                    r.direction = scatterDir;
                 }
             }
         }
-        else
+
+        // If medium was not sampled then proceed with surface BSDF evaluation
+        if (!mediumSampled)
         {
-            Node left = GetNode(top.x);
-            ivec2 leftIndex = ivec2(left.FirstId, left.PrimCount);
-            Node right = GetNode(top.x + 1);
-            ivec2 rightIndex = ivec2(right.FirstId, right.PrimCount);
-
-            float leftNear, leftFar, rightNear, rightFar;
-            bool hitLeft = AABBIntersection(ray, left.BboxMin, left.BboxMax, leftNear, leftFar);
-            bool hitRight = AABBIntersection(ray, right.BboxMin, right.BboxMax, rightNear, rightFar);
-            bool shouldSwap = leftNear > rightNear;
-
-            if (hitLeft && hitRight)
+#endif
+            // Ignore intersection and continue ray based on alpha test
+            if ((state.mat.alphaMode == ALPHA_MODE_MASK && state.mat.opacity < state.mat.alphaCutoff) ||
+                (state.mat.alphaMode == ALPHA_MODE_BLEND && rand() > state.mat.opacity))
             {
-                ivec2 nearIndex, farIndex;
-                if (shouldSwap)
-                {
-                    nearIndex = rightIndex;
-                    farIndex = leftIndex;
-                }
+                scatterSample.L = r.direction;
+                state.depth--;
+            }
+            else
+            {
+                surfaceScatter = true;
+
+                // Next event estimation
+                radiance += DirectLight(r, state, true) * throughput;
+
+                // Sample BSDF for color and outgoing direction
+                scatterSample.f = DisneySample(state, -r.direction, state.ffnormal, scatterSample.L, scatterSample.pdf);
+                if (scatterSample.pdf > 0.0)
+                    throughput *= scatterSample.f / scatterSample.pdf;
                 else
-                {
-                    nearIndex = leftIndex;
-                    farIndex = rightIndex;
-                }
+                    break;
+            }
 
-                stackPtr++;
-                stack[stackPtr] = farIndex;
+            // Move ray origin to hit point and set direction for next bounce
+            r.direction = scatterSample.L;
+            r.origin = state.fhp + r.direction * EPS;
 
-                stackPtr++;
-                stack[stackPtr] = nearIndex;
-            }
-            else if (hitLeft)
+#ifdef OPT_MEDIUM
+
+            // Note: Nesting of volumes isn't supported due to lack of a volume stack for performance reasons
+            // Ray is in medium only if it is entering a surface containing a medium
+            if (dot(r.direction, state.normal) < 0 && state.mat.medium.type != MEDIUM_NONE)
             {
-                stackPtr++;
-                stack[stackPtr] = leftIndex;
+                inMedium = true;
+                // Get medium params from the intersected object
+                state.medium = state.mat.medium;
             }
-            else if (hitRight)
-            {
-                stackPtr++;
-                stack[stackPtr] = rightIndex;
-            }
+            // FIXME: Objects clipping or inside a medium were shaded incorrectly as inMedium would be set to false.
+            // This hack works for now but needs some rethinking
+            else if(state.mat.medium.type != MEDIUM_NONE)
+                inMedium = false;
         }
+#endif
+
+// <--------------------------------------------------------------->
+// #ifdef OPT_RR
+//         // Russian roulette
+//         if (state.depth >= OPT_RR_DEPTH)
+//         {
+//             float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+//             if (rand() > q)
+//                 break;
+//             throughput /= q;
+//         }
+// #endif
+// <--------------------------------------------------------------->
+
     }
 
-    return manifold.Depth < MaxRenderDistance;
+    return vec4(radiance, alpha);
 }
-
 ```
-
-
-## AABB
-```c++
-auto inv_dir = ray.template get_inv_dir<!IsRobust>();
-auto inv_org = -inv_dir * ray.org;
-auto octant = ray.get_octant();
-
-left.intersect_fast(ray, inv_dir, inv_org, octant);
-{
-    auto tmin = get_min_bounds(octant) * inv_dir + inv_org;
-    auto tmax = get_max_bounds(octant) * inv_dir + inv_org;
-    return make_intersection_result(ray, tmin, tmax);
-    {
-        auto t0 = ray.tmin;
-        auto t1 = ray.tmax;
-        static_for<0, Dim>([&] (size_t i) {
-            t0 = robust_max(tmin[i], t0);
-            t1 = robust_min(tmax[i], t1);
-        });
-        return std::pair<T, T> { t0, t1 };
-    }
-}
-
-```
-
-```glsl
-vec3 inv_dir = 1.0 / ray.Direction; // ToDo SafeInverse
-vec3 inv_org = -inv_dir * ray.Origin;
-bvec3 octant = bvec3(ray.Direction.x < 0, ray.Direction.y < 0, ray.Direction.z < 0);
-
-bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNear, out float tFar)
-{
-    vec3 minBounds = vec3(octant.x ? boxMax.x : boxMin.x, octant.y ? boxMax.y : boxMin.y, octant.z ? boxMax.z : boxMin.z);
-    vec3 maxBounds = vec3(octant.x ? boxMin.x : boxMax.x, octant.y ? boxMin.y : boxMax.y, octant.z ? boxMin.z : boxMax.z);
-
-    vec3 tmin = minBounds * inv_dir + inv_org;
-    vec3 tmax = maxBounds * inv_dir + inv_org;
-
-    tNear = max(max(tmin.x, tmin.y), tmin.z);
-    tFar = min(min(tmax.x, tmaax.y), tmax.z);
-    return tNear <= tFar && tFar >= 0;
-}
-
-```
-
-ajax (544_566 triangles) (position 0 0.5 -0.5)
-|        | bvh     | my_bvh  | FastBVH |
-|--------|---------|---------|---------|
-| render | 45 ms   | 47 ms   | 26 ms   |
-| nodes  | 611_331 | 611_331 | 36_6573 |
-
-
