@@ -53,6 +53,40 @@ Image Image::resize(glm::uvec2 size) const
     return img;
 }
 
+glm::vec4 Image::get(glm::uvec2 coords) const
+{
+    assert(coords.x < this->size.x && coords.y < this->size.y);
+    size_t index = (coords.y * this->size.x + coords.x) * 4;
+    return glm::vec4(this->pixels[index + 0], this->pixels[index + 1], this->pixels[index + 2], this->pixels[index + 3]);
+}
+
+glm::vec4 Image::get(size_t index) const
+{
+    assert(index < this->size.x * this->size.y);
+    index *= 4;
+    return glm::vec4(this->pixels[index + 0], this->pixels[index + 1], this->pixels[index + 2], this->pixels[index + 3]);
+}
+
+void Image::set(glm::uvec2 coords, glm::vec4 value)
+{
+    assert(coords.x < this->size.x && coords.y < this->size.y);
+    size_t index = (coords.y * this->size.x + coords.x) * 4;
+    this->pixels[index + 0] = value.r;
+    this->pixels[index + 1] = value.g;
+    this->pixels[index + 2] = value.b;
+    this->pixels[index + 3] = value.a;
+}
+
+void Image::set(size_t index, glm::vec4 value)
+{
+    assert(index < this->size.x * this->size.y);
+    index *= 4;
+    this->pixels[index + 0] = value.r;
+    this->pixels[index + 1] = value.g;
+    this->pixels[index + 2] = value.b;
+    this->pixels[index + 3] = value.a;
+}
+
 Image Image::loadFromFile(const std::filesystem::path& path)
 {
     Image img;
@@ -82,8 +116,4 @@ Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels)
     img.size = size;
     img.pixels = pixels;
     return img;
-}
-
-Image::Image()
-{
 }

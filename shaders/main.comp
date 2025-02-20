@@ -18,6 +18,7 @@ int StackPtr = 0;
 #include "common/random.comp"
 #include "common/transforms.comp"
 #include "common/intersection.comp"
+#include "common/sampling.comp"
 #include "common/bsdf.comp"
 #include "common/tonemap.comp"
 
@@ -35,7 +36,10 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
         CollisionManifold manifold;
         if (!FindIntersection(ray, depth == 0 ? Camera.ZNear : EPS, depth == 0 ? Camera.ZFar : INF, manifold))
         {
-            radiance += GetEnvironment(ray) * throughput;
+            vec4 envColPdf = GetEnvironment(ray);
+            float misWeight = depth > 0 ? PowerHeuristic(1, envColPdf.w) : 1;
+            radiance += misWeight * envColPdf.rgb * throughput;
+
             if (!isSampled)
             {
                 albedo = radiance;
@@ -45,6 +49,10 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
 
             return vec4(radiance, !isSampled && Environment.Transparent ? 0 : 1);
         }
+
+        Material material = GetMaterial(manifold);
+
+        radiance += state.mat.emission * throughput;
 
         if (BSDF(ray, throughput, radiance, manifold))
         {

@@ -55,46 +55,39 @@ vec4 PathTrace(Ray r)
     for (state.depth = 0;; state.depth++)
     {
 // <--------------------------------------------------------------->
-        bool hit = ClosestHit(r, state, lightSample);
-
-        if (!hit)
-        {
-#if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND)
-            if (state.depth == 0)
-                alpha = 0.0;
-#endif
-
-#ifdef OPT_HIDE_EMITTERS
-            if(state.depth > 0)
-#endif
-            {
-                vec4 envMapColPdf = EvalEnvMap(r);
-
-                float misWeight = 1.0;
-
-                // Gather radiance from envmap and use scatterSample.pdf from previous bounce for MIS
-                if (state.depth > 0)
-                    misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
-
-#if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
-                if(!surfaceScatter)
-                    misWeight = 1.0f;
-#endif
-
-                if(misWeight > 0)
-                    radiance += misWeight * envMapColPdf.rgb * throughput * envMapIntensity;
-             }
-             break;
-        }
-
-// <--------------------------------------------------------------->
+//         bool hit = ClosestHit(r, state, lightSample);
+// 
+//         if (!hit)
+//         {
+// #if defined(OPT_BACKGROUND) || defined(OPT_TRANSPARENT_BACKGROUND)
+//             if (state.depth == 0)
+//                 alpha = 0.0;
+// #endif
+// 
+//             vec4 envMapColPdf = EvalEnvMap(r);
+// 
+//             float misWeight = 1.0;
+// 
+//             // Gather radiance from envmap and use scatterSample.pdf from previous bounce for MIS
+//             if (state.depth > 0)
+//                 misWeight = PowerHeuristic(scatterSample.pdf, envMapColPdf.w);
+// 
+// #if defined(OPT_MEDIUM) && !defined(OPT_VOL_MIS)
+//             if(!surfaceScatter)
+//                 misWeight = 1.0f;
+// #endif
+// 
+//             if(misWeight > 0)
+//                 radiance += misWeight * envMapColPdf.rgb * throughput * envMapIntensity;
+//              break;
+//         }
+// 
+// <------------------------------------------------------------- -->
 
         GetMaterial(state, r);
 
         // Gather radiance from emissive objects. Emission from meshes is not importance sampled
         radiance += state.mat.emission * throughput;
-        
-#ifdef OPT_LIGHTS
 
         // Gather radiance from light and use scatterSample.pdf from previous bounce for MIS
         if (state.isEmitter)
@@ -113,7 +106,7 @@ vec4 PathTrace(Ray r)
 
             break;
         }
-#endif
+
         // Stop tracing ray if maximum depth was reached
         if(state.depth == maxDepth)
             break;

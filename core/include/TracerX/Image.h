@@ -45,6 +45,34 @@ public:
     Image resize(glm::uvec2 size) const;
 
     /**
+     * @brief Gets the pixel at the specified coordinates.
+     * @param coords The coordinates of the pixel.
+     * @return The pixel at the specified coordinates.
+     */
+    glm::vec4 get(glm::uvec2 coords) const;
+
+    /**
+     * @brief Gets the pixel at the specified index.
+     * @param index The index of the pixel.
+     * @return The pixel at the specified index.
+     */
+    glm::vec4 get(size_t index) const;
+
+    /**
+     * @brief Sets the pixel at the specified coordinates.
+     * @param coords The coordinates of the pixel.
+     * @param value The value of the pixel.
+     */
+    void set(glm::uvec2 coords, glm::vec4 value);
+
+    /**
+     * @brief Sets the pixel at the specified index.
+     * @param index The index of the pixel.
+     * @param value The value of the pixel.
+     */
+    void set(size_t index, glm::vec4 value);
+
+    /**
      * @brief Loads an image from a file.
      * @param path The path of the file to load the image from.
      * @return The loaded image.
@@ -61,8 +89,6 @@ public:
      * @return The loaded image.
      */
     static Image loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels);
-private:
-    Image();
 };
 
 }

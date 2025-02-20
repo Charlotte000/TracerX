@@ -112,6 +112,7 @@ void Renderer::shutdown()
     this->depthTexture.shutdown();
     this->toneMapTexture.shutdown();
     this->environment.texture.shutdown();
+    this->environment.cdfTexture.shutdown();
     this->textureArray.shutdown();
 
     // SSBOs
@@ -386,6 +387,7 @@ void Renderer::initData(const std::filesystem::path& shaderPath)
     this->depthTexture.init(GL_R32F, GL_NEAREST);
     this->toneMapTexture.init(GL_RGBA32F, GL_NEAREST);
     this->environment.texture.init(GL_RGBA32F);
+    this->environment.cdfTexture.init(GL_R32F);
     this->textureArray.init(GL_RGBA32F);
 
     // SSBOs
@@ -414,7 +416,8 @@ void Renderer::bindData()
 
     // Textures
     this->environment.texture.bind(0);
-    this->textureArray.bind(1);
+    this->environment.cdfTexture.bind(1);
+    this->textureArray.bind(2);
 
     // SSBOs
     this->vertexBuffer.bind(0);
@@ -469,7 +472,7 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         glm::vec4 rotation3;
         int transparent;
         float intensity;
-        int padding1;
+        float cdfTotal;
         int padding2;
     } environment
     {
@@ -478,7 +481,7 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         glm::vec4(this->environment.rotation[2], 0),
         this->environment.transparent,
         this->environment.intensity,
-        0,
+        this->environment.cdfTotal,
         0,
     };
     this->environmentBuffer.update(&environment, sizeof(environment));

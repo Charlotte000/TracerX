@@ -405,8 +405,7 @@ void Application::control()
 float Application::getLookAtDistance() const
 {
     Image image = this->renderer.getDepthImage();
-    size_t centerIndex = image.size.x / 2 * (1 + image.size.y) * 4;
-    float nonLinear = image.pixels[centerIndex] * 2 - 1;
+    float nonLinear = image.get(image.size / 2u).r * 2 - 1;
 
     float min = this->renderer.camera.zNear;
     float max = this->renderer.camera.zFar;

@@ -5,7 +5,8 @@ layout(r32f,    binding=3) writeonly uniform image2D DepthImage;
 layout(rgba32f, binding=4) writeonly uniform image2D ToneMapImage;
 
 layout(binding=0) uniform sampler2D EnvironmentTexture;
-layout(binding=1) uniform sampler2DArray Textures;
+layout(binding=1) uniform sampler2D EnvironmentCDFTexture;
+layout(binding=2) uniform sampler2DArray Textures;
 
 layout(std430, binding=0) readonly buffer VertexSSBO
 {
@@ -65,16 +66,27 @@ layout(std140, binding=2) uniform ParamsUBO
 };
 
 ivec2 Size = imageSize(AccumulatorImage);
+ivec2 EnvironmentSize = textureSize(EnvironmentTexture, 0);
 ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
 vec2 UV = vec2(TexelCoord) / Size;
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
-vec3 GetEnvironment(in Ray ray)
+float Luminance(vec3 c)
+{
+    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
+}
+
+vec4 GetEnvironment(in Ray ray)
 {
     vec3 direction = Environment.Rotation * ray.Direction;
+    float theta = acos(direction.y);
+    
+    float v = theta * INV_PI;
     float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
-    float v = acos(direction.y) * INV_PI;
-    return texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
+
+    vec3 color = texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
+    float pdf = Luminance(color) / Environment.CdfTotal;
+    return vec4(color, pdf * EnvironmentSize.x * EnvironmentSize.y * INV_TWO_PI * INV_PI / sin(theta));
 }
 
 Material GetMaterial(inout CollisionManifold manifold)

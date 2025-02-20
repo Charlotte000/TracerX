@@ -10,6 +10,7 @@ struct Env
     mat3 Rotation;
     bool Transparent;
     float Intensity;
+    float CdfTotal;
 };
 
 struct Cam

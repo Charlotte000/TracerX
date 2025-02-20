@@ -47,6 +47,10 @@ public:
     void loadFromImage(const Image& image);
 private:
     core::GL::Texture texture;
+    core::GL::Texture cdfTexture;
+    float cdfTotal;
+
+    void buildCDF(const Image& image);
 
     friend class Renderer;
 };
