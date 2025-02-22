@@ -339,12 +339,12 @@ public:
      * @brief Loads the specified scene into the renderer.
      * 
      * Use this method to load the entire scene into the GPU.
-     * Keep in mind that this method builds the BVH tree of the scene, which may be time-consuming.
+     * Builds the BVH tree of the scene (BLAS and TLAS), which may be time-consuming.
      * 
      * @param scene The scene to load.
      * @param maxTextureArraySize The maximum size of the textures used in the scene. For low-end devices.
      * @see Renderer::updateSceneMaterials to update only the materials.
-     * @see Renderer::updateSceneMeshes to update only the meshes.
+     * @see Renderer::updateSceneMeshInstances to update only the mesh instances.
      */
     void loadScene(Scene& scene, glm::uvec2 maxTextureArraySize = glm::uvec2(-1));
 
@@ -362,6 +362,7 @@ public:
      * @brief Updates the mesh instances in the scene.
      * 
      * Use this method to update only the mesh instances in the scene.
+     * Rebuilds the BVH tree of the scene (only TLAS).
      * 
      * @param scene The scene containing the updated mesh instances.
      * @see Renderer::loadScene to update the entire scene.

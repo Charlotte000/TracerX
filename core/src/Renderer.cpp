@@ -9,7 +9,6 @@
 #include <OpenImageDenoise/oidn.hpp>
 #endif
 
-
 using namespace TracerX;
 using namespace TracerX::core;
 using namespace TracerX::core::GL;
@@ -336,7 +335,7 @@ void Renderer::updateSceneMaterials(const Scene& scene)
 
 void Renderer::updateSceneMeshInstances(Scene& scene)
 {
-    struct Payload
+    struct MeshInstancePayload
     {
         glm::mat4 transform = glm::mat4(1);
         glm::mat4 transformInv = glm::mat4(1);
@@ -344,26 +343,30 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
         int meshId = -1;
         int padding1 = 0;
         int padding2 = 0;
+
+        MeshInstancePayload(const MeshInstance& meshInstance)
+            :
+            transform(meshInstance.transform),
+            transformInv(glm::inverse(meshInstance.transform)),
+            materialId(meshInstance.materialId),
+            meshId(meshInstance.meshId)
+        {
+        }
     };
 
     std::vector<BvhNode> tlas;
-    std::vector<size_t> permutation;
-    scene.buildTLAS(tlas, permutation);
+    std::vector<size_t> meshInstancePermutation;
+    scene.buildTLAS(tlas, meshInstancePermutation);
 
-    std::vector<Payload> meshInstancesPayload;
-    for (size_t meshInstanceId : permutation)
+    std::vector<MeshInstancePayload> meshInstancesPayload;
+    meshInstancesPayload.reserve(scene.meshInstances.size());
+    for (size_t meshInstanceId : meshInstancePermutation)
     {
         const MeshInstance& meshInstance = scene.meshInstances[meshInstanceId];
-
-        Payload payload;
-        payload.transform = meshInstance.transform;
-        payload.transformInv = glm::inverse(meshInstance.transform);
-        payload.materialId = meshInstance.materialId;
-        payload.meshId = meshInstance.meshId;
-        meshInstancesPayload.push_back(payload);
+        meshInstancesPayload.emplace_back(meshInstance);
     }
 
-    this->meshInstanceBuffer.update(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(Payload));
+    this->meshInstanceBuffer.update(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(MeshInstancePayload));
     this->tlasBuffer.update(tlas.data(), tlas.size() * sizeof(BvhNode));
 }
 

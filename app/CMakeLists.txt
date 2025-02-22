@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(App)
 
 include(FetchContent)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(
     ${PROJECT_NAME}
@@ -69,9 +69,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE -DIMGUI_DEFINE_MATH_OPERATORS
 # TinyFileDialogs v3.18.2
 FetchContent_Declare(
     tinyfiledialogs
-    URL      https://sourceforge.net/code-snapshots/git/t/ti/tinyfiledialogs/code.git/tinyfiledialogs-code-29c1b354d75825209adf8cc1979c425885a64d32.zip
-    URL_HASH SHA256=381c68cd5330e58d9180807bf82570988aa96c2fb133b4d0d5e8a588af12762f
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    GIT_REPOSITORY https://github.com/native-toolkit/libtinyfiledialogs.git
+    GIT_TAG        cc6b593c029110af8045826ce691f540c85e850c
 )
 FetchContent_MakeAvailable(tinyfiledialogs)
 target_include_directories(${PROJECT_NAME} PRIVATE ${tinyfiledialogs_SOURCE_DIR})

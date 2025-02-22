@@ -34,6 +34,7 @@ public:
      * @brief The triangles of the scene.
      * 
      * The range of the triangles in the vector is [Mesh::triangleOffset, Mesh::triangleOffset + Mesh::triangleSize) for each mesh in the scene.
+     * The order of the triangles in the mesh is not guaranteed due to the BVH build optimization.
      */
     std::vector<core::Triangle> triangles;
 
@@ -82,6 +83,8 @@ public:
 
     /**
      * @brief The mesh instances in the scene.
+     * 
+     * The order of the mesh instances is preserved after the BVH build.
      */
     std::vector<MeshInstance> meshInstances;
 
@@ -109,7 +112,7 @@ public:
     /**
      * @brief Adds a mesh to the scene.
      * 
-     * Builds a BVH tree for the mesh. May take a long time for large meshes.
+     * Builds the BLAS BVH tree for the mesh. May take a long time for large meshes.
      * 
      * @param mesh The mesh to be added.
      * @param name The name of the mesh.
@@ -120,7 +123,7 @@ private:
     std::vector<core::BvhNode> blas;
 
     void buildBLAS(Mesh& mesh);
-    void buildTLAS(std::vector<core::BvhNode>& tlas, std::vector<size_t>& permutation);
+    void buildTLAS(std::vector<core::BvhNode>& tlas, std::vector<size_t>& meshInstancePermutation);
 
     friend class Renderer;
 };

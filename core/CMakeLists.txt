@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(TracerX)
 
 include(FetchContent)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 add_library(
     ${PROJECT_NAME}
@@ -22,8 +22,15 @@ add_library(
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # FastBVH
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/libs/fastBVH)
-target_link_libraries(${PROJECT_NAME} PRIVATE FastBVH)
+set(FASTBVH_BUILD_EXAMPLES OFF CACHE BOOL "Whether or not to build the example programs.")
+set(FASTBVH_BUILD_TESTS OFF CACHE BOOL "Whether or not to build the unit tests.")
+FetchContent_Declare(
+    fastbvh
+    GIT_REPOSITORY https://github.com/brandonpelfrey/Fast-BVH.git
+    GIT_TAG        f2750b2d3543248b5b29dd97a630d35be5366678
+)
+FetchContent_MakeAvailable(fastbvh)
+target_include_directories(${PROJECT_NAME} PRIVATE ${fastbvh_SOURCE_DIR}/include)
 
 # GLEW 2.2.0
 FetchContent_Declare(

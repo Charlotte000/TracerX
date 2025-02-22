@@ -3,6 +3,7 @@
  */
 #include "TracerX/Scene.h"
 
+#include <numeric>
 #include <FastBVH.h>
 #include <glm/gtx/extended_min_max.hpp>
 
@@ -38,11 +39,21 @@ void transformBbox(glm::vec3 vMin, glm::vec3 vMax, const glm::mat4& transform, g
     tMax = glm::max(glm::max(glm::max(v1, v2, v3, v4), v5, v6, v7), v8);
 }
 
+FastBVH::Vector3<float> toVector3(glm::vec3 v)
+{
+    return { v.x, v.y, v.z };
+}
+
+glm::vec3 toVec3(FastBVH::Vector3<float> v)
+{
+    return { v.x, v.y, v.z };
+}
+
 BvhNode toNode(const FastBVH::Node<float>& node)
 {
     BvhNode myNode;
-    myNode.bboxMin = glm::vec4(node.bbox.min, 0);
-    myNode.bboxMax = glm::vec4(node.bbox.max, 0);
+    myNode.bboxMin = glm::vec4(toVec3(node.bbox.min), 0);
+    myNode.bboxMax = glm::vec4(toVec3(node.bbox.max), 0);
     myNode.start = node.start;
     myNode.primitiveCount = node.primitive_count;
     myNode.rightOffset = node.right_offset;
@@ -81,19 +92,14 @@ void Scene::buildBLAS(Mesh& mesh)
     public:
         const std::vector<Vertex>* vertices;
 
-        TriangleConverter(const std::vector<Vertex>* vertices)
-            : vertices(vertices)
-        {
-        }
-
         FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
         {
             glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
             glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
             glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
-            return FastBVH::BBox<float>(glm::min(v1, v2, v3), glm::max(v1, v2, v3));
+            return FastBVH::BBox<float>(toVector3(glm::min(v1, v2, v3)), toVector3(glm::max(v1, v2, v3)));
         }
-    } triangleConverter(&this->vertices);
+    } triangleConverter { &this->vertices };
     FastBVH::DefaultBuilder<float> bvhBuilder;
 
     // Build BVH
@@ -110,7 +116,7 @@ void Scene::buildBLAS(Mesh& mesh)
     }
 }
 
-void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& permutation)
+void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& meshInstancePermutation)
 {
     class MeshInstanceConverter
     {
@@ -118,11 +124,6 @@ void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& permutati
         const std::vector<MeshInstance>* meshInstances;
         const std::vector<Mesh>* meshes;
         const std::vector<BvhNode>* blas;
-
-        MeshInstanceConverter(const std::vector<MeshInstance>* meshInstances, const std::vector<Mesh>* meshes, const std::vector<BvhNode>* blas)
-            : meshInstances(meshInstances), meshes(meshes), blas(blas)
-        {
-        }
 
         FastBVH::BBox<float> operator()(const size_t& meshInstanceId) const noexcept
         {
@@ -132,20 +133,17 @@ void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& permutati
 
             glm::vec3 vMin, vMax;
             transformBbox(node.bboxMin, node.bboxMax, meshInstance.transform, vMin, vMax);
-            return FastBVH::BBox<float>(vMin, vMax);
+            return FastBVH::BBox<float>(toVector3(vMin), toVector3(vMax));
         }
-    } meshInstanceBuilder(&this->meshInstances, &this->meshes, &this->blas);
+    } meshInstanceBuilder { &this->meshInstances, &this->meshes, &this->blas };
     FastBVH::DefaultBuilder<float> bvhBuilder;
 
     // Create mesh instance permutation
-    permutation.reserve(permutation.size() + this->meshInstances.size());
-    for (size_t i = 0; i < this->meshInstances.size(); i++)
-    {
-        permutation.push_back(i);
-    }
+    meshInstancePermutation = std::vector<size_t>(this->meshInstances.size());
+    std::iota(meshInstancePermutation.begin(), meshInstancePermutation.end(), 0);
 
     // Build BVH
-    FastBVH::BVH<float, size_t> bvh = bvhBuilder(permutation, meshInstanceBuilder);
+    FastBVH::BVH<float, size_t> bvh = bvhBuilder(meshInstancePermutation, meshInstanceBuilder);
 
     // Convert to our format
     tlas.reserve(tlas.size() + bvh.getNodes().size());
