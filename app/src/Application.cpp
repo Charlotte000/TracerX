@@ -125,50 +125,29 @@ bool Application::CameraControl::controlOrbit(Camera& camera)
     return false;
 }
 
-void Application::RenderTextureView::reset()
-{
-    this->uvCenter = glm::vec2(.5);
-    this->uvSize = glm::vec2(1);
-}
-
-void Application::RenderTextureView::clamp()
-{
-    this->uvSize = glm::clamp(this->uvSize, glm::vec2(.0001f), glm::vec2(1));
-    this->uvCenter = glm::clamp(this->uvCenter, this->uvSize * .5f, 1.f - this->uvSize * .5f);
-}
-
-void Application::RenderTextureView::getUV(glm::vec2& lo, glm::vec2& up) const
-{
-    lo = this->uvCenter - this->uvSize * .5f;
-    up = this->uvCenter + this->uvSize * .5f;
-}
-
-void Application::RenderTextureView::getRectFromUV(glm::vec2& lo, glm::vec2& up) const
-{
-    lo = lo * this->size + this->pos;
-    up = up * this->size + this->pos;
-}
-
-void Application::RenderTextureView::control()
+void Application::ZoomTexture::control()
 {
     ImGuiIO io = ImGui::GetIO();
-
-    if (ImGui::IsMouseDragging(ImGuiMouseButton_Left) && this->uvSize != glm::vec2(1))
-    {
-        this->uvCenter -= toVec2(io.MouseDelta) * this->uvSize / this->size;
-        this->clamp();
-    }
-
     if (io.MouseWheel > 0)
     {
-        this->uvSize *= .9f;
-        this->clamp();
+        this->zoom *= .9f;
     }
     else if (io.MouseWheel < 0)
     {
-        this->uvSize *= 1.1f;
-        this->clamp();
+        this->zoom *= 1.1f;
     }
+}
+
+void Application::ZoomTexture::getUV(float aspectRatio, glm::vec2& lo, glm::vec2& up)
+{
+    this->zoom = glm::clamp(this->zoom, 0.f, 1.f);
+
+    glm::vec2 ar = aspectRatio < 1 ? glm::vec2(1, aspectRatio) : glm::vec2(1 / aspectRatio, 1);
+    glm::vec2 size = this->zoom / 2 * ar;
+    this->uvCenter = glm::clamp(this->uvCenter, size, 1.f - size);
+
+    lo = this->uvCenter - this->zoom / 2 * ar;
+    up = this->uvCenter + this->zoom / 2 * ar;
 }
 
 void Application::Tiling::tick()
@@ -369,9 +348,10 @@ void Application::control()
     }
 #endif
 
-    if (this->renderTextureView.isHover && ImGui::IsKeyDown(ImGuiKey_LeftCtrl))
+    this->zoomTexture.enable = this->isHoverTexture && ImGui::IsKeyDown(ImGuiKey_Z);
+    if (this->zoomTexture.enable)
     {
-        this->renderTextureView.control();
+        this->zoomTexture.control();
     }
 
     switch (this->cameraControl.mode)
@@ -380,22 +360,19 @@ void Application::control()
             if (this->cameraControl.enableFree && this->cameraControl.controlFree(this->renderer.camera))
             {
                 this->clear();
-                this->renderTextureView.reset();
             }
 
             if (ImGui::IsKeyPressed(ImGuiKey_C, false))
             {
                 this->cameraControl.enableFree = !this->cameraControl.enableFree;
                 glfwSetInputMode(window, GLFW_CURSOR, this->cameraControl.enableFree ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
-                this->renderTextureView.reset();
             }
 
             break;
         case Application::CameraControl::Mode::Orbit:
-            if (this->renderTextureView.isHover && !ImGuizmo::IsOver() && !ImGui::IsKeyDown(ImGuiKey_LeftCtrl) && this->cameraControl.controlOrbit(this->renderer.camera))
+            if (this->isHoverTexture && !ImGuizmo::IsOver() && this->cameraControl.controlOrbit(this->renderer.camera))
             {
                 this->clear();
-                this->renderTextureView.reset();
             }
 
             break;
@@ -418,7 +395,6 @@ void Application::setCameraMode(CameraControl::Mode mode)
     this->cameraControl.mode = mode;
     this->cameraControl.enableFree = false;
     glfwSetInputMode(this->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    this->renderTextureView.reset();
 }
 
 void Application::switchRendering()

@@ -14,6 +14,7 @@ public:
     GLFWwindow* window = nullptr;
     GLFWwindow* threadContext = nullptr;
     bool isSceneLoaded = true;
+    bool isHoverTexture = false;
     const glm::uvec2 maxTextureArraySize;
 #if !TX_SPIRV
     const std::filesystem::path shaderPath;
@@ -52,20 +53,15 @@ public:
         bool isLastTick() const;
         void getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::uvec2& size);
     } tiling;
-    struct RenderTextureView
+    struct ZoomTexture
     {
-        glm::vec2 uvCenter = glm::vec2(.5f);
-        glm::vec2 uvSize = glm::vec2(1);
-        glm::vec2 size;
-        glm::vec2 pos;
-        bool isHover = false;
+        float zoom = .125;
+        glm::vec2 uvCenter = glm::vec2(.5);
+        bool enable = false;
 
-        void reset();
-        void clamp();
-        void getUV(glm::vec2& lo, glm::vec2& up) const;
-        void getRectFromUV(glm::vec2& lo, glm::vec2& up) const;
         void control();
-    } renderTextureView;
+        void getUV(float aspectRatio, glm::vec2& lo, glm::vec2& up);
+    } zoomTexture;
     struct Property
     {
         enum class Type
