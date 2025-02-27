@@ -5,9 +5,9 @@
 
 #include "TracerX/GLTFLoader.h"
 
-#include <map>
 #include <stdexcept>
 #include <tiny_gltf.h>
+#include <unordered_map>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -15,9 +15,9 @@ using namespace TracerX;
 using namespace TracerX::core;
 
 #pragma region GLTF Helper Functions
-std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::Model& model)
+std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, const tinygltf::Model& model)
 {
-    std::map<int, std::vector<glm::ivec2>> meshMap;
+    std::unordered_multimap<size_t, glm::ivec2> meshMap;
     scene.meshes.reserve(scene.meshes.size() + model.meshes.size());
     scene.meshNames.reserve(scene.meshes.size() + model.meshes.size());
 
@@ -37,23 +37,23 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             const tinygltf::Buffer& positionBuffer = model.buffers[positionBufferView.buffer];
             const uint8_t* positionBufferAddress = positionBuffer.data.data();
             const uint8_t* positionData = positionBufferAddress + positionBufferView.byteOffset + positionAccessor.byteOffset;
-            size_t positionStride = positionAccessor.ByteStride(positionBufferView);
+            const size_t positionStride = positionAccessor.ByteStride(positionBufferView);
 
             const tinygltf::Accessor& normalAccessor = model.accessors[primitive.attributes["NORMAL"]];
             const tinygltf::BufferView& normalBufferView = model.bufferViews[normalAccessor.bufferView];
             const tinygltf::Buffer& normalBuffer = model.buffers[normalBufferView.buffer];
             const uint8_t* normalBufferAddress = normalBuffer.data.data();
             const uint8_t* normalData = normalBufferAddress + normalBufferView.byteOffset + normalAccessor.byteOffset;
-            size_t normalStride = normalAccessor.ByteStride(normalBufferView);
+            const size_t normalStride = normalAccessor.ByteStride(normalBufferView);
 
             const tinygltf::Accessor& uvAccessor = model.accessors[primitive.attributes["TEXCOORD_0"]];
             const tinygltf::BufferView& uvBufferView = model.bufferViews[uvAccessor.bufferView];
             const tinygltf::Buffer& uvBuffer = model.buffers[uvBufferView.buffer];
             const uint8_t* uvBufferAddress = uvBuffer.data.data();
             const uint8_t* uvData = uvBufferAddress + uvBufferView.byteOffset + uvAccessor.byteOffset;
-            size_t uvStride = uvAccessor.ByteStride(uvBufferView);
+            const size_t uvStride = uvAccessor.ByteStride(uvBufferView);
 
-            size_t vertexOffset = scene.vertices.size();
+            const size_t vertexOffset = scene.vertices.size();
             scene.vertices.reserve(vertexOffset + positionAccessor.count);
             for (size_t i = 0; i < positionAccessor.count; i++)
             {
@@ -75,7 +75,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             }
 
             // Get indices data
-            size_t triangleOffset = scene.triangles.size();
+            const size_t triangleOffset = scene.triangles.size();
             if (primitive.indices >= 0)
             {
                 const tinygltf::Accessor& indexAccessor = model.accessors[primitive.indices];
@@ -83,7 +83,7 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
                 const tinygltf::Buffer& indexBuffer = model.buffers[indexBufferView.buffer];
                 const uint8_t* indexBufferAddress = indexBuffer.data.data();
                 const uint8_t* indexData = indexBufferAddress + indexBufferView.byteOffset + indexAccessor.byteOffset;
-                size_t indexStride = indexAccessor.ByteStride(indexBufferView);
+                const size_t indexStride = indexAccessor.ByteStride(indexBufferView);
 
                 scene.triangles.reserve(triangleOffset + indexAccessor.count / 3);
                 for (size_t i = 0; i < indexAccessor.count; i += 3)
@@ -133,9 +133,9 @@ std::map<int, std::vector<glm::ivec2>> GLTFmeshes(Scene& scene, const tinygltf::
             Mesh mesh;
             mesh.triangleOffset = (int)triangleOffset;
             mesh.triangleSize = (int)(scene.triangles.size() - triangleOffset);
-            int meshId = scene.addMesh(mesh, gltfMesh.name);
+            const int meshId = scene.addMesh(mesh, gltfMesh.name);
 
-            meshMap[(int)gltfMeshId].emplace_back(meshId, primitive.material);
+            meshMap.insert({ gltfMeshId, glm::ivec2(meshId, primitive.material) });
         }
     }
 
@@ -150,7 +150,7 @@ void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, 
     {
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
 
-        glm::uvec2 size(gltfImage.width, gltfImage.height);
+        const glm::uvec2 size(gltfImage.width, gltfImage.height);
 
         std::vector<float> pixels;
         pixels.reserve(gltfImage.width * gltfImage.height * 4);
@@ -229,7 +229,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
     }
 }
 
-void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf::Node& node, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& globalTransform)
+void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf::Node& node, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& globalTransform)
 {
     // Get transform
     glm::mat4 localTransform(1);
@@ -281,11 +281,11 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
     // Get mesh instances
     if (node.mesh >= 0)
     {
-        for (glm::ivec2 pair : meshMap.at(node.mesh))
+        for (auto [it, end] = meshMap.equal_range((size_t)node.mesh); it != end; it++)
         {
             MeshInstance meshInstance;
-            meshInstance.meshId = pair.x;
-            meshInstance.materialId = pair.y;
+            meshInstance.meshId = it->second.x;
+            meshInstance.materialId = it->second.y;
             meshInstance.transform = transform;
             scene.meshInstances.push_back(meshInstance);
         }
@@ -319,20 +319,20 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
     }
 
     // Traverse children
-    for (int child : node.children)
+    for (const int child : node.children)
     {
         GLTFtraverseNode(scene, model, model.nodes[child], meshMap, transform);
     }
 }
 
-void GLTFnodes(Scene& scene, const tinygltf::Model& model, const std::map<int, std::vector<glm::ivec2>>& meshMap, const glm::mat4& world)
+void GLTFnodes(Scene& scene, const tinygltf::Model& model, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& world)
 {
     if (model.scenes.empty())
     {
         throw std::runtime_error("No scenes are provided");
     }
 
-    for (int index : model.scenes[std::clamp(model.defaultScene, 0, (int)model.scenes.size() - 1)].nodes)
+    for (const int index : model.scenes[std::clamp(model.defaultScene, 0, (int)model.scenes.size() - 1)].nodes)
     {
         GLTFtraverseNode(scene, model, model.nodes[index], meshMap, world);
     }
@@ -362,7 +362,7 @@ Scene TracerX::loadGLTF(const std::filesystem::path& path)
         }
     }
 
-    const std::map<int, std::vector<glm::ivec2>> meshMap = GLTFmeshes(scene, model);
+    const std::unordered_multimap<size_t, glm::ivec2> meshMap = GLTFmeshes(scene, model);
     GLTFtextures(scene, model.textures, model.images);
     GLTFmaterials(scene, model.materials);
     GLTFnodes(scene, model, meshMap, glm::mat4(1));

@@ -64,7 +64,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(imguizmo)
 target_include_directories(${PROJECT_NAME} PRIVATE ${imguizmo_SOURCE_DIR})
 target_sources(${PROJECT_NAME} PRIVATE ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp)
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DIMGUI_DEFINE_MATH_OPERATORS)
+target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_DEFINE_MATH_OPERATORS)
 
 # TinyFileDialogs v3.18.2
 FetchContent_Declare(

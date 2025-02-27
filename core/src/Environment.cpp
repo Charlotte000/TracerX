@@ -23,7 +23,7 @@ void Environment::loadFromImage(const Image& image)
 
 void Environment::buildCDF(const Image& image)
 {
-    size_t size = image.size.x * image.size.y;
+    const size_t size = image.size.x * image.size.y;
     Image cdf = Image::loadFromMemory(image.size, std::vector<float>(size * 4, 0));
 
     float sum = 0;

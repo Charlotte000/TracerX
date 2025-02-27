@@ -5,6 +5,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <GL/glew.h>
 
 using namespace TracerX::core::GL;
 
@@ -12,7 +13,7 @@ using namespace TracerX::core::GL;
 void Shader::init(const std::vector<unsigned char>& shaderBin)
 {
     // Create OpenGL shader
-    GLuint shaderHandler = this->initShader(shaderBin, GL_COMPUTE_SHADER);
+    const GLuint shaderHandler = this->initShader(shaderBin, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -21,10 +22,10 @@ void Shader::init(const std::vector<unsigned char>& shaderBin)
     glDeleteShader(shaderHandler);
 }
 
-GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderType)
+GLuint Shader::initShader(const std::vector<unsigned char>& bin, unsigned int shaderType)
 {
     // Create shader
-    GLuint handler = glCreateShader(shaderType);
+    const GLuint handler = glCreateShader(shaderType);
     glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), (GLsizei)bin.size());
     glSpecializeShader(handler, "main", 0, nullptr, nullptr);
 
@@ -35,7 +36,7 @@ GLuint Shader::initShader(const std::vector<unsigned char>& bin, GLenum shaderTy
 void Shader::init(const std::filesystem::path& shaderSrc)
 {
     // Create OpenGL shader
-    GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
+    const GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -44,12 +45,12 @@ void Shader::init(const std::filesystem::path& shaderSrc)
     glDeleteShader(shaderHandler);
 }
 
-GLuint Shader::initShader(const std::filesystem::path& shaderSrc, GLenum shaderType)
+unsigned int Shader::initShader(const std::filesystem::path& shaderSrc, unsigned int shaderType)
 {
     // Create shader
     const std::string src = Shader::loadShader(shaderSrc);
     const GLchar* code = (const GLchar*)src.c_str();
-    GLuint handler = glCreateShader(shaderType);
+    const GLuint handler = glCreateShader(shaderType);
     glShaderSource(handler, 1, &code, 0);
     glCompileShader(handler);
 
@@ -114,10 +115,10 @@ void Shader::stopUse()
     glUseProgram(0);
 }
 
-GLuint Shader::initProgram(GLuint shaderHandler)
+unsigned int Shader::initProgram(unsigned int shaderHandler)
 {
     // Create program
-    GLuint handler = glCreateProgram();
+    const GLuint handler = glCreateProgram();
     glAttachShader(handler, shaderHandler);
     glLinkProgram(handler);
 
@@ -138,7 +139,7 @@ GLuint Shader::initProgram(GLuint shaderHandler)
     return handler;
 }
 
-void Shader::checkShader(GLuint shaderHandler)
+void Shader::checkShader(unsigned int shaderHandler)
 {
     GLint status;
     glGetShaderiv(shaderHandler, GL_COMPILE_STATUS, &status);

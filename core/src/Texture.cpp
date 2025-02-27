@@ -3,10 +3,12 @@
  */
 #include "TracerX/core/GL/Texture.h"
 
+#include <GL/glew.h>
+
 using namespace TracerX;
 using namespace TracerX::core::GL;
 
-void Texture::init(GLint internalFormat, GLint sampler)
+void Texture::init(int internalFormat, int sampler)
 {
     this->internalFormat = internalFormat;
     glGenTextures(1, &this->handler);
@@ -21,7 +23,7 @@ void Texture::bind(unsigned int binding)
     glBindTextureUnit(binding, this->handler);
 }
 
-void Texture::bindImage(unsigned int binding, GLenum access)
+void Texture::bindImage(unsigned int binding, unsigned int access)
 {
     glBindImageTexture(binding, this->handler, 0, GL_FALSE, 0, access, this->internalFormat);
 }
@@ -70,7 +72,7 @@ void Texture::shutdown()
     glDeleteTextures(1, &this->handler);
 }
 
-GLuint Texture::getHandler() const
+unsigned int Texture::getHandler() const
 {
     return this->handler;
 }

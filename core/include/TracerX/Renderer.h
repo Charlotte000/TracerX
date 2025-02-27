@@ -213,7 +213,7 @@ public:
      * @return The texture handler.
      * @see Renderer::getImage to load the image from the GPU to the CPU.
      */
-    GLuint getTextureHandler() const;
+    unsigned int getTextureHandler() const;
 
     /**
      * @brief Gets the OpenGL texture handler for the albedo image.
@@ -224,7 +224,7 @@ public:
      * @return The texture handler.
      * @see Renderer::getAlbedoImage to load the image from the GPU to the CPU.
      */
-    GLuint getAlbedoTextureHandler() const;
+    unsigned int getAlbedoTextureHandler() const;
 
     /**
      * @brief Gets the OpenGL texture handler for the normal image.
@@ -235,7 +235,7 @@ public:
      * @return The texture handler.
      * @see Renderer::getNormalImage to load the image from the GPU to the CPU.
      */
-    GLuint getNormalTextureHandler() const;
+    unsigned int getNormalTextureHandler() const;
 
     /**
      * @brief Gets the OpenGL texture handler for the depth image.
@@ -248,7 +248,7 @@ public:
      * @return The texture handler.
      * @see Renderer::getDepthImage to load the image from the GPU to the CPU.
      */
-    GLuint getDepthTextureHandler() const;
+    unsigned int getDepthTextureHandler() const;
 
     /**
      * @brief Gets the OpenGL texture handler for the accumulation image.
@@ -258,7 +258,7 @@ public:
      * @return The texture handler.
      * @see Renderer::getAccumulatorImage to load the image from the GPU to the CPU.
      */
-    GLuint getAccumulatorTextureHandler() const;
+    unsigned int getAccumulatorTextureHandler() const;
 
     /**
      * @brief Loads the rendered texture from the GPU to the CPU.

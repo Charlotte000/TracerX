@@ -56,7 +56,7 @@ Image Image::resize(glm::uvec2 size) const
 glm::vec4 Image::get(glm::uvec2 coords) const
 {
     assert(coords.x < this->size.x && coords.y < this->size.y);
-    size_t index = (coords.y * this->size.x + coords.x) * 4;
+    const size_t index = (coords.y * this->size.x + coords.x) * 4;
     return glm::vec4(this->pixels[index + 0], this->pixels[index + 1], this->pixels[index + 2], this->pixels[index + 3]);
 }
 
@@ -70,7 +70,7 @@ glm::vec4 Image::get(size_t index) const
 void Image::set(glm::uvec2 coords, glm::vec4 value)
 {
     assert(coords.x < this->size.x && coords.y < this->size.y);
-    size_t index = (coords.y * this->size.x + coords.x) * 4;
+    const size_t index = (coords.y * this->size.x + coords.x) * 4;
     this->pixels[index + 0] = value.r;
     this->pixels[index + 1] = value.g;
     this->pixels[index + 2] = value.b;
@@ -101,7 +101,7 @@ Image Image::loadFromFile(const std::filesystem::path& path)
 
     // Copy to image
     img.size = size;
-    size_t pixelCount = img.size.x * img.size.y * 4;
+    const size_t pixelCount = img.size.x * img.size.y * 4;
     img.pixels.resize(pixelCount);
     std::copy(data, data + pixelCount, img.pixels.data());
 

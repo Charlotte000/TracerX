@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <GL/glew.h>
 #if TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
 #endif
@@ -64,8 +65,7 @@ void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
 #endif
 {
     // Init GLEW
-    GLenum status = glewInit();
-    if (status != GLEW_OK)
+    if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
     {
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
@@ -180,20 +180,20 @@ void Renderer::denoise()
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    glm::uvec2 size = this->getSize();
+    const glm::uvec2 size = this->getSize();
 
     // Create color buffer
-    Image colorImage = this->accumulationTexture.upload();
+    const Image colorImage = this->accumulationTexture.upload();
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create albedo buffer
-    Image albedoImage = this->albedoTexture.upload();
+    const Image albedoImage = this->albedoTexture.upload();
     oidn::BufferRef albedoBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(float), albedoImage.pixels.data());
 
     // Create normal buffer
-    Image normalImage = this->normalTexture.upload();
+    const Image normalImage = this->normalTexture.upload();
     oidn::BufferRef normalBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(float), normalImage.pixels.data());
 
@@ -209,8 +209,7 @@ void Renderer::denoise()
 
     // Denoise
     filter.execute();
-    const char* errorMessage;
-    if (device.getError(errorMessage) != oidn::Error::None)
+    if (const char* errorMessage; device.getError(errorMessage) != oidn::Error::None)
     {
         // Release buffers
         colorBuf.release();
@@ -221,8 +220,8 @@ void Renderer::denoise()
     }
 
     // Update accumulator
-    float* data = (float*)colorBuf.getData();
-    std::vector<float> pixels(data, data + colorImage.pixels.size());
+    const float* data = (const float*)colorBuf.getData();
+    const std::vector<float> pixels(data, data + colorImage.pixels.size());
     this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
 
     // Update output
@@ -254,27 +253,27 @@ void Renderer::clear()
     this->sampleCount = 0;
 }
 
-GLuint Renderer::getTextureHandler() const
+unsigned int Renderer::getTextureHandler() const
 {
     return this->toneMapTexture.getHandler();
 }
 
-GLuint Renderer::getAlbedoTextureHandler() const
+unsigned int Renderer::getAlbedoTextureHandler() const
 {
     return this->albedoTexture.getHandler();
 }
 
-GLuint Renderer::getNormalTextureHandler() const
+unsigned int Renderer::getNormalTextureHandler() const
 {
     return this->normalTexture.getHandler();
 }
 
-GLuint Renderer::getDepthTextureHandler() const
+unsigned int Renderer::getDepthTextureHandler() const
 {
     return this->depthTexture.getHandler();
 }
 
-GLuint Renderer::getAccumulatorTextureHandler() const
+unsigned int Renderer::getAccumulatorTextureHandler() const
 {
     return this->accumulationTexture.getHandler();
 }
@@ -360,7 +359,7 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
 
     std::vector<MeshInstancePayload> meshInstancesPayload;
     meshInstancesPayload.reserve(scene.meshInstances.size());
-    for (size_t meshInstanceId : meshInstancePermutation)
+    for (const size_t meshInstanceId : meshInstancePermutation)
     {
         const MeshInstance& meshInstance = scene.meshInstances[meshInstanceId];
         meshInstancesPayload.emplace_back(meshInstance);
@@ -389,8 +388,8 @@ void Renderer::initData(const std::filesystem::path& shaderPath)
     this->normalTexture.init(GL_RGBA32F, GL_NEAREST);
     this->depthTexture.init(GL_R32F, GL_NEAREST);
     this->toneMapTexture.init(GL_RGBA32F, GL_NEAREST);
-    this->environment.texture.init(GL_RGBA32F);
-    this->environment.cdfTexture.init(GL_R32F);
+    this->environment.texture.init(GL_RGBA32F, GL_LINEAR);
+    this->environment.cdfTexture.init(GL_R32F, GL_LINEAR);
     this->textureArray.init(GL_RGBA32F);
 
     // SSBOs
@@ -440,7 +439,7 @@ void Renderer::bindData()
 void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
 {
     // cameraBuffer
-    struct
+    const struct
     {
         glm::vec3 position;
         float fov;
@@ -468,7 +467,7 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
     this->cameraBuffer.update(&camera, sizeof(camera));
 
     // environmentBuffer
-    struct
+    const struct
     {
         glm::vec4 rotation1;
         glm::vec4 rotation2;
@@ -490,7 +489,7 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
     this->environmentBuffer.update(&environment, sizeof(environment));
 
     // paramBuffer
-    struct
+    const struct
     {
         glm::ivec2 rectPosition;
         glm::ivec2 rectSize;

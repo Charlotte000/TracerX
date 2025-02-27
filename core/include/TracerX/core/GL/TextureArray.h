@@ -5,8 +5,6 @@
 
 #include "TracerX/Image.h"
 
-#include <GL/glew.h>
-
 namespace TracerX::core::GL
 {
 
@@ -19,13 +17,13 @@ class TextureArray
 public:
     glm::uvec3 size;
 
-    void init(GLint internalFormat);
+    void init(int internalFormat);
     void bind(unsigned int binding);
     void update(const std::vector<Image>& images, glm::uvec2 maxSize);
     void shutdown();
 private:
-    GLuint handler;
-    GLint internalFormat;
+    unsigned int handler;
+    int internalFormat;
 
     static glm::uvec2 getMaxSize(const std::vector<Image>& images, glm::uvec2 maxSize);
     static std::vector<float> resizeImages(const std::vector<Image>& images, glm::uvec2 size);

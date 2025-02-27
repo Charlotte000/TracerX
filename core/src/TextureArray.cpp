@@ -3,9 +3,11 @@
  */
 #include "TracerX/core/GL/TextureArray.h"
 
+#include <GL/glew.h>
+
 using namespace TracerX::core::GL;
 
-void TextureArray::init(GLint internalFormat)
+void TextureArray::init(int internalFormat)
 {
     this->internalFormat = internalFormat;
     glGenTextures(1, &this->handler);
@@ -22,14 +24,14 @@ void TextureArray::bind(unsigned int binding)
 
 void TextureArray::update(const std::vector<Image>& images, glm::uvec2 maxSize)
 {
-    glm::uvec2 size = TextureArray::getMaxSize(images, maxSize);
-    glm::uvec3 size3(size, images.size());
+    const glm::uvec2 size = TextureArray::getMaxSize(images, maxSize);
+    const glm::uvec3 size3(size, images.size());
     if (this->size == size3 && this->size == glm::uvec3(0))
     {
         return;
     }
 
-    std::vector<float> data = TextureArray::resizeImages(images, size);
+    const std::vector<float> data = TextureArray::resizeImages(images, size);
     glBindTexture(GL_TEXTURE_2D_ARRAY, this->handler);
     {
         if (this->size != size3)
@@ -63,7 +65,7 @@ glm::uvec2 TextureArray::getMaxSize(const std::vector<Image>& images, glm::uvec2
 
 std::vector<float> TextureArray::resizeImages(const std::vector<Image>& images, glm::uvec2 size)
 {
-    size_t count = size.x * size.y * 4;
+    const size_t count = size.x * size.y * 4;
     std::vector<float> data(count * images.size());
     for (size_t i = 0; i < images.size(); i++)
     {

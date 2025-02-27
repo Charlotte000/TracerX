@@ -5,8 +5,6 @@
 
 #include "TracerX/Image.h"
 
-#include <GL/glew.h>
-
 namespace TracerX::core::GL
 {
 
@@ -19,18 +17,18 @@ class Texture
 public:
     glm::uvec2 size;
 
-    void init(GLint internalFormat, GLint sampler = GL_LINEAR);
+    void init(int internalFormat, int sampler);
     void bind(unsigned int binding);
-    void bindImage(unsigned int binding, GLenum access = GL_READ_WRITE);
+    void bindImage(unsigned int binding, unsigned int access);
     void update(const Image& image);
     Image upload() const;
     void clear();
     void resize(glm::uvec2 size);
     void shutdown();
-    GLuint getHandler() const;
+    unsigned int getHandler() const;
 private:
-    GLuint handler;
-    GLint internalFormat;
+    unsigned int handler;
+    int internalFormat;
 };
 
 }

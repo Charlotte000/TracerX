@@ -37,12 +37,11 @@ FetchContent_Declare(
     glew
     URL      https://github.com/nigels-com/glew/releases/download/glew-2.2.0/glew-2.2.0.zip
     URL_HASH SHA256=a9046a913774395a095edcc0b0ac2d81c3aacca61787b39839b941e9be14e0d4
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(glew)
-target_include_directories(${PROJECT_NAME} PUBLIC ${glew_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE ${glew_SOURCE_DIR}/include)
 target_sources(${PROJECT_NAME} PRIVATE ${glew_SOURCE_DIR}/src/glew.c)
-target_compile_definitions(${PROJECT_NAME} PRIVATE -DGLEW_STATIC)
+target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
 
 # GLM v1.0.1
 FetchContent_Declare(
@@ -52,7 +51,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glm)
 target_include_directories(${PROJECT_NAME} PUBLIC ${glm_SOURCE_DIR})
-target_compile_definitions(${PROJECT_NAME} PUBLIC -DGLM_ENABLE_EXPERIMENTAL)
+target_compile_definitions(${PROJECT_NAME} PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 # OIDN v2.3.2
 if (TX_DENOISE)
@@ -70,7 +69,6 @@ if (TX_DENOISE)
         oidn
         URL      ${OIDN_URL}
         URL_HASH SHA256=${OIDN_URL_HASH}
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     FetchContent_MakeAvailable(oidn)
     target_include_directories(${PROJECT_NAME} PRIVATE ${oidn_SOURCE_DIR}/include)

@@ -1112,7 +1112,7 @@ void Application::initUI()
 
     SetupImGuiStyle();
 
-    this->materialTextureView.texture.init(GL_RGBA32F);
+    this->materialTextureView.texture.init(GL_RGBA32F, GL_LINEAR);
 }
 
 void Application::shutdownUI()

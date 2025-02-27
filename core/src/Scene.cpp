@@ -13,8 +13,8 @@ using namespace TracerX::core;
 void transformBbox(glm::vec3 vMin, glm::vec3 vMax, const glm::mat4& transform, glm::vec3& tMin, glm::vec3& tMax)
 {
     // Get 8 corners of the bounding box
-    glm::vec3 pos = (vMax + vMin) * 0.5f;
-    glm::vec3 hSize = (vMax - vMin) * 0.5f;
+    const glm::vec3 pos = (vMax + vMin) * 0.5f;
+    const glm::vec3 hSize = (vMax - vMin) * 0.5f;
     glm::vec3 v1 = pos + glm::vec3(-1, -1, -1) * hSize;
     glm::vec3 v2 = pos + glm::vec3(-1, -1,  1) * hSize;
     glm::vec3 v3 = pos + glm::vec3(-1,  1, -1) * hSize;
@@ -87,23 +87,23 @@ int Scene::addMesh(const Mesh& mesh, const std::string& name)
 
 void Scene::buildBLAS(Mesh& mesh)
 {
-    class TriangleConverter
+    const class TriangleConverter
     {
     public:
         const std::vector<Vertex>* vertices;
 
         FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
         {
-            glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
-            glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
-            glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
+            const glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
+            const glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
+            const glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
             return FastBVH::BBox<float>(toVector3(glm::min(v1, v2, v3)), toVector3(glm::max(v1, v2, v3)));
         }
     } triangleConverter { &this->vertices };
     FastBVH::DefaultBuilder<float> bvhBuilder;
 
     // Build BVH
-    FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
+    const FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
         FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
         triangleConverter);
 
@@ -118,7 +118,7 @@ void Scene::buildBLAS(Mesh& mesh)
 
 void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& meshInstancePermutation)
 {
-    class MeshInstanceConverter
+    const class MeshInstanceConverter
     {
     public:
         const std::vector<MeshInstance>* meshInstances;
@@ -143,7 +143,7 @@ void Scene::buildTLAS(std::vector<BvhNode>& tlas, std::vector<size_t>& meshInsta
     std::iota(meshInstancePermutation.begin(), meshInstancePermutation.end(), 0);
 
     // Build BVH
-    FastBVH::BVH<float, size_t> bvh = bvhBuilder(meshInstancePermutation, meshInstanceBuilder);
+    const FastBVH::BVH<float, size_t> bvh = bvhBuilder(meshInstancePermutation, meshInstanceBuilder);
 
     // Convert to our format
     tlas.reserve(tlas.size() + bvh.getNodes().size());

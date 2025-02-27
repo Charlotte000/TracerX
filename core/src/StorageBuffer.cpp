@@ -3,6 +3,8 @@
  */
 #include "TracerX/core/GL/StorageBuffer.h"
 
+#include <GL/glew.h>
+
 using namespace TracerX::core::GL;
 
 void StorageBuffer::init()

@@ -3,6 +3,8 @@
  */
 #include "TracerX/core/GL/UniformBuffer.h"
 
+#include <GL/glew.h>
+
 using namespace TracerX::core::GL;
 
 void UniformBuffer::init()

@@ -5,7 +5,6 @@
 
 #include <string>
 #include <vector>
-#include <GL/glew.h>
 #include <filesystem>
 #include <glm/glm.hpp>
 
@@ -35,18 +34,18 @@ public:
     static void dispatchCompute(glm::uvec3 groups);
     static void stopUse();
 private:
-    GLuint handler;
+    unsigned int handler;
 
     static inline const glm::uvec3 groupSize = glm::uvec3(16, 16, 1);
 
 #if TX_SPIRV
-    static GLuint initShader(const std::vector<unsigned char>& bin, GLenum shaderType);
+    static unsigned int initShader(const std::vector<unsigned char>& bin, unsigned int shaderType);
 #else
-    static GLuint initShader(const std::filesystem::path& shaderSrc, GLenum shaderType);
+    static unsigned int initShader(const std::filesystem::path& shaderSrc, unsigned int shaderType);
     static std::string loadShader(const std::filesystem::path& path);
 #endif
-    static GLuint initProgram(GLuint shaderHandler);
-    static void checkShader(GLuint shaderHandler);
+    static unsigned int initProgram(unsigned int shaderHandler);
+    static void checkShader(unsigned int shaderHandler);
 };
 
 }

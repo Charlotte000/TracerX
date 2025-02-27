@@ -3,7 +3,7 @@
  */
 #pragma once
 
-#include <GL/glew.h>
+#include <cstddef>
 
 namespace TracerX::core::GL
 {
@@ -24,7 +24,7 @@ public:
     void bind(unsigned int binding);
     void shutdown();
 private:
-    GLuint handler;
+    unsigned int handler;
     size_t size;
 };
 
