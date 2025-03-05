@@ -1,3 +1,4 @@
+#include <GL/glew.h>
 #include "Application.h"
 
 #include <iostream>
@@ -733,7 +734,7 @@ void propertyEditor(Application& app, Application::Property& property)
 
     switch (property.type)
     {
-        case Application::Property::Type::Contorls:
+        case Application::Property::Type::Controls:
             propertyControls(app);
             break;
         case Application::Property::Type::ToneMapping:
@@ -769,9 +770,9 @@ void propertySelector(Application& app, Application::Property& property)
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Renderer"))
     {
-        if (ImGui::Selectable("Controls", property.type == Application::Property::Type::Contorls))
+        if (ImGui::Selectable("Controls", property.type == Application::Property::Type::Controls))
         {
-            property.type = Application::Property::Type::Contorls;
+            property.type = Application::Property::Type::Controls;
         }
 
         if (ImGui::Selectable("Tone mapping", property.type == Application::Property::Type::ToneMapping))

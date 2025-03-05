@@ -66,16 +66,16 @@ std::string Shader::loadShader(const std::filesystem::path& path)
         throw std::runtime_error("Shader source not found: " + path.string());
     }
 
-    const std::string includeIndentifier = "#include";
+    const std::string includeIdentifier = "#include";
 
     std::string code;
     std::string line;
     while (std::getline(file, line))
     {
-        if (line.find(includeIndentifier) != line.npos)
+        if (line.find(includeIdentifier) != line.npos)
         {
             // Get include path (remove #include and quotes)
-            line.erase(0, includeIndentifier.size() + 2);
+            line.erase(0, includeIdentifier.size() + 2);
             line.pop_back();
 
             code += Shader::loadShader(path.parent_path() / line) + '\n';

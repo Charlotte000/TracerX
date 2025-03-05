@@ -324,7 +324,7 @@ void Application::loadScene(const std::filesystem::path& path)
         if (this->property.type == Application::Property::Type::MeshInstance ||
             this->property.type == Application::Property::Type::Material)
         {
-            this->property.type = Application::Property::Type::Contorls;
+            this->property.type = Application::Property::Type::Controls;
         }
 
         this->renderer.loadScene(this->scene, this->maxTextureArraySize);

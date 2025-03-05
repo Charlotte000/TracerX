@@ -66,14 +66,14 @@ public:
     {
         enum class Type
         {
-            Contorls,
+            Controls,
             ToneMapping,
             Settings,
             Camera,
             Environment,
             MeshInstance,
             Material,
-        } type = Type::Contorls;
+        } type = Type::Controls;
         size_t id = 0;
     } property;
     struct MaterialTextureView

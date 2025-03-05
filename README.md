@@ -93,7 +93,7 @@ If the __TX_SPIRV__ option is disabled, the shaders will be used directly from t
 - [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets): To store all models and other assets related to glTF
 - [Patitotective/ImThemes](https://github.com/Patitotective/ImThemes): Dear ImGui style browser and editor written in Nim
 
-# Aknowledgements
+# Acknowledgements
 - [Ray Tracing in One Weekend](https://raytracing.github.io) is a series of books by Peter Shirley that explain the fundamentals of ray tracing.
 - [Scratchapixel](https://scratchapixel.com) is a website that provides a comprehensive introduction to computer graphics.
 - [knightcrawler25/GLSL-PathTracer](https://github.com/knightcrawler25/GLSL-PathTracer) is a path tracing project that inspired the development of this app.
