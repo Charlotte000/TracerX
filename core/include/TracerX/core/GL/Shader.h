@@ -23,7 +23,7 @@ class Shader
 {
 public:
 #if TX_SPIRV
-    void init(const std::vector<unsigned char>& shaderBin);
+    void init(const unsigned char shaderBin[], const size_t shaderBinSize);
 #else
     void init(const std::filesystem::path& shaderSrc);
 #endif
@@ -39,7 +39,7 @@ private:
     static inline const glm::uvec3 groupSize = glm::uvec3(16, 16, 1);
 
 #if TX_SPIRV
-    static unsigned int initShader(const std::vector<unsigned char>& bin, unsigned int shaderType);
+    static unsigned int initShader(const unsigned char bin[], const size_t shaderBinSize, unsigned int shaderType);
 #else
     static unsigned int initShader(const std::filesystem::path& shaderSrc, unsigned int shaderType);
     static std::string loadShader(const std::filesystem::path& path);

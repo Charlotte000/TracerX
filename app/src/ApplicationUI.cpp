@@ -13,7 +13,7 @@
 using namespace TracerX;
 
 #pragma region UI Helper Functions
-void SetupImGuiStyle()
+static void SetupImGuiStyle()
 {
     // Rounded Visual Studio style by RedNicStone from ImThemes
     // https://github.com/Patitotective/ImThemes
@@ -106,7 +106,7 @@ void SetupImGuiStyle()
 }
 
 // https://www.unknowncheats.me/forum/direct3d/601535-imgui-simple-spinner.html
-void Im_Spinner(const char* label, float radius, float thickness, ImU32 color) {
+static void Im_Spinner(const char* label, float radius, float thickness, ImU32 color) {
     ImGuiStyle* style = &ImGui::GetStyle();
     ImVec2 pos = ImGui::GetCursorScreenPos();
     ImVec2 size = ImVec2(radius * 2, radius * 2); 
@@ -133,7 +133,7 @@ void Im_Spinner(const char* label, float radius, float thickness, ImU32 color) {
     DrawList->PathStroke(color, false, thickness);
 }
 
-bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
+static bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
 {
     int vTemp = *v;
     bool changed = ImGui::DragInt(label, &vTemp, v_speed, v_min, v_max, format, flags);
@@ -141,7 +141,7 @@ bool DragUInt(const char* label, unsigned int* v, float v_speed = 1.f, unsigned 
     return changed;
 }
 
-bool DragUInt2(const char* label, unsigned int v[2], float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
+static bool DragUInt2(const char* label, unsigned int v[2], float v_speed = 1.f, unsigned int v_min = 0, unsigned int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
 {
     int vTemp[2] { (int)v[0], (int)v[1] };
     bool changed = ImGui::DragInt2(label, vTemp, v_speed, v_min, v_max, format, flags);
@@ -150,7 +150,7 @@ bool DragUInt2(const char* label, unsigned int v[2], float v_speed = 1.f, unsign
     return changed;
 }
 
-void Tooltip(const std::string& content)
+static void Tooltip(const std::string& content)
 {
     ImGui::SameLine();
     ImGui::TextDisabled("(?)");
@@ -161,7 +161,7 @@ void Tooltip(const std::string& content)
     }
 }
 
-void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
+static void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
 {
     if (flipY)
     {
@@ -179,7 +179,7 @@ void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::vec2 uv
         ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
 }
 
-void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
+static void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
 {
     if (flipY)
     {
@@ -205,7 +205,7 @@ void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos,
     imagePos += toVec2(ImGui::GetWindowPos());
 }
 
-bool materialTextureSelector(Application& app, const std::string& name, int& currentTextureId, glm::vec3 tintColor)
+static bool materialTextureSelector(Application& app, const std::string& name, int& currentTextureId, glm::vec3 tintColor)
 {
     bool changed = false;
 
@@ -254,7 +254,7 @@ bool materialTextureSelector(Application& app, const std::string& name, int& cur
     return changed;
 }
 
-void propertyMaterial(Application& app, Material& material)
+static void propertyMaterial(Application& app, Material& material)
 {
     if (!ImGui::BeginTabBar("propertyMaterialMenu"))
     {
@@ -364,7 +364,7 @@ void propertyMaterial(Application& app, Material& material)
     }
 }
 
-void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
+static void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
 {
     if (!ImGui::BeginTabBar("propertyMeshMenu"))
     {
@@ -466,7 +466,7 @@ void propertyMeshInstance(Application& app, MeshInstance& meshInstance)
     }
 }
 
-void propertyEnvironment(Application& app, Environment& environment)
+static void propertyEnvironment(Application& app, Environment& environment)
 {
     bool changed = false;
 
@@ -499,7 +499,7 @@ void propertyEnvironment(Application& app, Environment& environment)
     }
 }
 
-void propertyCamera(Application& app, Camera& camera)
+static void propertyCamera(Application& app, Camera& camera)
 {
     if (!ImGui::BeginTabBar("propertyCamera"))
     {
@@ -620,7 +620,7 @@ void propertyCamera(Application& app, Camera& camera)
     }
 }
 
-void propertySettings(Application& app)
+static void propertySettings(Application& app)
 {
     bool updated = false;
 
@@ -652,7 +652,7 @@ void propertySettings(Application& app)
     }
 }
 
-void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
+static void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
 {
     bool changed = false;
 
@@ -693,7 +693,7 @@ void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMapMode)
     }
 }
 
-void propertyControls(Application& app)
+static void propertyControls(Application& app)
 {
     if (ImGui::Button(app.rendering.enable ? "Stop rendering" : "Start rendering", ImVec2(-1, 0)))
     {
@@ -728,7 +728,7 @@ void propertyControls(Application& app)
 #endif
 }
 
-void propertyEditor(Application& app, Application::Property& property)
+static void propertyEditor(Application& app, Application::Property& property)
 {
     ImGui::BeginChild("propertyEditorMenu", ImVec2(-1, 0), ImGuiChildFlags_Border);
 
@@ -760,7 +760,7 @@ void propertyEditor(Application& app, Application::Property& property)
     ImGui::EndChild();
 }
 
-void propertySelector(Application& app, Application::Property& property)
+static void propertySelector(Application& app, Application::Property& property)
 {
     ImGui::BeginChild(
         "sceneMenu",
@@ -838,7 +838,7 @@ void propertySelector(Application& app, Application::Property& property)
     ImGui::EndChild();
 }
 
-void viewRenderTexture(Application& app, GLint textureHandler)
+static void viewRenderTexture(Application& app, GLint textureHandler)
 {
     ImGui::BeginChild("viewTexture");
 
@@ -925,7 +925,7 @@ void viewRenderTexture(Application& app, GLint textureHandler)
     ImGui::EndChild();
 }
 
-void sidePanel(Application& app)
+static void sidePanel(Application& app)
 {
     ImGui::BeginChild("sidePanelMenu", ImVec2(0, -1));
     propertySelector(app, app.property);
@@ -933,7 +933,7 @@ void sidePanel(Application& app)
     ImGui::EndChild();
 }
 
-void drawingPanel(Application& app)
+static void drawingPanel(Application& app)
 {
     ImGui::BeginChild(
         "drawingPanelMenu",
@@ -987,7 +987,7 @@ void drawingPanel(Application& app)
     ImGui::EndChild();
 }
 
-void mainWindow(Application& app)
+static void mainWindow(Application& app)
 {
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetMainViewport()->WorkSize, ImGuiCond_Always);
@@ -1003,7 +1003,7 @@ void mainWindow(Application& app)
     ImGui::End();
 }
 
-void mainMenuBar(Application& app)
+static void mainMenuBar(Application& app)
 {
     if (!ImGui::BeginMainMenuBar())
     {

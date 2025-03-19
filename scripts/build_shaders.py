@@ -19,13 +19,16 @@ def compile_shader(mainPath: str) -> bytes:
 
 
 def write_shader(path: str, shaderBin: bytes) -> bool:
+    src = list(map(lambda v: f"{v:#04x}", shaderBin))
+
     newData = (
         "#include <TracerX/Renderer.h>\n\n"
         + "using namespace TracerX;\n\n"
         + "#if TX_SPIRV\n"
-        + "const std::vector<unsigned char> Renderer::shaderBin =\n{\n    "
-        + ",\n    ".join(list(map(str, shaderBin)))
-        + "\n};\n"
+        + "const unsigned char Renderer::shaderBin[] =\n{\n    "
+        + ",\n    ".join(', '.join(src[i:i+10]) for i in range(0, len(src), 10))
+        + "\n};\n\n"
+        + f"const size_t Renderer::shaderBinSize = {len(src)};\n"
         + "#endif\n"
     )
 

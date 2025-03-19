@@ -389,7 +389,8 @@ private:
     core::GL::UniformBuffer paramBuffer;
 
 #if TX_SPIRV
-    static const std::vector<unsigned char> shaderBin;
+    static const unsigned char shaderBin[];
+    static const size_t shaderBinSize;
 
     void initData();
 #else

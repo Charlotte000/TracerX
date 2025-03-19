@@ -5,7 +5,7 @@
 
 using namespace TracerX;
 
-float luminance(glm::vec3 c)
+static float luminance(glm::vec3 c)
 {
     return 0.212671f * c.r + 0.715160f * c.g + 0.072169f * c.b;
 }

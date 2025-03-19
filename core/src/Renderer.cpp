@@ -377,7 +377,7 @@ void Renderer::initData(const std::filesystem::path& shaderPath)
 {
     // Shader
 #if TX_SPIRV
-    this->shader.init(Renderer::shaderBin);
+    this->shader.init(Renderer::shaderBin, Renderer::shaderBinSize);
 #else
     this->shader.init(shaderPath);
 #endif

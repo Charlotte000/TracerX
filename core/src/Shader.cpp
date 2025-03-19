@@ -3,6 +3,7 @@
  */
 #include "TracerX/core/GL/Shader.h"
 
+#include <array>
 #include <fstream>
 #include <stdexcept>
 #include <GL/glew.h>
@@ -10,10 +11,10 @@
 using namespace TracerX::core::GL;
 
 #if TX_SPIRV
-void Shader::init(const std::vector<unsigned char>& shaderBin)
+void Shader::init(const unsigned char shaderBin[], const size_t shaderBinSize)
 {
     // Create OpenGL shader
-    const GLuint shaderHandler = this->initShader(shaderBin, GL_COMPUTE_SHADER);
+const GLuint shaderHandler = this->initShader(shaderBin, shaderBinSize, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -22,11 +23,11 @@ void Shader::init(const std::vector<unsigned char>& shaderBin)
     glDeleteShader(shaderHandler);
 }
 
-GLuint Shader::initShader(const std::vector<unsigned char>& bin, unsigned int shaderType)
+GLuint Shader::initShader(const unsigned char bin[], const size_t shaderBinSize, unsigned int shaderType)
 {
     // Create shader
     const GLuint handler = glCreateShader(shaderType);
-    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), (GLsizei)bin.size());
+    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin, (GLsizei)shaderBinSize);
     glSpecializeShader(handler, "main", 0, nullptr, nullptr);
 
     Shader::checkShader(handler);

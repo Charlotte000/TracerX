@@ -15,7 +15,7 @@ using namespace TracerX;
 using namespace TracerX::core;
 
 #pragma region GLTF Helper Functions
-std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, const tinygltf::Model& model)
+static std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, const tinygltf::Model& model)
 {
     std::unordered_multimap<size_t, glm::ivec2> meshMap;
     scene.meshes.reserve(scene.meshes.size() + model.meshes.size());
@@ -142,7 +142,7 @@ std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, const tinyg
     return meshMap;
 }
 
-void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
+static void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, const std::vector<tinygltf::Image>& images)
 {
     scene.textures.reserve(scene.textures.size() + textures.size());
     scene.textureNames.reserve(scene.textures.size() + textures.size());
@@ -166,7 +166,7 @@ void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& textures, 
     }
 }
 
-void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& materials)
+static void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& materials)
 {
     scene.materials.reserve(scene.materials.size() + materials.size());
     scene.materialNames.reserve(scene.materials.size() + materials.size());
@@ -229,7 +229,7 @@ void GLTFmaterials(Scene& scene, const std::vector<tinygltf::Material>& material
     }
 }
 
-void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf::Node& node, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& globalTransform)
+static void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf::Node& node, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& globalTransform)
 {
     // Get transform
     glm::mat4 localTransform(1);
@@ -325,7 +325,7 @@ void GLTFtraverseNode(Scene& scene, const tinygltf::Model& model, const tinygltf
     }
 }
 
-void GLTFnodes(Scene& scene, const tinygltf::Model& model, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& world)
+static void GLTFnodes(Scene& scene, const tinygltf::Model& model, const std::unordered_multimap<size_t, glm::ivec2>& meshMap, const glm::mat4& world)
 {
     if (model.scenes.empty())
     {

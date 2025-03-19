@@ -52,8 +52,6 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
 
         Material material = GetMaterial(manifold);
 
-        radiance += state.mat.emission * throughput;
-
         if (BSDF(ray, throughput, radiance, manifold))
         {
             ray.InvDirection = 1 / ray.Direction;
