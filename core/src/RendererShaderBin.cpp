@@ -3,7 +3,7 @@
 using namespace TracerX;
 
 #if TX_SPIRV
-const unsigned char Renderer::shaderBin[] =
+const unsigned char Renderer::shaderSrc[] =
 {
     0x03, 0x02, 0x23, 0x07, 0x00, 0x00, 0x01, 0x00, 0x0b, 0x00,
     0x0d, 0x00, 0xc4, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -6270,6 +6270,796 @@ const unsigned char Renderer::shaderBin[] =
     0x31, 0x09, 0x00, 0x00, 0xe3, 0x01, 0x00, 0x00, 0xfe, 0x00,
     0x02, 0x00, 0x32, 0x09, 0x00, 0x00, 0x38, 0x00, 0x01, 0x00
 };
+const size_t Renderer::shaderSrcSize = 62640;
+#elif NDEBUG
+const char Renderer::shaderSrc[] = R"ShaderSrc(#version 430 core
+#pragma shader_stage(compute)
 
-const size_t Renderer::shaderBinSize = 62640;
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+const float INV_PI     = 0.31830988618379067;
+const float INV_TWO_PI = 0.15915494309189533;
+const float TWO_PI     = 6.28318530717958648;
+
+const float EPS = 0.001;
+const float INF = 1000000000;
+
+vec2 Stack[64];
+int StackPtr = 0;
+
+struct Ray
+{
+    vec3 Origin;
+    vec3 Direction;
+    vec3 InvDirection;
+};
+
+struct Env
+{
+    mat3 Rotation;
+    bool Transparent;
+    float Intensity;
+    float CdfTotal;
+};
+
+struct Cam
+{
+    vec3 Position;
+    float FOV;
+    vec3 Forward;
+    float FocalDistance;
+    vec3 Up;
+    float Aperture;
+    float Blur;
+    float ZNear;
+    float ZFar;
+    int Padding1;
+};
+
+struct Material
+{
+    vec4 AlbedoColor;
+    vec3 EmissionColor;
+    float EmissionStrength;
+    vec3 FresnelColor;
+    float FresnelStrength;
+    float Roughness;
+    float Metalness;
+    float IOR;
+    float Density;
+    int AlbedoTextureId;
+    int MetalnessTextureId;
+    int EmissionTextureId;
+    int RoughnessTextureId;
+    int NormalTextureId;
+    uint AlphaMode;
+    float AlphaCutoff;
+    int Padding1;
+};
+
+struct Vertex
+{
+    vec4 PositionU;
+    vec4 NormalV;
+};
+
+struct Triangle
+{
+    int V1;
+    int V2;
+    int V3;
+};
+
+struct Mesh
+{
+    int TriangleOffset;
+    int TriangleSize;
+    int NodeOffset;
+};
+
+struct MeshInstance
+{
+    mat4 Transform;
+    mat4 TransformInv;
+    int MaterialId;
+    int MeshId;
+    int Padding1;
+    int Padding2;
+};
+
+struct CollisionManifold
+{
+    float Depth;
+    vec3 Point;
+    vec2 TextureCoordinate;
+    vec3 Normal;
+    vec3 Tangent;
+    vec3 Bitangent;
+    int MaterialId;
+    bool IsFrontFace;
+};
+
+struct Node
+{
+    vec4 BboxMin;
+    vec4 BboxMax;
+    int Start;
+    int PrimitiveCount;
+    int RightOffset;
+    int Padding1;
+};
+
+const uint ReinhardToneMap = 0;
+const uint ACESToneMap = 1;
+const uint ACESfittedToneMap = 2;
+
+const uint OpaqueAlphaMode = 0;
+const uint BlendAlphaMode = 1;
+const uint MaskAlphaMode = 2;
+layout(rgba32f, binding=0)           uniform image2D AccumulatorImage;
+layout(rgba32f, binding=1) writeonly uniform image2D AlbedoImage;
+layout(rgba32f, binding=2) writeonly uniform image2D NormalImage;
+layout(r32f,    binding=3) writeonly uniform image2D DepthImage;
+layout(rgba32f, binding=4) writeonly uniform image2D ToneMapImage;
+
+layout(binding=0) uniform sampler2D EnvironmentTexture;
+layout(binding=1) uniform sampler2D EnvironmentCDFTexture;
+layout(binding=2) uniform sampler2DArray Textures;
+
+layout(std430, binding=0) readonly buffer VertexSSBO
+{
+    Vertex Vertices[];
+};
+
+layout(std430, binding=1) readonly buffer TriangleSSBO
+{
+    Triangle Triangles[];
+};
+
+layout(std430, binding=2) readonly buffer MeshSSBO
+{
+    Mesh Meshes[];
+};
+
+layout(std430, binding=3) readonly buffer MeshInstanceSSBO
+{
+    MeshInstance MeshInstances[];
+};
+
+layout(std430, binding=4) readonly buffer MaterialSSBO
+{
+    Material Materials[];
+};
+
+layout(std430, binding=5) readonly buffer BlasSSBO
+{
+    Node BLAS[];
+};
+
+layout(std430, binding=6) readonly buffer TlasSSBO
+{
+    Node TLAS[];
+};
+
+layout(std140, binding=0) uniform CameraUBO
+{
+    Cam Camera;
+};
+
+layout(std140, binding=1) uniform EnvironmentUBO
+{
+    Env Environment;
+};
+
+layout(std140, binding=2) uniform ParamsUBO
+{
+    ivec2 FramePosition;
+    ivec2 FrameSize;
+    uint SampleCount;
+    uint MaxDepth;
+    uint RussianRouletteDepth;
+    bool OnlyToneMapping;
+    uint ToneMapMode;
+    float Gamma;
+};
+
+ivec2 Size = imageSize(AccumulatorImage);
+ivec2 EnvironmentSize = textureSize(EnvironmentTexture, 0);
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
+vec2 UV = vec2(TexelCoord) / Size;
+vec3 CameraRight = cross(Camera.Forward, Camera.Up);
+
+float Luminance(vec3 c)
+{
+    return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
+}
+
+vec4 GetEnvironment(in Ray ray)
+{
+    vec3 direction = Environment.Rotation * ray.Direction;
+    float theta = acos(direction.y);
+    
+    float v = theta * INV_PI;
+    float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
+
+    vec3 color = texture(EnvironmentTexture, vec2(u, v)).rgb * Environment.Intensity;
+    float pdf = Luminance(color) / Environment.CdfTotal;
+    return vec4(color, pdf * EnvironmentSize.x * EnvironmentSize.y * INV_TWO_PI * INV_PI / sin(theta));
+}
+
+Material GetMaterial(inout CollisionManifold manifold)
+{
+    Material material = Materials[manifold.MaterialId];
+
+    if (material.AlbedoTextureId >= 0)
+    {
+        material.AlbedoColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.AlbedoTextureId));
+    }
+
+    if (material.MetalnessTextureId >= 0)
+    {
+        material.Metalness *= texture(Textures, vec3(manifold.TextureCoordinate, material.MetalnessTextureId)).b;
+    }
+
+    if (material.RoughnessTextureId >= 0)
+    {
+        material.Roughness *= texture(Textures, vec3(manifold.TextureCoordinate, material.RoughnessTextureId)).g;
+    }
+
+    material.EmissionColor *= material.EmissionStrength;
+    if (material.EmissionTextureId >= 0)
+    {
+        material.EmissionColor *= texture(Textures, vec3(manifold.TextureCoordinate, material.EmissionTextureId)).rgb;
+    }
+
+    if (material.NormalTextureId >= 0)
+    {
+        vec3 texNormal = texture(Textures, vec3(manifold.TextureCoordinate, material.NormalTextureId)).rgb;
+        texNormal.y = 1 - texNormal.y;
+        texNormal = normalize(texNormal * 2 - 1);
+        manifold.Normal = normalize(manifold.Tangent * texNormal.x + manifold.Bitangent * texNormal.y + manifold.Normal * texNormal.z);
+    }
+
+    if (!manifold.IsFrontFace)
+    {
+        manifold.Normal *= -1;
+    }
+
+    return material;
+}
+// pcg4d rng algorithm by Moroz Mykhailo (https://www.shadertoy.com/view/wltcRS)
+uvec4 Seed = uvec4(TexelCoord.x, TexelCoord.y, SampleCount, TexelCoord.x + TexelCoord.y);
+
+float RandomValue()
+{
+    Seed = Seed * 1664525u + 1013904223u;
+    Seed.x += Seed.y * Seed.w;
+    Seed.y += Seed.z * Seed.x;
+    Seed.z += Seed.x * Seed.y;
+    Seed.w += Seed.y * Seed.z;
+
+    Seed = Seed ^ (Seed >> 16u);
+    Seed.x += Seed.y * Seed.w;
+    Seed.y += Seed.z * Seed.x;
+    Seed.z += Seed.x * Seed.y;
+    Seed.w += Seed.y * Seed.z;
+    return float(Seed.x) / float(0xffffffffu);
+}
+
+float RandomValueNormalDistribution()
+{
+    float theta = TWO_PI * RandomValue();
+    float rho = sqrt(-2 * log(RandomValue()));
+    return rho * cos(theta);
+}
+
+vec2 RandomVector2()
+{
+    float angle = RandomValue() * TWO_PI;
+    return vec2(cos(angle), sin(angle)) * sqrt(RandomValue());
+}
+
+vec3 RandomVector3()
+{
+    float x = RandomValueNormalDistribution();
+    float y = RandomValueNormalDistribution();
+    float z = RandomValueNormalDistribution();
+    return normalize(vec3(x, y, z));
+}
+vec3 Slerp(in vec3 a, in vec3 b, float t)
+{
+    float angle = acos(dot(a, b));
+    return isnan(angle) || angle == 0 ? b : (sin((1 - t) * angle) * a + sin(t * angle) * b) / sin(angle);
+}
+
+vec3 Transform(in vec3 v, in mat4 matrix, in bool translate)
+{
+    if (translate)
+    {
+        return (matrix * vec4(v, 1)).xyz;
+    }
+
+    return mat3(matrix) * v;
+}
+
+void JitterRay(inout Ray ray)
+{
+    // Focal
+    vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
+    vec2 focal = RandomVector2() * Camera.Aperture;
+    ray.Origin += focal.x * CameraRight + focal.y * Camera.Up;
+    ray.Direction = normalize(focalPoint - ray.Origin);
+
+    // Blur
+    vec2 blur = RandomVector2() * Camera.Blur;
+    ray.Origin += blur.x * CameraRight + blur.y * Camera.Up;
+
+    ray.InvDirection = 1 / ray.Direction;
+}
+
+vec4 NormalToColor(in vec3 normal)
+{
+    return vec4((normal + 1) * .5, 1);
+}
+
+vec4 DepthToColor(in float depth)
+{
+    float nonLinear = (1 / depth - 1 / Camera.ZNear) / (1 / Camera.ZFar - 1 / Camera.ZNear);
+    return vec4(vec3(nonLinear), 1);
+}
+// https://github.com/brandonpelfrey/Fast-BVH/blob/master/include/FastBVH/Traverser.h#L61
+#define Traverse(BVH, NODE_OFFSET, LEAF)                                                                \
+{                                                                                                       \
+    /* Bounding box min-t/max-t for left/right children at some point in the tree */                    \
+    vec4 bbhits;                                                                                        \
+    ivec2 range;                                                                                        \
+                                                                                                        \
+    int stackOffset = StackPtr;                                                                         \
+                                                                                                        \
+    /* "Push" on the root node to the working set */                                                    \
+    Stack[++StackPtr] = vec2(NODE_OFFSET, -1);                                                          \
+                                                                                                        \
+    while (StackPtr > stackOffset)                                                                      \
+    {                                                                                                   \
+        /* Pop off the next node to work on. */                                                         \
+        int ni = int(Stack[StackPtr].x);                                                                \
+        float near = Stack[StackPtr--].y;                                                               \
+                                                                                                        \
+        Node node = BVH[ni];                                                                            \
+                                                                                                        \
+        /* If this node is further than the closest found intersection, continue */                     \
+        if (near > manifold.Depth) continue;                                                            \
+                                                                                                        \
+        /* Is leaf -> Intersect */                                                                      \
+        if (node.RightOffset == 0)                                                                      \
+        {                                                                                               \
+            int i = node.Start;                                                                         \
+            int iMax = i + node.PrimitiveCount;                                                         \
+            for (; i < iMax; ++i)                                                                       \
+            {                                                                                           \
+                LEAF;                                                                                   \
+            }                                                                                           \
+        }                                                                                               \
+        else /* Not a leaf */                                                                           \
+        {                                                                                               \
+            Node c0 = BVH[ni + 1];                                                                      \
+            Node c1 = BVH[ni + node.RightOffset];                                                       \
+                                                                                                        \
+            bool hitc0 = AABBIntersection(ray, c0.BboxMin.xyz, c0.BboxMax.xyz, bbhits.x, bbhits.y);     \
+            bool hitc1 = AABBIntersection(ray, c1.BboxMin.xyz, c1.BboxMax.xyz, bbhits.z, bbhits.w);     \
+                                                                                                        \
+            /* Did we hit both nodes? */                                                                \
+            if (hitc0 && hitc1)                                                                         \
+            {                                                                                           \
+                /* We assume that the left child is a closer hit... */                                  \
+                range = ivec2(ni + 1, ni + node.RightOffset);                                           \
+                                                                                                        \
+                /* ... If the right child was actually closer, swap the relavent values. */             \
+                if (bbhits.z < bbhits.x)                                                                \
+                {                                                                                       \
+                    bbhits.xz = bbhits.zx;                                                              \
+                    bbhits.yw = bbhits.wy;                                                              \
+                    range.xy = range.yx;                                                                \
+                }                                                                                       \
+                                                                                                        \
+                /* It's possible that the nearest object is still in the other side, but */             \
+                /* we'll check the further-awar node later... */                                        \
+                                                                                                        \
+                /* Push the farther first */                                                            \
+                Stack[++StackPtr] = vec2(range.y, bbhits.z);                                            \
+                                                                                                        \
+                /* And now the closer (with overlap test) */                                            \
+                Stack[++StackPtr] = vec2(range.x, bbhits.x);                                            \
+            }                                                                                           \
+            else if (hitc0)                                                                             \
+            {                                                                                           \
+                Stack[++StackPtr] = vec2(ni + 1, bbhits.x);                                             \
+            }                                                                                           \
+            else if (hitc1)                                                                             \
+            {                                                                                           \
+                Stack[++StackPtr] = vec2(ni + node.RightOffset, bbhits.z);                              \
+            }                                                                                           \
+        }                                                                                               \
+    }                                                                                                   \
+}
+
+bool TriangleIntersection(in Ray ray, in Vertex v1, in Vertex v2, in Vertex v3, in int materialId, in float minDistance, in float maxDistance, inout CollisionManifold manifold)
+{
+    vec3 edge12 = v2.PositionU.xyz - v1.PositionU.xyz;
+    vec3 edge13 = v3.PositionU.xyz - v1.PositionU.xyz;
+    vec3 normal = cross(edge12, edge13);
+    float det = -dot(ray.Direction, normal);
+
+    if (abs(det) <= length(normal) * EPS)
+    {
+        return false;
+    }
+
+    vec3 ao = ray.Origin - v1.PositionU.xyz;
+    vec3 dao = cross(ao, ray.Direction);
+
+    float invDet = 1 / det;
+
+    float dst = dot(ao, normal) * invDet;
+    float u = dot(edge13, dao) * invDet;
+    float v = -dot(edge12, dao) * invDet;
+    float w = 1 - u - v;
+
+    if (u < 0 || v < 0 || w < 0 || dst <= minDistance || dst >= maxDistance)
+    {
+        return false;
+    }
+
+    vec2 uv1 = vec2(v1.PositionU.w, v1.NormalV.w);
+    vec2 uv2 = vec2(v2.PositionU.w, v2.NormalV.w);
+    vec2 uv3 = vec2(v3.PositionU.w, v3.NormalV.w);
+
+    vec2 uv = uv1 * w + uv2 * u + uv3 * v;
+    vec2 edgeUV12 = uv2 - uv1;
+    vec2 edgeUV13 = uv3 - uv1;
+    float invDetUV = 1 / (edgeUV12.x * edgeUV13.y - edgeUV12.y * edgeUV13.x);
+
+    manifold.Depth = dst;
+    manifold.Point = ray.Origin + ray.Direction * dst;
+    manifold.TextureCoordinate = uv;
+    manifold.Normal = normalize(v1.NormalV.xyz * w + v2.NormalV.xyz * u + v3.NormalV.xyz * v);
+    manifold.Tangent = normalize((edge12 * edgeUV13.y - edge13 * edgeUV12.y) * invDetUV);
+    manifold.Bitangent = normalize((edge13 * edgeUV12.x - edge12 * edgeUV13.x) * invDetUV);
+    manifold.MaterialId = materialId;
+    manifold.IsFrontFace = det >= 0;
+    return true;
+}
+
+bool AABBIntersection(in Ray ray, in vec3 boxMin, in vec3 boxMax, out float tNear, out float tFar)
+{
+    vec3 tMin = (boxMin - ray.Origin) * ray.InvDirection;
+    vec3 tMax = (boxMax - ray.Origin) * ray.InvDirection;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    tNear = max(max(t1.x, t1.y), t1.z);
+    tFar = min(min(t2.x, t2.y), t2.z);
+    return tNear <= tFar && tFar >= 0;
+}
+
+bool MeshInstanceIntersection(in Ray ray, in MeshInstance meshInstance, in float minDistance, in float maxDistance, out CollisionManifold manifold)
+{
+    const Mesh mesh = Meshes[meshInstance.MeshId];
+
+    vec3 rayOrigin = ray.Origin;
+    ray.Origin = Transform(ray.Origin, meshInstance.TransformInv, true);
+    ray.Direction = normalize(Transform(ray.Direction, meshInstance.TransformInv, false));
+    ray.InvDirection = 1 / ray.Direction;
+
+    float localMinDistance = length(Transform(ray.Direction * minDistance, meshInstance.TransformInv, false));
+    float localMaxDistance = length(Transform(ray.Direction * maxDistance, meshInstance.TransformInv, false));
+    manifold.Depth = localMaxDistance;
+
+    Traverse(
+        BLAS,
+        mesh.NodeOffset,
+        {
+            Triangle triangle = Triangles[i + mesh.TriangleOffset];
+            Vertex v1 = Vertices[triangle.V1];
+            Vertex v2 = Vertices[triangle.V2];
+            Vertex v3 = Vertices[triangle.V3];
+            TriangleIntersection(ray, v1, v2, v3, meshInstance.MaterialId, localMinDistance, manifold.Depth, manifold);
+        }
+    );
+
+
+    if (manifold.Depth < localMaxDistance)
+    {
+        manifold.Point = Transform(manifold.Point, meshInstance.Transform, true);
+        manifold.Depth = length(manifold.Point - rayOrigin);
+        manifold.Normal = normalize(Transform(manifold.Normal, meshInstance.Transform, false));
+        manifold.Tangent = normalize(Transform(manifold.Tangent, meshInstance.Transform, false));
+        manifold.Bitangent = normalize(Transform(manifold.Bitangent, meshInstance.Transform, false));
+        return true;
+    }
+
+    return false;
+}
+
+bool FindIntersection(in Ray ray, in float minDistance, in float maxDistance, out CollisionManifold manifold)
+{
+    manifold.Depth = maxDistance;
+
+    Traverse(
+        TLAS,
+        0,
+        {
+            MeshInstance meshInstance = MeshInstances[i];
+            CollisionManifold current;
+            if (MeshInstanceIntersection(ray, meshInstance, minDistance, manifold.Depth, current))
+            {
+                manifold = current;
+            }
+        }
+    );
+
+    return manifold.Depth < maxDistance;
+}
+float PowerHeuristic(float a, float b)
+{
+    float t = a * a;
+    return t / (b * b + t);
+}
+bool AlphaTest(in Material material)
+{
+    switch (material.AlphaMode)
+    {
+        case OpaqueAlphaMode:
+            return true;
+        case BlendAlphaMode:
+            return material.AlbedoColor.a > RandomValue();
+        case MaskAlphaMode:
+            return material.AlbedoColor.a > material.AlphaCutoff;
+    }
+
+    return true;
+}
+
+bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in CollisionManifold manifold)
+{
+    Material material = GetMaterial(manifold);
+    if (!AlphaTest(material))
+    {
+        return false;
+    }
+
+    vec3 specularDir = reflect(ray.Direction, manifold.Normal);
+    vec3 diffuseDir = normalize(RandomVector3() + manifold.Normal);
+
+    if (material.Metalness <= RandomValue() && RandomValue() >= 0.2)
+    {
+        material.Roughness = 1;
+    }
+
+    // Fresnel
+    if (material.FresnelStrength > 0 &&
+        1 - pow(dot(manifold.Normal, -ray.Direction), material.FresnelStrength) >= RandomValue())
+    {
+        ray.Origin = manifold.Point;
+        ray.Direction = specularDir;
+
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.FresnelColor;
+        return true;
+    }
+
+    // Density
+    if (material.Density > 0)
+    {
+        float depth = -log(RandomValue()) / material.Density;
+        if (manifold.IsFrontFace || depth >= manifold.Depth)
+        {
+            return false;
+        }
+
+        ray.Origin += ray.Direction * depth;
+        ray.Direction = RandomVector3();
+
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.AlbedoColor.rgb;
+        return true;
+    }
+
+    // Refract
+    if (material.IOR > 0)
+    {
+        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1 / material.IOR : material.IOR);
+        if (refractedDir == vec3(0))
+        {
+            refractedDir = specularDir;
+        }
+
+        ray.Origin = manifold.Point;
+        ray.Direction = refractedDir;
+
+        radiance += material.EmissionColor * throughput;
+        throughput *= material.AlbedoColor.rgb;
+        return true;
+    }
+
+    // Scatter
+    ray.Origin = manifold.Point;
+    ray.Direction = Slerp(specularDir, diffuseDir, material.Roughness);
+
+    radiance += material.EmissionColor * throughput;
+    throughput *= material.AlbedoColor.rgb;
+    return true;
+}
+vec3 Reinhard(in vec3 color)
+{
+    return color / (color + 1);
+}
+
+vec3 ACES(in vec3 color)
+{
+    const float a = 2.51;
+    const float b = 0.03;
+    const float y = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+
+    return clamp((color * (a * color + b)) / (color * (y * color + d) + e), 0, 1);
+}
+
+vec3 ACESfitted(in vec3 color)
+{
+    const mat3 ACESInputMat = mat3
+    (
+        vec3(0.59719, 0.35458, 0.04823),
+        vec3(0.07600, 0.90834, 0.01566),
+        vec3(0.02840, 0.13383, 0.83777)
+    );
+
+    const mat3 ACESOutputMat = mat3
+    (
+        vec3(1.60475, -0.53108, -0.07367),
+        vec3(-0.10208, 1.10813, -0.00605),
+        vec3(-0.00327, -0.07276, 1.07602)
+    );
+
+    color = color * ACESInputMat;
+
+    // Apply RRT and ODT
+    vec3 a = color * (color + 0.0245786) - 0.000090537;
+    vec3 b = color * (0.983729 * color + 0.4329510) + 0.238081;
+    color = a / b;
+
+    color = color * ACESOutputMat;
+
+    return clamp(color, 0, 1);
+}
+
+vec3 GammaCorrection(in vec3 color, in float gamma)
+{
+    return pow(color, vec3(1 / gamma));
+}
+
+vec4 ToneMap(in vec4 pixel)
+{
+    switch (ToneMapMode)
+    {
+        // Reinhard
+        case ReinhardToneMap:
+            pixel.rgb = Reinhard(pixel.rgb);
+            break;
+
+        // ACES
+        case ACESToneMap:
+            pixel.rgb = ACES(pixel.rgb);
+            break;
+
+        // ACES fitted
+        case ACESfittedToneMap:
+            pixel.rgb = ACESfitted(pixel.rgb);
+            break;
+    }
+
+    pixel.rgb = GammaCorrection(pixel.rgb, Gamma);
+    return pixel;
+}
+
+vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
+{
+    albedo = normal = vec3(0);
+    z = 0;
+
+    vec3 throughput = vec3(1);
+    vec3 radiance = vec3(0);
+
+    bool isSampled = false;
+    for (uint depth = 0; depth <= MaxDepth; depth++)
+    {
+        CollisionManifold manifold;
+        if (!FindIntersection(ray, depth == 0 ? Camera.ZNear : EPS, depth == 0 ? Camera.ZFar : INF, manifold))
+        {
+            vec4 envColPdf = GetEnvironment(ray);
+            float misWeight = depth > 0 ? PowerHeuristic(1, envColPdf.w) : 1;
+            radiance += misWeight * envColPdf.rgb * throughput;
+
+            if (!isSampled)
+            {
+                albedo = radiance;
+                normal = -ray.Direction;
+                z = Camera.ZFar;
+            }
+
+            return vec4(radiance, !isSampled && Environment.Transparent ? 0 : 1);
+        }
+
+        Material material = GetMaterial(manifold);
+
+        if (BSDF(ray, throughput, radiance, manifold))
+        {
+            ray.InvDirection = 1 / ray.Direction;
+            if (!isSampled)
+            {
+                albedo = throughput;
+                normal = manifold.Normal;
+                z += manifold.Depth;
+            }
+
+            isSampled = true;
+        }
+        else
+        {
+            ray.Origin = manifold.Point;
+            if (!isSampled)
+            {
+                z += manifold.Depth;
+            }
+        }
+
+        // Russian roulette
+        if (RussianRouletteDepth > 0 && depth >= RussianRouletteDepth)
+        {
+            float q = min(max(throughput.x, max(throughput.y, throughput.z)) + 0.001, 0.95);
+            if (RandomValue() > q)
+            {
+                break;
+            }
+
+            throughput /= q;
+        }
+    }
+
+    return vec4(radiance, 1);
+}
+
+void main()
+{
+    if (any(lessThan(TexelCoord, FramePosition)) || any(lessThanEqual(FramePosition + FrameSize, TexelCoord)))
+    {
+        return;
+    }
+
+    if (OnlyToneMapping)
+    {
+        vec4 accumColor = imageLoad(AccumulatorImage, TexelCoord);
+        imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / SampleCount));
+        return;
+    }
+
+    vec2 coord = (UV - vec2(.5)) * vec2(1, float(Size.y) / Size.x) * 2 * tan(Camera.FOV * .5);
+    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0));
+    JitterRay(ray);
+
+    vec3 albedo, normal;
+    float depth;
+    vec4 accumColor = PathTrace(ray, albedo, normal, depth) + imageLoad(AccumulatorImage, TexelCoord);
+
+    if (SampleCount == 0)
+    {
+        imageStore(AlbedoImage, TexelCoord, vec4(albedo, 1));
+        imageStore(NormalImage, TexelCoord, NormalToColor(normal));
+        imageStore(DepthImage, TexelCoord, DepthToColor(depth));
+    }
+
+    imageStore(AccumulatorImage, TexelCoord, accumColor);
+    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1)));
+}
+)ShaderSrc";
 #endif

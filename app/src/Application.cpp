@@ -173,7 +173,7 @@ Application::Application(
     glm::uvec2 maxTextureArraySize,
     const std::filesystem::path sceneDir,
     const std::filesystem::path environmentDir,
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
     const std::filesystem::path shaderPath,
 #endif
     const Scene& initScene,
@@ -182,7 +182,7 @@ Application::Application(
     maxTextureArraySize(maxTextureArraySize),
     sceneDir(sceneDir),
     environmentDir(environmentDir),
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
     shaderPath(shaderPath),
 #endif
     scene(initScene)
@@ -224,7 +224,7 @@ Application::Application(
     // Init renderer
     try
     {
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
         this->renderer.init(initSize);
 #else
         this->renderer.init(initSize, this->shaderPath);
@@ -341,7 +341,7 @@ void Application::control()
         this->switchRendering();
     }
 
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
     if (ImGui::IsKeyPressed(ImGuiKey_R, false))
     {
         this->reloadShaders();
@@ -412,7 +412,7 @@ void Application::switchRendering()
     }
 }
 
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
 void Application::reloadShaders()
 {
     try

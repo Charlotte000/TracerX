@@ -12,7 +12,7 @@ Additional assets can be downloaded here and installed in the directory:
 - `app/assets/environments`: [Poly Haven](https://polyhaven.com/hdris)
 - `app/assets/scenes`: [KhronosGroup/glTF-Sample-Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) or [Sketchfab](https://sketchfab.com)
 
-Be aware that the project uses CMake [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html) to download required libraries, so an internet connection is required to build the project.
+Be aware that the project uses CMake [FetchContent](https://cmake.org/cmake/help/latest/module/FetchContent.html) to download required libraries, so an internet connection is required to build the project. See the [External libraries](#external) section for more information.
 
 # Renders
 ![](imgs/UI.jpg)

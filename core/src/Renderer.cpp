@@ -14,7 +14,7 @@ using namespace TracerX;
 using namespace TracerX::core;
 using namespace TracerX::core::GL;
 
-#ifndef NDEBUG
+#if !NDEBUG
 // https://learnopengl.com/In-Practice/Debugging
 void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
 {
@@ -58,7 +58,7 @@ void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenu
 }
 #endif
 
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
 void Renderer::init(glm::uvec2 size)
 #else
 void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
@@ -70,7 +70,7 @@ void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
         throw std::runtime_error((const char*)glewGetErrorString(status));
     }
 
-#ifndef NDEBUG
+#if !NDEBUG
     // Debug output
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -79,7 +79,7 @@ void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
 #endif
 
     // Init GPU data
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
     this->initData();
 #else
     this->initData(shaderPath);
@@ -234,7 +234,7 @@ void Renderer::denoise()
 }
 #endif
 
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
     this->shader.shutdown();
@@ -369,7 +369,7 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
     this->tlasBuffer.update(tlas.data(), tlas.size() * sizeof(BvhNode));
 }
 
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
 void Renderer::initData()
 #else
 void Renderer::initData(const std::filesystem::path& shaderPath)
@@ -377,7 +377,9 @@ void Renderer::initData(const std::filesystem::path& shaderPath)
 {
     // Shader
 #if TX_SPIRV
-    this->shader.init(Renderer::shaderBin, Renderer::shaderBinSize);
+    this->shader.init(Renderer::shaderSrc, Renderer::shaderSrcSize);
+#elif NDEBUG
+    this->shader.init(Renderer::shaderSrc);
 #else
     this->shader.init(shaderPath);
 #endif

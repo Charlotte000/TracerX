@@ -11,10 +11,10 @@
 using namespace TracerX::core::GL;
 
 #if TX_SPIRV
-void Shader::init(const unsigned char shaderBin[], const size_t shaderBinSize)
+void Shader::init(const unsigned char shaderSrc[], const size_t shaderSrcSize)
 {
     // Create OpenGL shader
-const GLuint shaderHandler = this->initShader(shaderBin, shaderBinSize, GL_COMPUTE_SHADER);
+    const GLuint shaderHandler = this->initShader(shaderSrc, shaderSrcSize, GL_COMPUTE_SHADER);
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -23,12 +23,35 @@ const GLuint shaderHandler = this->initShader(shaderBin, shaderBinSize, GL_COMPU
     glDeleteShader(shaderHandler);
 }
 
-GLuint Shader::initShader(const unsigned char bin[], const size_t shaderBinSize, unsigned int shaderType)
+GLuint Shader::initShader(const unsigned char shaderSrc[], const size_t shaderSrcSize, unsigned int shaderType)
 {
     // Create shader
     const GLuint handler = glCreateShader(shaderType);
-    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, bin, (GLsizei)shaderBinSize);
+    glShaderBinary(1, &handler, GL_SHADER_BINARY_FORMAT_SPIR_V, shaderSrc, (GLsizei)shaderSrcSize);
     glSpecializeShader(handler, "main", 0, nullptr, nullptr);
+
+    Shader::checkShader(handler);
+    return handler;
+}
+#elif NDEBUG
+void Shader::init(const char shaderSrc[])
+{
+    // Create OpenGL shader
+    const GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
+
+    // Create OpenGL program
+    this->handler = this->initProgram(shaderHandler);
+
+    // Clean OpenGL shader
+    glDeleteShader(shaderHandler);
+}
+
+unsigned int Shader::initShader(const char shaderSrc[], unsigned int shaderType)
+{
+    // Create shader
+    const GLuint handler = glCreateShader(shaderType);
+    glShaderSource(handler, 1, &shaderSrc, nullptr);
+    glCompileShader(handler);
 
     Shader::checkShader(handler);
     return handler;
@@ -52,7 +75,7 @@ unsigned int Shader::initShader(const std::filesystem::path& shaderSrc, unsigned
     const std::string src = Shader::loadShader(shaderSrc);
     const GLchar* code = (const GLchar*)src.c_str();
     const GLuint handler = glCreateShader(shaderType);
-    glShaderSource(handler, 1, &code, 0);
+    glShaderSource(handler, 1, &code, nullptr);
     glCompileShader(handler);
 
     Shader::checkShader(handler);

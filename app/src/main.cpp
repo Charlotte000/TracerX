@@ -23,7 +23,7 @@ int main()
     // The directory containing the environment maps.
     const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
 
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
     // The path to the shader source code.
     const std::filesystem::path shaderPath = homeDir / "shaders" / "main.comp";
 #endif
@@ -41,7 +41,7 @@ int main()
         maxTextureArraySize,
         sceneDir,
         environmentDir,
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
         shaderPath,
 #endif
         initScene,

@@ -17,18 +17,30 @@ def compile_shader(mainPath: str) -> bytes:
     remove(temp)
     return data
 
+def assemble_shader(mainPath: str) -> str:
+    result = ""
+    with open(mainPath, "r") as file:
+        for line in file:
+            if line.startswith("#include \""):
+                includePath = line.removeprefix("#include \"").removesuffix("\"\n")
+                result += assemble_shader(join(dirname(mainPath), includePath))
+            else:
+                result += line
+    return result
 
-def write_shader(path: str, shaderBin: bytes) -> bool:
+def write_shader(path: str, shaderBin: bytes, shaderSrc: str) -> bool:
     src = list(map(lambda v: f"{v:#04x}", shaderBin))
 
     newData = (
         "#include <TracerX/Renderer.h>\n\n"
         + "using namespace TracerX;\n\n"
         + "#if TX_SPIRV\n"
-        + "const unsigned char Renderer::shaderBin[] =\n{\n    "
+        + "const unsigned char Renderer::shaderSrc[] =\n{\n    "
         + ",\n    ".join(', '.join(src[i:i+10]) for i in range(0, len(src), 10))
-        + "\n};\n\n"
-        + f"const size_t Renderer::shaderBinSize = {len(src)};\n"
+        + "\n};\n"
+        + f"const size_t Renderer::shaderSrcSize = {len(src)};\n"
+        + "#elif NDEBUG\n"
+        + f"const char Renderer::shaderSrc[] = R\"ShaderSrc({shaderSrc})ShaderSrc\";\n"
         + "#endif\n"
     )
 
@@ -49,14 +61,19 @@ def write_shader(path: str, shaderBin: bytes) -> bool:
 
 project = join(dirname(__file__), "..")
 shaders = join(project, "shaders")
+mainPath = join(shaders, "main.comp")
 
 try:
-    shaderBin = compile_shader(join(shaders, "main.comp"))
+    shaderSrc = assemble_shader(mainPath)
+    print("[Info] Assemble completed")
+
+    shaderBin = compile_shader(mainPath)
     print("[Info] Compilation completed")
 
     override = write_shader(
         join(project, "core", "src", "RendererShaderBin.cpp"),
         shaderBin,
+        shaderSrc
     )
 
     if override:

@@ -105,7 +105,7 @@ public:
         ACESfitted = 2,
     } toneMapMode = ToneMapMode::Reinhard;
 
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
     /**
      * @brief Initializes the renderer with the specified size.
      * 
@@ -187,7 +187,7 @@ public:
     void denoise();
 #endif
 
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
     /**
      * @brief Reloads the shaders.
      * 
@@ -389,8 +389,12 @@ private:
     core::GL::UniformBuffer paramBuffer;
 
 #if TX_SPIRV
-    static const unsigned char shaderBin[];
-    static const size_t shaderBinSize;
+    static const unsigned char shaderSrc[];
+    static const size_t shaderSrcSize;
+
+    void initData();
+#elif NDEBUG
+    static const char shaderSrc[];
 
     void initData();
 #else
