@@ -8,7 +8,7 @@
 const std::filesystem::path homeDir = std::filesystem::canonical(TX_HOME);
 const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
 const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes" / "";
-#if !TX_SPIRV
+#if !TX_SPIRV && !NDEBUG
 const std::filesystem::path shaderPath = homeDir / "shaders" / "main.comp";
 #endif
 
@@ -51,7 +51,7 @@ int main()
 
     // Setting up the renderer
     TracerX::Renderer renderer;
-#if TX_SPIRV
+#if TX_SPIRV || NDEBUG
     renderer.init(glm::uvec2(1000, 1000));
 #else
     renderer.init(glm::uvec2(1000, 1000), shaderPath);

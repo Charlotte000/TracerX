@@ -42,13 +42,13 @@ private:
 
 #if TX_SPIRV
     static unsigned int initShader(const unsigned char shaderSrc[], const size_t shaderSrcSize, unsigned int shaderType);
-#elif NDEBUG
-    static unsigned int initShader(const char shaderSrc[], unsigned int shaderType);
 #else
-    static unsigned int initShader(const std::filesystem::path& shaderSrc, unsigned int shaderType);
-    static std::string loadShader(const std::filesystem::path& path);
+    static unsigned int initShader(const char shaderSrc[], unsigned int shaderType);
 #endif
     static unsigned int initProgram(unsigned int shaderHandler);
+#if !TX_SPIRV && !NDEBUG
+    static std::string loadShader(const std::filesystem::path& path);
+#endif
     static void checkShader(unsigned int shaderHandler);
 };
 

@@ -71,7 +71,7 @@ try:
     print("[Info] Compilation completed")
 
     override = write_shader(
-        join(project, "core", "src", "RendererShaderBin.cpp"),
+        join(project, "core", "src", "RendererShaderSrc.cpp"),
         shaderBin,
         shaderSrc
     )
