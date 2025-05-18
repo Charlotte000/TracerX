@@ -14,9 +14,7 @@ if (TX_SPIRV)
     add_compile_definitions(TX_SPIRV)
 endif()
 
-add_compile_definitions(TX_HOME="${CMAKE_HOME_DIRECTORY}")
-
-add_subdirectory(core)
+add_subdirectory(tracerX)
 
 if (TX_BUILD_EDITOR)
     add_subdirectory(app)

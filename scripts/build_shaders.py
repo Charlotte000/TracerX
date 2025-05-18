@@ -6,7 +6,7 @@ from os.path import dirname, join, exists
 def compile_shader(mainPath: str) -> bytes:
     temp = join(dirname(mainPath), "out.spv")
     proc = subprocess.run(
-        ["glslc", join(shaders, "main.comp"), "-o", temp], stderr=subprocess.PIPE
+        ["glslc", mainPath, "-o", temp], stderr=subprocess.PIPE
     )
     if proc.returncode != 0:
         raise ValueError(f"Compilation error:\n{proc.stderr.decode()}")
@@ -60,8 +60,7 @@ def write_shader(path: str, shaderBin: bytes, shaderSrc: str) -> bool:
 
 
 project = join(dirname(__file__), "..")
-shaders = join(project, "shaders")
-mainPath = join(shaders, "main.comp")
+mainPath = join(project, "tracerX", "shaders", "main.comp")
 
 try:
     shaderSrc = assemble_shader(mainPath)
@@ -71,7 +70,7 @@ try:
     print("[Info] Compilation completed")
 
     override = write_shader(
-        join(project, "core", "src", "RendererShaderSrc.cpp"),
+        join(project, "tracerX", "src", "RendererShaderSrc.cpp"),
         shaderBin,
         shaderSrc
     )

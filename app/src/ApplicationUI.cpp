@@ -1017,7 +1017,7 @@ static void mainMenuBar(Application& app)
             const char* patterns[] = { "*.glb", "*.gltf" };
             const char* path = tinyfd_openFileDialog(
                 "Open scene file",
-                app.sceneDir.string().c_str(),
+                (std::filesystem::canonical(app.sceneDir) / "").string().c_str(),
                 2,
                 patterns,
                 nullptr,
@@ -1033,7 +1033,7 @@ static void mainMenuBar(Application& app)
             const char* patterns[] = { "*.png", "*.hdr", "*.jpg" };
             const char* fileName = tinyfd_openFileDialog(
                 "Open environment image",
-                app.environmentDir.string().c_str(),
+                (std::filesystem::canonical(app.environmentDir) / "").string().c_str(),
                 3,
                 patterns,
                 nullptr,

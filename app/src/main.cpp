@@ -2,13 +2,13 @@
 
 #include <TracerX/GLTFLoader.h>
 
-int main()
+int main(int argc, char* argv[])
 {
     // Initialize the application with the following parameters.
     // Feel free to change them.
     // =======================================
 
-    const std::filesystem::path homeDir = std::filesystem::canonical(TX_HOME);
+    const std::filesystem::path homeDir = std::filesystem::path(argv[0]).parent_path() / ".." / "..";
 
     // The initial size of the rendered image.
     const glm::uvec2 initSize(900, 900);
@@ -25,7 +25,7 @@ int main()
 
 #if !TX_SPIRV && !NDEBUG
     // The path to the shader source code.
-    const std::filesystem::path shaderPath = homeDir / "shaders" / "main.comp";
+    const std::filesystem::path shaderPath = homeDir / "tracerX" / "shaders" / "main.comp";
 #endif
 
     // The initial scene to render.
