@@ -10,22 +10,22 @@
 
 using namespace TracerX::core::GL;
 
-#if TX_SPIRV
 void Shader::init(const unsigned char shaderSrc[], const size_t shaderSrcSize)
-#elif NDEBUG
-void Shader::init(const char shaderSrc[])
-#else
-void Shader::init(const std::filesystem::path& shaderSrc)
-#endif
 {
     // Create OpenGL shader
-#if TX_SPIRV
     const GLuint shaderHandler = this->initShader(shaderSrc, shaderSrcSize, GL_COMPUTE_SHADER);
-#elif NDEBUG
+
+    // Create OpenGL program
+    this->handler = this->initProgram(shaderHandler);
+
+    // Clean OpenGL shader
+    glDeleteShader(shaderHandler);
+}
+
+void Shader::init(const char shaderSrc[])
+{
+    // Create OpenGL shader
     const GLuint shaderHandler = this->initShader(shaderSrc, GL_COMPUTE_SHADER);
-#else
-    const GLuint shaderHandler = this->initShader(Shader::loadShader(shaderSrc).c_str(), GL_COMPUTE_SHADER);
-#endif
 
     // Create OpenGL program
     this->handler = this->initProgram(shaderHandler);
@@ -44,6 +44,14 @@ void Shader::use()
     glUseProgram(this->handler);
 }
 
+#if !NDEBUG
+void Shader::reload(const std::filesystem::path& path)
+{
+    this->shutdown();
+    this->init(Shader::loadShader(path).c_str());
+}
+#endif
+
 glm::uvec3 Shader::getGroups(glm::uvec2 size)
 {
     return glm::uvec3(glm::ceil(glm::vec3(size, 1) / glm::vec3(Shader::groupSize)));
@@ -60,7 +68,6 @@ void Shader::stopUse()
     glUseProgram(0);
 }
 
-#if TX_SPIRV
 GLuint Shader::initShader(const unsigned char shaderSrc[], const size_t shaderSrcSize, unsigned int shaderType)
 {
     // Create shader
@@ -71,7 +78,7 @@ GLuint Shader::initShader(const unsigned char shaderSrc[], const size_t shaderSr
     Shader::checkShader(handler);
     return handler;
 }
-#else
+
 unsigned int Shader::initShader(const char shaderSrc[], unsigned int shaderType)
 {
     // Create shader
@@ -82,7 +89,6 @@ unsigned int Shader::initShader(const char shaderSrc[], unsigned int shaderType)
     Shader::checkShader(handler);
     return handler;
 }
-#endif
 
 unsigned int Shader::initProgram(unsigned int shaderHandler)
 {
@@ -108,7 +114,7 @@ unsigned int Shader::initProgram(unsigned int shaderHandler)
     return handler;
 }
 
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
 std::string Shader::loadShader(const std::filesystem::path& path)
 {
     std::ifstream file(path);

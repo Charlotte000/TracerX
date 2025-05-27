@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
     // The directory containing the environment maps.
     const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
 
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     // The path to the shader source code.
     const std::filesystem::path shaderPath = homeDir / "tracerX" / "shaders" / "main.comp";
 #endif
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
         maxTextureArraySize,
         sceneDir,
         environmentDir,
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
         shaderPath,
 #endif
         initScene,

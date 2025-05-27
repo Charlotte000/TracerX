@@ -720,7 +720,7 @@ static void propertyControls(Application& app)
     }
 #endif
 
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     if (ImGui::Button("Reload shaders", ImVec2(-1, 0)))
     {
         app.reloadShaders();

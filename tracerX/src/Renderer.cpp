@@ -58,11 +58,7 @@ void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenu
 }
 #endif
 
-#if TX_SPIRV || NDEBUG
 void Renderer::init(glm::uvec2 size)
-#else
-void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
-#endif
 {
     // Init GLEW
     if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
@@ -79,11 +75,7 @@ void Renderer::init(glm::uvec2 size, const std::filesystem::path& shaderPath)
 #endif
 
     // Init GPU data
-#if TX_SPIRV || NDEBUG
     this->initData();
-#else
-    this->initData(shaderPath);
-#endif
 
     // Set size
     this->resize(size);
@@ -234,11 +226,10 @@ void Renderer::denoise()
 }
 #endif
 
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->shader.shutdown();
-    this->shader.init(shaderPath);
+    this->shader.reload(shaderPath);
 }
 #endif
 
@@ -369,19 +360,13 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
     this->tlasBuffer.update(tlas.data(), tlas.size() * sizeof(BvhNode));
 }
 
-#if TX_SPIRV || NDEBUG
 void Renderer::initData()
-#else
-void Renderer::initData(const std::filesystem::path& shaderPath)
-#endif
 {
     // Shader
 #if TX_SPIRV
     this->shader.init(Renderer::shaderSrc, Renderer::shaderSrcSize);
-#elif NDEBUG
-    this->shader.init(Renderer::shaderSrc);
 #else
-    this->shader.init(shaderPath);
+    this->shader.init(Renderer::shaderSrc);
 #endif
 
     // Textures

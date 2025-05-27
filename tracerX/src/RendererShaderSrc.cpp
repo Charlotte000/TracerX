@@ -6271,7 +6271,7 @@ const unsigned char Renderer::shaderSrc[] =
     0x02, 0x00, 0x32, 0x09, 0x00, 0x00, 0x38, 0x00, 0x01, 0x00
 };
 const size_t Renderer::shaderSrcSize = 62640;
-#elif NDEBUG
+#else
 const char Renderer::shaderSrc[] = R"ShaderSrc(#version 430 core
 #pragma shader_stage(compute)
 

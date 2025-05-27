@@ -16,7 +16,7 @@ public:
     bool isSceneLoaded = true;
     bool isHoverTexture = false;
     const glm::uvec2 maxTextureArraySize;
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     const std::filesystem::path shaderPath;
 #endif
     const std::filesystem::path sceneDir;
@@ -93,7 +93,7 @@ public:
         glm::uvec2 maxTextureArraySize,
         const std::filesystem::path sceneDir,
         const std::filesystem::path environmentDir,
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
         const std::filesystem::path shaderPath,
 #endif
         const TracerX::Scene& initScene,
@@ -105,7 +105,7 @@ public:
     float getLookAtDistance() const;
     void setCameraMode(CameraControl::Mode mode);
     void switchRendering();
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     void reloadShaders();
 #endif
     void clear();

@@ -39,7 +39,7 @@ def write_shader(path: str, shaderBin: bytes, shaderSrc: str) -> bool:
         + ",\n    ".join(', '.join(src[i:i+10]) for i in range(0, len(src), 10))
         + "\n};\n"
         + f"const size_t Renderer::shaderSrcSize = {len(src)};\n"
-        + "#elif NDEBUG\n"
+        + "#else\n"
         + f"const char Renderer::shaderSrc[] = R\"ShaderSrc({shaderSrc})ShaderSrc\";\n"
         + "#endif\n"
     )

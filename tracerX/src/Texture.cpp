@@ -43,7 +43,6 @@ void Texture::update(const Image& image)
         }
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-
 }
 
 Image Texture::upload() const

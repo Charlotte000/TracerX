@@ -105,7 +105,6 @@ public:
         ACESfitted = 2,
     } toneMapMode = ToneMapMode::Reinhard;
 
-#if TX_SPIRV || NDEBUG
     /**
      * @brief Initializes the renderer with the specified size.
      * 
@@ -115,18 +114,6 @@ public:
      * @throws std::runtime_error Thrown if GLEW fails to initialize.
      */
     void init(glm::uvec2 size);
-#else
-    /**
-     * @brief Initializes the renderer with the specified size.
-     * 
-     * Must be called before any other method. Initializes GLEW and OpenGL.
-     * 
-     * @param size The size of the renderer.
-     * @param shaderPath The path to the shader source code.
-     * @throws std::runtime_error Thrown if GLEW fails to initialize.
-     */
-    void init(glm::uvec2 size, const std::filesystem::path& shaderPath);
-#endif
 
     /**
      * @brief Resizes the rendered image to the specified size.
@@ -187,7 +174,7 @@ public:
     void denoise();
 #endif
 
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     /**
      * @brief Reloads the shaders.
      * 
@@ -391,15 +378,10 @@ private:
 #if TX_SPIRV
     static const unsigned char shaderSrc[];
     static const size_t shaderSrcSize;
-
-    void initData();
-#elif NDEBUG
-    static const char shaderSrc[];
-
-    void initData();
 #else
-    void initData(const std::filesystem::path& shaderPath);
+    static const char shaderSrc[];
 #endif
+    void initData();
     void bindData();
     void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping);
 };

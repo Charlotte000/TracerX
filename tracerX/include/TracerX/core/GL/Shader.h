@@ -22,15 +22,13 @@ namespace TracerX::core::GL
 class Shader
 {
 public:
-#if TX_SPIRV
     void init(const unsigned char shaderSrc[], const size_t shaderSrcSize);
-#elif NDEBUG
     void init(const char shaderSrc[]);
-#else
-    void init(const std::filesystem::path& shaderSrc);
-#endif
     void shutdown();
     void use();
+#if !NDEBUG
+    void reload(const std::filesystem::path& path);
+#endif
 
     static glm::uvec3 getGroups(glm::uvec2 size);
     static void dispatchCompute(glm::uvec3 groups);
@@ -40,13 +38,10 @@ private:
 
     static inline const glm::uvec3 groupSize = glm::uvec3(16, 16, 1);
 
-#if TX_SPIRV
     static unsigned int initShader(const unsigned char shaderSrc[], const size_t shaderSrcSize, unsigned int shaderType);
-#else
     static unsigned int initShader(const char shaderSrc[], unsigned int shaderType);
-#endif
     static unsigned int initProgram(unsigned int shaderHandler);
-#if !TX_SPIRV && !NDEBUG
+#if !NDEBUG
     static std::string loadShader(const std::filesystem::path& path);
 #endif
     static void checkShader(unsigned int shaderHandler);

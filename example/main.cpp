@@ -35,9 +35,6 @@ int main(int argc, char* argv[])
     const std::filesystem::path homeDir = std::filesystem::path(argv[0]).parent_path() / ".." / "..";
     const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
     const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes" / "";
-#if !TX_SPIRV && !NDEBUG
-    const std::filesystem::path shaderPath = homeDir / "tracerX" / "shaders" / "main.comp";
-#endif
 
     std::cout << "Setting up" << std::endl << std::endl;
     GLFWwindow* window = createWindow();
@@ -51,11 +48,7 @@ int main(int argc, char* argv[])
 
     // Setting up the renderer
     TracerX::Renderer renderer;
-#if TX_SPIRV || NDEBUG
     renderer.init(glm::uvec2(1000, 1000));
-#else
-    renderer.init(glm::uvec2(1000, 1000), shaderPath);
-#endif
     renderer.environment.loadFromFile(environmentDir / "konzerthaus_2k.hdr");
     renderer.loadScene(scene);
 
