@@ -78,7 +78,8 @@ if (TX_DENOISE)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageDenoise)
 
     if (WIN32)
-        set(OIDN_BIN "${oidn_SOURCE_DIR}/bin" PARENT_SCOPE)
+        file(GLOB OIDN_DLL "${oidn_SOURCE_DIR}/bin/*.dll")
+        set(TX_DENOISE_DLL ${OIDN_DLL} PARENT_SCOPE)
     endif()
 endif()
 

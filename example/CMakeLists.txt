@@ -7,8 +7,7 @@ add_executable(${PROJECT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 # TracerX
 target_link_libraries(${PROJECT_NAME} PRIVATE TracerX)
 if(TX_DENOISE AND WIN32)
-    file(GLOB OIDN_DLL "${OIDN_BIN}/*.dll")
-    file(COPY ${OIDN_DLL} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY ${TX_DENOISE_DLL} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 # OpenGL
