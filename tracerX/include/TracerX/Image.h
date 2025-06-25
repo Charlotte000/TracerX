@@ -31,11 +31,17 @@ public:
 
     /**
      * @brief Saves the image to a file.
+     * 
+     * The image is saved in the format specified by the file extension.
+     * Supported formats include:
+     * - PNG (.png)
+     * - HDR (.hdr)
+     * - JPEG (.jpg)
+     * - BMP (.bmp)
      * @param path The path of the file to save the image to.
-     * @param isHDR Whether to save the image as a high dynamic range (HDR) image. If not, the image is saved as a PNG image.
      * @throws std::runtime_error Thrown if the image fails to save.
      */
-    void saveToFile(const std::filesystem::path& path, bool isHDR = false) const;
+    void saveToFile(const std::filesystem::path& path) const;
  
     /**
      * @brief Resizes the image to the specified size.

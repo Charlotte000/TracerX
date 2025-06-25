@@ -108,7 +108,7 @@ unsigned int Shader::initProgram(unsigned int shaderHandler)
         glGetProgramInfoLog(handler, logSize, nullptr, log.data());
         glDeleteShader(shaderHandler);
         glDeleteProgram(handler);
-        throw std::runtime_error(log);
+        throw std::runtime_error("Failed to link shader program: " + log);
     }
 
     return handler;
@@ -157,6 +157,6 @@ void Shader::checkShader(unsigned int shaderHandler)
         std::string log(logSize, ' ');
         glGetShaderInfoLog(shaderHandler, logSize, nullptr, log.data());
         glDeleteShader(shaderHandler);
-        throw std::runtime_error(log);
+        throw std::runtime_error("Failed to compile shader: " + log);
     }
 }

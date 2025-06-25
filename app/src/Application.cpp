@@ -191,13 +191,13 @@ Application::Application(
     glfwSetErrorCallback([](int, const char* err)
     {
         std::cerr << "GLFW Error: " << err << std::endl;
-        throw std::runtime_error(err);
+        throw std::runtime_error("GLFW Error: " + std::string(err));
     });
 
     if (glfwInit() == GL_FALSE)
     {
         std::cerr << "GLFW Init Error" << std::endl;
-        throw std::runtime_error("GLFW Init Error");
+        throw std::runtime_error("Failed to initialize GLFW");
     }
 
     // Create window
@@ -205,8 +205,8 @@ Application::Application(
     this->window = glfwCreateWindow(initSize.x, initSize.y, "TracerX", nullptr, nullptr);
     if (this->window == nullptr)
     {
-        std::cerr << "GLFW Create Window Error" << std::endl;
-        throw std::runtime_error("GLFW Create Window Error");
+        std::cerr << "Failed to create window" << std::endl;
+        throw std::runtime_error("Failed to create window");
     }
 
     // Create thread context
@@ -214,8 +214,8 @@ Application::Application(
     this->threadContext = glfwCreateWindow(1, 1, "", nullptr, this->window);
     if (this->threadContext == nullptr)
     {
-        std::cerr << "GLFW Create Window Error" << std::endl;
-        throw std::runtime_error("GLFW Create Window Error");
+        std::cerr << "Failed to create window" << std::endl;
+        throw std::runtime_error("Failed to create window");
     }
 
     glfwMakeContextCurrent(this->window);
@@ -312,7 +312,7 @@ void Application::loadScene(const std::filesystem::path& path)
             this->isSceneLoaded = true;
 
             std::cerr << err.what() << std::endl;
-            tinyfd_messageBox("Error", "Invalid scene file", "ok", "warning", 0);
+            tinyfd_messageBox("Error", err.what(), "ok", "warning", 0);
             return;
         }
 

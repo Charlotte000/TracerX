@@ -116,7 +116,7 @@ static std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, cons
                                 Triangle { .v1 = (int)(index64.x + vertexOffset), .v2 = (int)(index64.y + vertexOffset), .v3 = (int)(index64.z + vertexOffset) });
                             break;
                         default:
-                            throw std::runtime_error("Unsupported index stride");
+                            throw std::runtime_error("Unsupported index stride: " + std::to_string(indexStride));
                     }
                 }
             }
@@ -351,14 +351,14 @@ Scene TracerX::loadGLTF(const std::filesystem::path& path)
     {
         if (!loader.LoadBinaryFromFile(&model, &err, nullptr, path.string()))
         {
-            throw std::runtime_error(err);
+            throw std::runtime_error("Failed to load GLB file: " + err);
         }
     }
     else
     {
         if (!loader.LoadASCIIFromFile(&model, &err, nullptr, path.string()))
         {
-            throw std::runtime_error(err);
+            throw std::runtime_error("Failed to load GLTF file: " + err);
         }
     }
 

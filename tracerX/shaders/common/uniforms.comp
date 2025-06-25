@@ -68,7 +68,12 @@ layout(std140, binding=2) uniform ParamsUBO
 ivec2 Size = imageSize(AccumulatorImage);
 ivec2 EnvironmentSize = textureSize(EnvironmentTexture, 0);
 ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
+#if TX_OPENGL
+vec2 UV = vec2(TexelCoord.x, Size.y - 1 - TexelCoord.y) / Size;
+#else
 vec2 UV = vec2(TexelCoord) / Size;
+#endif
+
 vec3 CameraRight = cross(Camera.Forward, Camera.Up);
 
 float Luminance(vec3 c)
@@ -117,7 +122,9 @@ Material GetMaterial(inout CollisionManifold manifold)
     if (material.NormalTextureId >= 0)
     {
         vec3 texNormal = texture(Textures, vec3(manifold.TextureCoordinate, material.NormalTextureId)).rgb;
+#if TX_OPENGL
         texNormal.y = 1 - texNormal.y;
+#endif
         texNormal = normalize(texNormal * 2 - 1);
         manifold.Normal = normalize(manifold.Tangent * texNormal.x + manifold.Bitangent * texNormal.y + manifold.Normal * texNormal.z);
     }

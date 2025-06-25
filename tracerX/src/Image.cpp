@@ -15,16 +15,19 @@
 
 using namespace TracerX;
 
-void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
+void Image::saveToFile(const std::filesystem::path& path) const
 {
-    stbi_flip_vertically_on_write(true);
-
-    if (isHDR)
+    if (!path.has_extension())
     {
-        // Write to file
+        throw std::runtime_error("The file path must have an extension to determine the image format: " + path.string());
+    }
+
+    // HDR
+    if (path.extension() == ".hdr")
+    {
         if (!stbi_write_hdr(path.string().c_str(), this->size.x, this->size.y, 4, this->pixels.data()))
         {
-            throw std::runtime_error("Failed to save the image");
+            throw std::runtime_error("Failed to save the image: " + path.string());
         }
 
         return;
@@ -37,11 +40,41 @@ void Image::saveToFile(const std::filesystem::path& path, bool isHDR) const
         data[i] = (unsigned char)(this->pixels[i] * 255);
     }
 
-    // Write to file
-    if (!stbi_write_png(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 0))
+    // JPEG
+    if (path.extension() == ".jpg")
     {
-        throw std::runtime_error("Failed to save the image");
+        if (!stbi_write_jpg(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 100))
+        {
+            throw std::runtime_error("Failed to save the image: " + path.string());
+        }
+
+        return;
     }
+
+    // BMP
+    if (path.extension() == ".bmp")
+    {
+        if (!stbi_write_bmp(path.string().c_str(), this->size.x, this->size.y, 4, data.data()))
+        {
+            throw std::runtime_error("Failed to save the image: " + path.string());
+        }
+
+        return;
+    }
+
+    // PNG
+    if (path.extension() == ".png")
+    {
+        if (!stbi_write_png(path.string().c_str(), this->size.x, this->size.y, 4, data.data(), 0))
+        {
+            throw std::runtime_error("Failed to save the image: " + path.string());
+        }
+
+        return;
+    }
+
+    // Unsupported format
+    throw std::runtime_error("Unsupported image format: " + path.extension().string());
 }
 
 Image Image::resize(glm::uvec2 size) const

@@ -1,6 +1,8 @@
 #version 430 core
 #pragma shader_stage(compute)
 
+#define TX_OPENGL 1
+
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 const float INV_PI     = 0.31830988618379067;

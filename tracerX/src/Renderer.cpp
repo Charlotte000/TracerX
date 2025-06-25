@@ -63,7 +63,7 @@ void Renderer::init(glm::uvec2 size)
     // Init GLEW
     if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
     {
-        throw std::runtime_error((const char*)glewGetErrorString(status));
+        throw std::runtime_error("Failed to initialize GLEW: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(status))));
     }
 
 #if !NDEBUG

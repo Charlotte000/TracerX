@@ -1,4 +1,3 @@
-- tracerX::image flip hell (renderRect)
 - tracerX::texture uploadRect
 
 - importance sampling (pdf)

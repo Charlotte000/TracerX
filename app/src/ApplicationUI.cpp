@@ -161,14 +161,8 @@ static void Tooltip(const std::string& content)
     }
 }
 
-static void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
+static void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1))
 {
-    if (flipY)
-    {
-        uvLo.y = 1 - uvLo.y;
-        uvUp.y = 1 - uvUp.y;
-    }
-
     ImGui::SetCursorScreenPos(toImVec2(pos));
     ImGui::Image(
         (void*)(intptr_t)textureHandler,
@@ -179,14 +173,8 @@ static void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::
         ImGui::GetStyle().Colors[ImGuiCol_TableBorderLight]);
 }
 
-static void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1), bool flipY = false)
+static void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1))
 {
-    if (flipY)
-    {
-        uvLo.y = 1 - uvLo.y;
-        uvUp.y = 1 - uvUp.y;
-    }
-
     glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
     float dstAspectRatio = dstSize.x / dstSize.y;
 
@@ -715,7 +703,7 @@ static void propertyControls(Application& app)
         catch (const std::runtime_error& err)
         {
             std::cerr << err.what() << std::endl;
-            tinyfd_messageBox("Error", "Failed to denoise", "ok", "warning", 0);
+            tinyfd_messageBox("Error", err.what(), "ok", "warning", 0);
         }
     }
 #endif
@@ -845,7 +833,7 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
     // Draw filled image
     glm::vec2 imgPos, imgSize;
     float imgAspect = (float)app.renderer.getSize().x / app.renderer.getSize().y;
-    drawFillImage(textureHandler, imgAspect, imgPos, imgSize, glm::vec3(1), glm::vec2(0), glm::vec2(1), true);
+    drawFillImage(textureHandler, imgAspect, imgPos, imgSize, glm::vec3(1), glm::vec2(0), glm::vec2(1));
     app.isHoverTexture = ImGui::IsItemHovered();
 
     // Draw tile rectangle
@@ -854,8 +842,6 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
 
     glm::vec2 lo = (glm::vec2)pos / (glm::vec2)app.renderer.getSize();
     glm::vec2 up = lo + (glm::vec2)size / (glm::vec2)app.renderer.getSize();
-    lo.y = 1 - lo.y;
-    up.y = 1 - up.y;
 
     lo = imgPos + lo * imgSize;
     up = imgPos + up * imgSize;
@@ -919,7 +905,7 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
 
         glm::vec2 lo, up;
         app.zoomTexture.getUV(imgAspect, lo, up);
-        drawImage(textureHandler, mousePos - glm::vec2(100), glm::vec2(200), lo, up, true);
+        drawImage(textureHandler, mousePos - glm::vec2(100), glm::vec2(200), lo, up);
     }
 
     ImGui::EndChild();
@@ -1048,15 +1034,15 @@ static void mainMenuBar(Application& app)
                 catch (const std::runtime_error& err)
                 {
                     std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Invalid environment file", "ok", "warning", 0);
+                    tinyfd_messageBox("Error", err.what(), "ok", "warning", 0);
                 }
             }
         }
 
-        if (ImGui::MenuItem("Save", "(png)"))
+        if (ImGui::MenuItem("Save", "(png/hdr/jpg/bmp)"))
         {
-            const char* patterns[] = { "*.png" };
-            const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 1, patterns, nullptr);
+            const char* patterns[] = { "*.png", "*.hdr", "*.jpg", "*.bmp" };
+            const char* fileName = tinyfd_saveFileDialog("Save image", nullptr, 4, patterns, nullptr);
             if (fileName != nullptr)
             {
                 try
@@ -1066,7 +1052,7 @@ static void mainMenuBar(Application& app)
                 catch (const std::runtime_error& err)
                 {
                     std::cerr << err.what() << std::endl;
-                    tinyfd_messageBox("Error", "Failed to save the image", "ok", "warning", 0);
+                    tinyfd_messageBox("Error", err.what(), "ok", "warning", 0);
                 }
             }
         }
