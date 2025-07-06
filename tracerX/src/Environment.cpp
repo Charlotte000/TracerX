@@ -12,7 +12,7 @@ static float luminance(glm::vec3 c)
 
 void Environment::loadFromFile(const std::filesystem::path& path)
 {
-    this->loadFromImage(Image::loadFromFile(path));
+    this->loadFromImage(Image(path));
 }
 
 void Environment::loadFromImage(const Image& image)
@@ -24,7 +24,7 @@ void Environment::loadFromImage(const Image& image)
 void Environment::buildCDF(const Image& image)
 {
     const size_t size = image.size.x * image.size.y;
-    Image cdf = Image::loadFromMemory(image.size, std::vector<float>(size * 4, 0));
+    Image cdf(image.size);
 
     float sum = 0;
     for (size_t i = 0; i < size; i++)

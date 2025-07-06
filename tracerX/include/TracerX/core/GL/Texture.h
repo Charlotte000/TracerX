@@ -18,7 +18,7 @@ public:
     glm::uvec2 size;
 
     void init(int internalFormat, int sampler);
-    void bind(unsigned int binding);
+    void bindSampler(unsigned int binding);
     void bindImage(unsigned int binding, unsigned int access);
     void update(const Image& image);
     Image upload() const;

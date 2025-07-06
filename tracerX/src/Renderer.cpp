@@ -214,7 +214,7 @@ void Renderer::denoise()
     // Update accumulator
     const float* data = (const float*)colorBuf.getData();
     const std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->accumulationTexture.update(Image::loadFromMemory(size, pixels));
+    this->accumulationTexture.update(Image(size, pixels));
 
     // Update output
     this->toneMap();
@@ -404,23 +404,23 @@ void Renderer::bindData()
     this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
 
     // Textures
-    this->environment.texture.bind(0);
-    this->environment.cdfTexture.bind(1);
-    this->textureArray.bind(2);
+    this->environment.texture.bindSampler(0);
+    this->environment.cdfTexture.bindSampler(1);
+    this->textureArray.bindSampler(2);
 
     // SSBOs
-    this->vertexBuffer.bind(0);
-    this->triangleBuffer.bind(1);
-    this->meshBuffer.bind(2);
-    this->meshInstanceBuffer.bind(3);
-    this->materialBuffer.bind(4);
-    this->blasBuffer.bind(5);
-    this->tlasBuffer.bind(6);
+    this->vertexBuffer.bindBuffer(0);
+    this->triangleBuffer.bindBuffer(1);
+    this->meshBuffer.bindBuffer(2);
+    this->meshInstanceBuffer.bindBuffer(3);
+    this->materialBuffer.bindBuffer(4);
+    this->blasBuffer.bindBuffer(5);
+    this->tlasBuffer.bindBuffer(6);
 
     // UBOs
-    this->cameraBuffer.bind(0);
-    this->environmentBuffer.bind(1);
-    this->paramBuffer.bind(2);
+    this->cameraBuffer.bindUniform(0);
+    this->environmentBuffer.bindUniform(1);
+    this->paramBuffer.bindUniform(2);
 }
 
 void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)

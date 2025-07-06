@@ -162,7 +162,7 @@ static void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& tex
             pixels.push_back(gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1);
         }
 
-        scene.addTexture(Image::loadFromMemory(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
+        scene.addTexture(Image(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
     }
 }
 

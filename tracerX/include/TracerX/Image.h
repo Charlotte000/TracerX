@@ -30,6 +30,22 @@ public:
     std::vector<float> pixels;
 
     /**
+     * @brief Loads an image from a file.
+     * @param path The path of the file to load the image from.
+     * @throws std::runtime_error Thrown if the image fails to load.
+     */
+    Image(const std::filesystem::path& path);
+
+    /**
+     * @brief Loads an image from memory.
+     * @param size The size of the image.
+     * @param pixels The pixel data of the image.
+     * @remark The pixel data is stored in the order red, green, blue, alpha.
+     * @remark The size of the array must be size.x * size.y * 4.
+     */
+    Image(glm::uvec2 size, const std::vector<float>& pixels = {});
+
+    /**
      * @brief Saves the image to a file.
      * 
      * The image is saved in the format specified by the file extension.
@@ -77,24 +93,6 @@ public:
      * @param value The value of the pixel.
      */
     void set(size_t index, glm::vec4 value);
-
-    /**
-     * @brief Loads an image from a file.
-     * @param path The path of the file to load the image from.
-     * @return The loaded image.
-     * @throws std::runtime_error Thrown if the image fails to load.
-     */
-    static Image loadFromFile(const std::filesystem::path& path);
-
-    /**
-     * @brief Loads an image from memory.
-     * @param size The size of the image.
-     * @param pixels The pixel data of the image.
-     * @remark The pixel data is stored in the order red, green, blue, alpha.
-     * @remark The size of the array must be size.x * size.y * 4.
-     * @return The loaded image.
-     */
-    static Image loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels = {});
 };
 
 }

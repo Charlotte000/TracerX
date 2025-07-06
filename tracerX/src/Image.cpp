@@ -15,6 +15,30 @@
 
 using namespace TracerX;
 
+Image::Image(const std::filesystem::path& path)
+{
+    // Read from file
+    glm::ivec2 size;
+    float* data = stbi_loadf(path.string().c_str(), &size.x, &size.y, nullptr, 4);
+    if (data == nullptr)
+    {
+        throw std::runtime_error("Failed to load the image: " + path.string());
+    }
+
+    // Copy to image
+    this->size = size;
+    const size_t pixelCount = this->size.x * this->size.y * 4;
+    this->pixels.resize(pixelCount);
+    std::copy(data, data + pixelCount, this->pixels.data());
+
+    stbi_image_free(data);
+}
+
+Image::Image(glm::uvec2 size, const std::vector<float>& pixels)
+    : size(size), pixels(size.x * size.y * 4 == pixels.size() ? pixels : std::vector<float>(size.x * size.y * 4, 0))
+{
+}
+
 void Image::saveToFile(const std::filesystem::path& path) const
 {
     if (!path.has_extension())
@@ -79,9 +103,7 @@ void Image::saveToFile(const std::filesystem::path& path) const
 
 Image Image::resize(glm::uvec2 size) const
 {
-    Image img;
-    img.size = size;
-    img.pixels.resize(size.x * size.y * 4);
+    Image img(size);
     stbir_resize_float_linear(this->pixels.data(), this->size.x, this->size.y, 0, img.pixels.data(), size.x, size.y, 0, stbir_pixel_layout::STBIR_RGBA);
     return img;
 }
@@ -118,34 +140,4 @@ void Image::set(size_t index, glm::vec4 value)
     this->pixels[index + 1] = value.g;
     this->pixels[index + 2] = value.b;
     this->pixels[index + 3] = value.a;
-}
-
-Image Image::loadFromFile(const std::filesystem::path& path)
-{
-    Image img;
-
-    // Read from file
-    glm::ivec2 size;
-    float* data = stbi_loadf(path.string().c_str(), &size.x, &size.y, nullptr, 4);
-    if (data == nullptr)
-    {
-        throw std::runtime_error("Failed to load the image: " + path.string());
-    }
-
-    // Copy to image
-    img.size = size;
-    const size_t pixelCount = img.size.x * img.size.y * 4;
-    img.pixels.resize(pixelCount);
-    std::copy(data, data + pixelCount, img.pixels.data());
-
-    stbi_image_free(data);
-    return img;
-}
-
-Image Image::loadFromMemory(glm::uvec2 size, const std::vector<float>& pixels)
-{
-    Image img;
-    img.size = size;
-    img.pixels = size.x * size.y * 4 == pixels.size() ? pixels : std::vector<float>(size.x * size.y * 4);
-    return img;
 }

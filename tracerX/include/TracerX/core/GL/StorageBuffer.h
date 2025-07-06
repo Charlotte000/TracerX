@@ -20,7 +20,7 @@ class StorageBuffer
 public:
     void init();
     void update(const void* data, size_t size);
-    void bind(unsigned int binding);
+    void bindBuffer(unsigned int binding);
     void shutdown();
 private:
     unsigned int handler;

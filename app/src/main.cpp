@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
     const TracerX::Scene initScene = TracerX::loadGLTF(sceneDir / "Box.glb");
 
     // The initial environment to render.
-    const TracerX::Image initEnvironment = TracerX::Image::loadFromFile(environmentDir / "konzerthaus_2k.hdr");
+    const TracerX::Image initEnvironment(environmentDir / "konzerthaus_2k.hdr");
     // =======================================
 
     // Create the application and run it.

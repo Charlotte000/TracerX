@@ -18,7 +18,7 @@ public:
     glm::uvec3 size;
 
     void init(int internalFormat);
-    void bind(unsigned int binding);
+    void bindSampler(unsigned int binding);
     void update(const std::vector<Image>& images, glm::uvec2 maxSize);
     void shutdown();
 private:

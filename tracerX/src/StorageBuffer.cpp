@@ -31,7 +31,7 @@ void StorageBuffer::update(const void* data, size_t size)
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void StorageBuffer::bind(unsigned int binding)
+void StorageBuffer::bindBuffer(unsigned int binding)
 {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, this->handler);
 }
