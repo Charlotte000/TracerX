@@ -14,7 +14,7 @@ namespace TracerX::core
  * A BVH is a tree structure used to accelerate path tracing by reducing the number of intersection tests.
  * The BVH is constructed from the bounding boxes of the scene's triangles.
  * 
- * @remark Should not be used directly and is only used internally by the renderer.
+ * @remark Should not be used directly and is only used internally by the Renderer.
  */
 struct BvhNode
 {

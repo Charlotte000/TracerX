@@ -10,18 +10,18 @@ namespace TracerX::core::GL
 
 /**
  * @brief An OpenGL 2D texture array wrapper class.
- * @remark Should not be used directly and is only used internally by the renderer.
+ * @remark Should not be used directly and is only used internally by the Renderer.
  */
 class TextureArray
 {
 public:
-    glm::uvec3 size;
-
     void init(int internalFormat);
     void bindSampler(unsigned int binding);
+    glm::uvec3 getSize() const;
     void update(const std::vector<Image>& images, glm::uvec2 maxSize);
     void shutdown();
 private:
+    glm::uvec3 size;
     unsigned int handler;
     int internalFormat;
 

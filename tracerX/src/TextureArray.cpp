@@ -22,6 +22,11 @@ void TextureArray::bindSampler(unsigned int binding)
     glBindTextureUnit(binding, this->handler);
 }
 
+glm::uvec3 TextureArray::getSize() const
+{
+    return this->size;
+}
+
 void TextureArray::update(const std::vector<Image>& images, glm::uvec2 maxSize)
 {
     const glm::uvec2 size = TextureArray::getMaxSize(images, maxSize);

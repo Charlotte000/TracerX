@@ -12,6 +12,8 @@ namespace TracerX
 
 /**
  * @brief An array of pixel data stored in RAM.
+ * 
+ * The pixel data is stored in the RGBA format of float values.
  */
 struct Image
 {
@@ -54,6 +56,7 @@ public:
      * - HDR (.hdr)
      * - JPEG (.jpg)
      * - BMP (.bmp)
+     * 
      * @param path The path of the file to save the image to.
      * @throws std::runtime_error Thrown if the image fails to save.
      */
@@ -68,28 +71,28 @@ public:
 
     /**
      * @brief Gets the pixel at the specified coordinates.
-     * @param coords The coordinates of the pixel.
+     * @param coords The coordinates of the pixel from the top-left corner of the image.
      * @return The pixel at the specified coordinates.
      */
     glm::vec4 get(glm::uvec2 coords) const;
 
     /**
      * @brief Gets the pixel at the specified index.
-     * @param index The index of the pixel.
+     * @param index The index of the pixel from the top-left corner of the image.
      * @return The pixel at the specified index.
      */
     glm::vec4 get(size_t index) const;
 
     /**
      * @brief Sets the pixel at the specified coordinates.
-     * @param coords The coordinates of the pixel.
+     * @param coords The coordinates of the pixel from the top-left corner of the image.
      * @param value The value of the pixel.
      */
     void set(glm::uvec2 coords, glm::vec4 value);
 
     /**
      * @brief Sets the pixel at the specified index.
-     * @param index The index of the pixel.
+     * @param index The index of the pixel from the top-left corner of the image.
      * @param value The value of the pixel.
      */
     void set(size_t index, glm::vec4 value);

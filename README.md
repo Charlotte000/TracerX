@@ -68,13 +68,14 @@ doxygen
 ## Debugging the shaders
 The source shader code can be found in the `tracerX/shaders` directory.
 
-If the __TX_SPIRV__ option is enabled, the shaders will be compiled into SPIR-V format and included in the executable file.
 You can modify and rebuild the shaders by running the `scripts/build_shaders.py` python script.
 In order to run the script, you need to have Python 3 and the **glslc** compiler installed on your system.
-By running this script, the shaders will be compiled into **SPIR-V** format and saved in the `tracerX/src/RendererShaderSrc.cpp` file.
+By running this script, the shaders will be compiled and saved in the `tracerX/src/RendererShaderSrc.cpp` file.
 Each time you rebuild the shaders, you need to rebuild the project to see the changes.
 
-If the __TX_SPIRV__ option is disabled, the shaders will be included in the executable file. In this case, you need to rebuild the project to see the changes the same way as in the __SPIR-V__ case.
+If the __TX_SPIRV__ option is enabled, the shaders will be compiled into SPIR-V format.
+
+If the __TX_SPIRV__ option is disabled, the shaders will be compiled into GLSL source code.
 
 If the __CMAKE_BUILD_TYPE__ is set to __Debug__, the shaders can be modified in the `tracerX/shaders` directory and live reloaded without rebuilding the project by pressing the __Reload shaders__ button.
 

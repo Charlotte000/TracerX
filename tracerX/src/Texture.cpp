@@ -28,6 +28,11 @@ void Texture::bindImage(unsigned int binding, unsigned int access)
     glBindImageTexture(binding, this->handler, 0, GL_FALSE, 0, access, this->internalFormat);
 }
 
+glm::uvec2 Texture::getSize() const
+{
+    return this->size;
+}
+
 void Texture::update(const Image& image)
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);
@@ -47,13 +52,20 @@ void Texture::update(const Image& image)
 
 Image Texture::upload() const
 {
-    std::vector<float> pixels(this->size.x * this->size.y * 4);
+    Image img(this->size);
     glBindTexture(GL_TEXTURE_2D, this->handler);
     {
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, pixels.data());
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, img.pixels.data());
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    return Image(this->size, pixels);
+    return img;
+}
+
+Image Texture::uploadRect(glm::uvec2 pos, glm::uvec2 size) const
+{
+    Image img(size);
+    glGetTextureSubImage(this->handler, 0, pos.x, pos.y, 0, size.x, size.y, 1, GL_RGBA, GL_FLOAT, img.pixels.size() * sizeof(float), img.pixels.data());
+    return img;
 }
 
 void Texture::clear()

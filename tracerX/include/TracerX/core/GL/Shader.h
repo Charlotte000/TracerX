@@ -14,10 +14,10 @@ namespace TracerX::core::GL
 /**
  * @brief An OpenGL shader wrapper class.
  * 
- * The shader uses a SPIR-V binary format for loading the shader code if the TX_SPIRV macro is defined.  
- * Otherwise, it uses the GLSL source code provided in the __shaders__ directory.
+ * If the TX_SPIRV macro is defined, this class uses a SPIR-V binary format for loading the shader code.
+ * Other wise, it uses GLSL source code.
  * 
- * @remark Should not be used directly and is only used internally by the renderer.
+ * @remark Should not be used directly and is only used internally by the Renderer.
  */
 class Shader
 {

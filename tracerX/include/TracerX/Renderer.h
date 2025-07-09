@@ -24,6 +24,9 @@ namespace TracerX
  * 
  * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
  * 
+ * The renderer provides the Renderer::accumulationTexture as the intermediate result of the accumulation stage and the Renderer::toneMapTexture as the final result of the tone mapping stage.
+ * Also, there are Renderer::albedoTexture, Renderer::normalTexture, and Renderer::depthTexture for additional information about the render.
+ * 
  * An OpenGL compute shader is utilized to trace rays and update the image.
  * It is responsible for initializing and destroying the OpenGL and GLEW contexts.
  * 
@@ -33,12 +36,14 @@ namespace TracerX
  * 
  * The renderer can be used in the following way:
  * @code {.cpp}
+ * TracerX::Scene scene = TracerX::loadGLTF("scene.glb");
+ * 
  * TracerX::Renderer renderer;
  * renderer.init(glm::uvec2(800, 600));
  * renderer.loadScene(scene);
  * renderer.render(100);
  * renderer.denoise();
- * TracerX::Image image = renderer.getImage();
+ * const TracerX::Image image = renderer.toneMapTexture.upload();
  * image.saveToFile("output.png");
  * renderer.shutdown();
  * @endcode
@@ -106,6 +111,45 @@ public:
     } toneMapMode = ToneMapMode::Reinhard;
 
     /**
+     * @brief The texture contains the information about the albedo (diffuse) colors of the scene.
+     * 
+     * It represents the base color of the surface at each pixel and contains no lighting information.
+     */
+    core::GL::Texture albedoTexture;
+
+    /**
+     * @brief The texture contains the information about the normals of the scene.
+     * 
+     * It represents the direction of the surface normals at each pixel.
+     * To get the world-space normal, use the formula: normal = 2 * color - 1.
+     */
+    core::GL::Texture normalTexture;
+
+    /**
+     * @brief The texture contains the information about the depth of the scene.
+     * 
+     * It represents the distance from the camera to the closest object in the scene.
+     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
+     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
+     * Where near is the minimum render distance and far is the maximum render distance.
+     */
+    core::GL::Texture depthTexture;
+
+    /**
+     * @brief The texture contains the information about the accumulated colors of the scene.
+     * 
+     * It represents the accumulated colors of the scene over multiple samples.
+     */
+    core::GL::Texture accumulationTexture;
+
+    /**
+     * @brief The texture contains the information about the tone mapped colors and hence the final output image.
+     * 
+     * It represents the final image that is the result of the rendering process.
+     */
+    core::GL::Texture toneMapTexture;
+
+    /**
      * @brief Initializes the renderer with the specified size.
      * 
      * Must be called before any other method. Initializes GLEW and OpenGL.
@@ -133,7 +177,7 @@ public:
      * 
      * Renders the scene using accumulation and tone mapping.
      * The sample count is incremented.
-     * The rendered image can be accessed using Renderer::getImage().
+     * The rendered texture can be accessed using Renderer::toneMapTexture.
      * 
      * @param samples The number of samples to render.
      * @see Renderer::renderRect to render only a rectangular region of the image.
@@ -145,15 +189,15 @@ public:
      * 
      * Renders the specified region of the image using accumulation and tone mapping.
      * The sample count is incremented if updateSampleCount is true.
-     * The rendered image can be accessed using Renderer::getImage().
+     * The rendered texture can be accessed using Renderer::toneMapTexture.
      * 
      * @param samples The number of samples to render.
-     * @param rectPosition The position of the top-left corner of the region.
-     * @param rectSize The size of the region.
+     * @param pos The position of the top-left corner of the region.
+     * @param size The size of the region.
      * @param updateSampleCount Whether to update the sample count.
      * @see Renderer::render to render the entire image.
      */
-    void renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount = true);
+    void renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount = true);
 
     /**
      * @brief Applies tone mapping to the rendered image.
@@ -194,115 +238,6 @@ public:
      * Should be called after any changes to the scene or environment.
      */
     void clear();
-
-    /**
-     * @brief Gets the OpenGL texture handler for the rendered image.
-     * @return The texture handler.
-     * @see Renderer::getImage to load the image from the GPU to the CPU.
-     */
-    unsigned int getTextureHandler() const;
-
-    /**
-     * @brief Gets the OpenGL texture handler for the albedo image.
-     * 
-     * The albedo image contains the color information of the first hit of the rays.
-     * The color information does not include lighting or shadows and does not depend on the viewing angle.
-     * 
-     * @return The texture handler.
-     * @see Renderer::getAlbedoImage to load the image from the GPU to the CPU.
-     */
-    unsigned int getAlbedoTextureHandler() const;
-
-    /**
-     * @brief Gets the OpenGL texture handler for the normal image.
-     * 
-     * The normal image contains the normal information of the first hit of the rays.
-     * To get the world-space normal, use the formula: normal = 2 * color - 1.
-     * 
-     * @return The texture handler.
-     * @see Renderer::getNormalImage to load the image from the GPU to the CPU.
-     */
-    unsigned int getNormalTextureHandler() const;
-
-    /**
-     * @brief Gets the OpenGL texture handler for the depth image.
-     * 
-     * The depth image contains the depth information of the first hit of the rays.
-     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
-     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
-     * Where near is the minimum render distance and far is the maximum render distance.
-     * 
-     * @return The texture handler.
-     * @see Renderer::getDepthImage to load the image from the GPU to the CPU.
-     */
-    unsigned int getDepthTextureHandler() const;
-
-    /**
-     * @brief Gets the OpenGL texture handler for the accumulation image.
-     * 
-     * The accumulation image contains the accumulated colors of the rendered image.
-     * 
-     * @return The texture handler.
-     * @see Renderer::getAccumulatorImage to load the image from the GPU to the CPU.
-     */
-    unsigned int getAccumulatorTextureHandler() const;
-
-    /**
-     * @brief Loads the rendered texture from the GPU to the CPU.
-     * @return The rendered image.
-     * @see Image::saveToFile to save the image to a file.
-     * @see Renderer::getTextureHandler to get the OpenGL texture handler.
-     */
-    Image getImage() const;
-
-    /**
-     * @brief Loads the albedo texture from the GPU to the CPU.
-     * 
-     * The albedo image contains the color information of the first hit of the rays.
-     * The color information does not include lighting or shadows and does not depend on the viewing angle.
-     * 
-     * @return The albedo image.
-     * @see Image::saveToFile to save the image to a file.
-     * @see Renderer::getAlbedoTextureHandler to get the OpenGL texture handler.
-     */
-    Image getAlbedoImage() const;
-
-    /**
-     * @brief Loads the normal texture from the GPU to the CPU.
-     * 
-     * The normal image contains the normal information of the first hit of the rays.
-     * To get the world-space normal, use the formula: normal = 2 * color - 1.
-     * 
-     * @return The normal image.
-     * @see Image::saveToFile to save the image to a file.
-     * @see Renderer::getNormalTextureHandler to get the OpenGL texture handler.
-     */
-    Image getNormalImage() const;
-
-    /**
-     * @brief Loads the depth texture from the GPU to the CPU.
-     * 
-     * The depth image contains the depth information of the first hit of the rays.
-     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
-     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
-     * Where near is the minimum render distance and far is the maximum render distance.
-     * 
-     * @return The depth image.
-     * @see Image::saveToFile to save the image to a file.
-     * @see Renderer::getDepthTextureHandler to get the OpenGL texture handler.
-     */
-    Image getDepthImage() const;
-
-    /**
-     * @brief Loads the accumulation texture from the GPU to the CPU.
-     * 
-     * The accumulation image contains the accumulated colors of the rendered image.
-     * 
-     * @return The accumulation image.
-     * @see Image::saveToFile to save the image to a file.
-     * @see Renderer::getAccumulatorTextureHandler to get the OpenGL texture handler.
-     */
-    Image getAccumulatorImage() const;
 
     /**
      * @brief Gets the size of the renderer.
@@ -358,11 +293,6 @@ public:
 private:
     unsigned int sampleCount = 0;
     core::GL::Shader shader;
-    core::GL::Texture accumulationTexture;
-    core::GL::Texture albedoTexture;
-    core::GL::Texture normalTexture;
-    core::GL::Texture depthTexture;
-    core::GL::Texture toneMapTexture;
     core::GL::TextureArray textureArray;
     core::GL::StorageBuffer vertexBuffer;
     core::GL::StorageBuffer triangleBuffer;

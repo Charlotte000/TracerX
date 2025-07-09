@@ -27,7 +27,7 @@ void renderAndSave(TracerX::Renderer& renderer, unsigned int samples, const std:
 #endif
 
     std::cout << "Saving " << outputFile.filename() << std::endl << std::endl;
-    renderer.getImage().saveToFile(outputFile);
+    renderer.toneMapTexture.upload().saveToFile(outputFile);
 }
 
 int main(int argc, char* argv[])
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
     // Setting up the renderer
     TracerX::Renderer renderer;
     renderer.init(glm::uvec2(1000, 1000));
-    renderer.environment.loadFromFile(environmentDir / "konzerthaus_2k.hdr");
+    renderer.environment.update(TracerX::Image(environmentDir / "konzerthaus_2k.hdr"));
     renderer.loadScene(scene);
 
     // Setting up the camera

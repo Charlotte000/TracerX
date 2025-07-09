@@ -13,7 +13,7 @@ namespace TracerX::core::GL
  * 
  * The storage buffer is used to store data that is shared between the CPU and the GPU, such as vertex, triangle, and material data.
  * 
- * @remark Should not be used directly and is only used internally by the renderer.
+ * @remark Should not be used directly and is only used internally by the Renderer.
  */
 class StorageBuffer
 {

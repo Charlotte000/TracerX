@@ -175,8 +175,8 @@ static void drawImage(GLint textureHandler, glm::vec2 pos, glm::vec2 size, glm::
 
 static void drawFillImage(GLint textureHandler, float aspectRatio, glm::vec2& imagePos, glm::vec2& imageSize, glm::vec3 tintColor = glm::vec3(1), glm::vec2 uvLo = glm::vec2(0), glm::vec2 uvUp = glm::vec2(1))
 {
-    glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
-    float dstAspectRatio = dstSize.x / dstSize.y;
+    const glm::vec2 dstSize = toVec2(ImGui::GetContentRegionAvail());
+    const float dstAspectRatio = dstSize.x / dstSize.y;
 
     imageSize = dstSize * (aspectRatio > dstAspectRatio ? glm::vec2(1, dstAspectRatio / aspectRatio) : glm::vec2(aspectRatio / dstAspectRatio, 1));
     imagePos = (toVec2(ImGui::GetWindowSize()) - imageSize) * 0.5f;
@@ -234,7 +234,8 @@ static bool materialTextureSelector(Application& app, const std::string& name, i
         glm::vec2 imagePos, imageSize;
         ImGui::BeginChild("viewMaterialTexture");
 
-        float aspect = (float)app.materialTextureView.texture.size.x / app.materialTextureView.texture.size.y;
+        const glm::uvec2 size = app.materialTextureView.texture.getSize();
+        const float aspect = (float)size.x / size.y;
         drawFillImage(app.materialTextureView.texture.getHandler(), aspect, imagePos, imageSize, tintColor);
         ImGui::EndChild();
     }
@@ -832,7 +833,7 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
 
     // Draw filled image
     glm::vec2 imgPos, imgSize;
-    float imgAspect = (float)app.renderer.getSize().x / app.renderer.getSize().y;
+    const float imgAspect = (float)app.renderer.getSize().x / app.renderer.getSize().y;
     drawFillImage(textureHandler, imgAspect, imgPos, imgSize, glm::vec3(1), glm::vec2(0), glm::vec2(1));
     app.isHoverTexture = ImGui::IsItemHovered();
 
@@ -854,7 +855,7 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
     ImGuizmo::SetRect(imgPos.x, imgPos.y, imgSize.x, imgSize.y);
     ImGuizmo::SetDrawlist();
 
-    glm::vec3 snap(app.gizmo.snap);
+    const glm::vec3 snap(app.gizmo.snap);
     switch (app.property.type)
     {
         case Application::Property::Type::MeshInstance:
@@ -900,7 +901,7 @@ static void viewRenderTexture(Application& app, GLint textureHandler)
     // Draw zoom
     if (app.zoomTexture.enable)
     {
-        glm::vec2 mousePos = toVec2(ImGui::GetMousePos());
+        const glm::vec2 mousePos = toVec2(ImGui::GetMousePos());
         app.zoomTexture.uvCenter = (mousePos - imgPos) / imgSize;
 
         glm::vec2 lo, up;
@@ -935,37 +936,37 @@ static void drawingPanel(Application& app)
 
     if (ImGui::BeginTabItem("View"))
     {
-        viewRenderTexture(app, app.rendering.isPreview ? app.renderer.getAlbedoTextureHandler() : app.renderer.getTextureHandler());
+        viewRenderTexture(app, app.rendering.isPreview ? app.renderer.albedoTexture.getHandler() : app.renderer.toneMapTexture.getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Albedo"))
     {
-        viewRenderTexture(app, app.renderer.getAlbedoTextureHandler());
+        viewRenderTexture(app, app.renderer.albedoTexture.getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        viewRenderTexture(app, app.renderer.getNormalTextureHandler());
+        viewRenderTexture(app, app.renderer.normalTexture.getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Depth"))
     {
-        viewRenderTexture(app, app.renderer.getDepthTextureHandler());
+        viewRenderTexture(app, app.renderer.depthTexture.getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Accumulator"))
     {
-        viewRenderTexture(app, app.renderer.getAccumulatorTextureHandler());
+        viewRenderTexture(app, app.renderer.accumulationTexture.getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Tonemapped"))
     {
-        viewRenderTexture(app, app.renderer.getTextureHandler());
+        viewRenderTexture(app, app.renderer.toneMapTexture.getHandler());
         ImGui::EndTabItem();
     }
 
@@ -1028,7 +1029,7 @@ static void mainMenuBar(Application& app)
             {
                 try
                 {
-                    app.renderer.environment.loadFromFile(fileName);
+                    app.renderer.environment.update(Image(fileName));
                     app.clear();
                 }
                 catch (const std::runtime_error& err)
@@ -1047,7 +1048,7 @@ static void mainMenuBar(Application& app)
             {
                 try
                 {
-                    app.renderer.getImage().saveToFile(fileName);
+                    app.renderer.toneMapTexture.upload().saveToFile(fileName);
                 }
                 catch (const std::runtime_error& err)
                 {

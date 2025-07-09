@@ -62,7 +62,7 @@ BvhNode toNode(const FastBVH::Node<float>& node)
 
 int Scene::addTexture(const Image& texture, const std::string& name)
 {
-    int index = (int)this->textures.size();
+    const int index = (int)this->textures.size();
     this->textures.push_back(texture);
     this->textureNames.push_back(name.empty() ? "Untitled texture " + std::to_string(index) : name);
     return index;
@@ -70,7 +70,7 @@ int Scene::addTexture(const Image& texture, const std::string& name)
 
 int Scene::addMaterial(const Material& material, const std::string& name)
 {
-    int index = (int)this->materials.size();
+    const int index = (int)this->materials.size();
     this->materials.push_back(material);
     this->materialNames.push_back(name.empty() ? "Untitled material " + std::to_string(index) : name);
     return index;
@@ -78,7 +78,7 @@ int Scene::addMaterial(const Material& material, const std::string& name)
 
 int Scene::addMesh(const Mesh& mesh, const std::string& name)
 {
-    int index = (int)this->meshes.size();
+    const int index = (int)this->meshes.size();
     this->meshes.push_back(mesh);
     this->meshNames.push_back(name.empty() ? "Untitled mesh " + std::to_string(index) : name);
     this->buildBLAS(this->meshes.back());

@@ -13,15 +13,15 @@ using namespace TracerX;
 #pragma region Application Helper Functions
 bool Application::CameraControl::controlFree(Camera& camera)
 {
-    ImGuiIO io = ImGui::GetIO();
-    float elapsedTime = io.DeltaTime;
-    glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
+    const ImGuiIO& io = ImGui::GetIO();
+    const float elapsedTime = io.DeltaTime;
+    const glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
 
     bool updated = false;
 
     // Keyboard
-    float elapsedMove = this->movementSpeed * elapsedTime;
-    glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+    const float elapsedMove = this->movementSpeed * elapsedTime;
+    const glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
     if (ImGui::IsKeyDown(ImGuiKey_W))
     {
         camera.position += camera.forward * elapsedMove;
@@ -84,16 +84,16 @@ bool Application::CameraControl::controlFree(Camera& camera)
 
 bool Application::CameraControl::controlOrbit(Camera& camera)
 {
-    ImGuiIO io = ImGui::GetIO();
-    float elapsedTime = io.DeltaTime;
-    glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
+    const ImGuiIO& io = ImGui::GetIO();
+    const float elapsedTime = io.DeltaTime;
+    const glm::vec2 mouseDelta = toVec2(io.MouseDelta) * this->rotationSpeed / 200.f;
     if (mouseDelta == glm::vec2(0))
     {
         return false;
     }
 
-    float orbitRadius = glm::length(camera.position - this->orbitOrigin);
-    glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
+    const float orbitRadius = glm::length(camera.position - this->orbitOrigin);
+    const glm::vec3 right = glm::normalize(glm::cross(camera.forward, camera.up));
 
     // Camera rotation
     if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
@@ -102,8 +102,8 @@ bool Application::CameraControl::controlOrbit(Camera& camera)
         camera.forward = glm::rotate(camera.forward, -mouseDelta.x, camera.up);
 
         camera.position = this->orbitOrigin - camera.forward * orbitRadius;
-        right = glm::normalize(glm::cross(camera.forward, glm::vec3(0, 1, 0)));
-        camera.up = glm::normalize(glm::cross(right, camera.forward));
+        const glm::vec3 newRight = glm::normalize(glm::cross(camera.forward, glm::vec3(0, 1, 0)));
+        camera.up = glm::normalize(glm::cross(newRight, camera.forward));
         return true;
     }
 
@@ -127,7 +127,7 @@ bool Application::CameraControl::controlOrbit(Camera& camera)
 
 void Application::ZoomTexture::control()
 {
-    ImGuiIO io = ImGui::GetIO();
+    const ImGuiIO& io = ImGui::GetIO();
     if (io.MouseWheel > 0)
     {
         this->zoom *= .9f;
@@ -142,8 +142,8 @@ void Application::ZoomTexture::getUV(float aspectRatio, glm::vec2& lo, glm::vec2
 {
     this->zoom = glm::clamp(this->zoom, 0.f, 1.f);
 
-    glm::vec2 ar = aspectRatio < 1 ? glm::vec2(1, aspectRatio) : glm::vec2(1 / aspectRatio, 1);
-    glm::vec2 size = this->zoom / 2 * ar;
+    const glm::vec2 ar = aspectRatio < 1 ? glm::vec2(1, aspectRatio) : glm::vec2(1 / aspectRatio, 1);
+    const glm::vec2 size = this->zoom / 2 * ar;
     this->uvCenter = glm::clamp(this->uvCenter, size, 1.f - size);
 
     lo = this->uvCenter - this->zoom / 2 * ar;
@@ -232,7 +232,7 @@ Application::Application(
         throw err;
     }
     
-    this->renderer.environment.loadFromImage(initEnvironment);
+    this->renderer.environment.update(initEnvironment);
     this->renderer.loadScene(this->scene, this->maxTextureArraySize);
 
     // Init UI
@@ -377,12 +377,12 @@ void Application::control()
 
 float Application::getLookAtDistance() const
 {
-    Image image = this->renderer.getDepthImage();
-    float nonLinear = image.get(image.size / 2u).r * 2 - 1;
+    const Image image = this->renderer.depthTexture.upload();
+    const float nonLinear = image.get(image.size / 2u).r * 2 - 1;
 
-    float min = this->renderer.camera.zNear;
-    float max = this->renderer.camera.zFar;
-    float linear = 2 * min * max / (max + min - nonLinear * (max - min));
+    const float min = this->renderer.camera.zNear;
+    const float max = this->renderer.camera.zFar;
+    const float linear = 2 * min * max / (max + min - nonLinear * (max - min));
     return linear;
 }
 

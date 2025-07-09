@@ -1,5 +1,3 @@
-- tracerX::texture uploadRect
-
 - importance sampling (pdf)
     - env map
 - Disney BSFD

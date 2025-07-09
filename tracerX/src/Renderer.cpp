@@ -14,6 +14,57 @@ using namespace TracerX;
 using namespace TracerX::core;
 using namespace TracerX::core::GL;
 
+#pragma region Payload Structs
+struct MeshInstancePayload
+{
+    glm::mat4 transform = glm::mat4(1);
+    glm::mat4 transformInv = glm::mat4(1);
+    int materialId = -1;
+    int meshId = -1;
+    int padding1 = 0;
+    int padding2 = 0;
+};
+
+struct CameraPayload
+{
+    glm::vec3 position;
+    float fov;
+    glm::vec3 forward;
+    float focalDistance;
+    glm::vec3 up;
+    float aperture;
+    float blur;
+    float zNear;
+    float zFar;
+    int padding1 = 0;
+};
+
+struct EnvironmentPayload
+{
+    glm::vec4 rotation1;
+    glm::vec4 rotation2;
+    glm::vec4 rotation3;
+    int transparent;
+    float intensity;
+    float cdfTotal;
+    int padding1 = 0;
+};
+
+struct ParamsPayload
+{
+    glm::ivec2 rectPosition;
+    glm::ivec2 rectSize;
+    unsigned int sampleCount;
+    unsigned int maxDepth;
+    unsigned int russianRouletteDepth;
+    unsigned int onlyToneMapping;
+    unsigned int toneMapMode;
+    float gamma;
+    int padding1 = 0;
+    int padding2 = 0;
+};
+#pragma endregion
+
 #if !NDEBUG
 // https://learnopengl.com/In-Practice/Debugging
 void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
@@ -129,18 +180,18 @@ void Renderer::render(unsigned int samples)
     this->renderRect(samples, glm::uvec2(0, 0), this->getSize());
 }
 
-void Renderer::renderRect(unsigned int samples, glm::uvec2 rectPosition, glm::uvec2 rectSize, bool updateSampleCount)
+void Renderer::renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
 {
     // Update UBOs
     this->bindData();
-    this->updateUniform(rectPosition, rectSize, false);
+    this->updateUniform(pos, size, false);
 
     // Render
     this->shader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
-        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), sizeof(int) * 4);
-        Shader::dispatchCompute(Shader::getGroups(rectSize));
+        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
+        Shader::dispatchCompute(Shader::getGroups(size));
         this->sampleCount++;
     }
 
@@ -244,59 +295,9 @@ void Renderer::clear()
     this->sampleCount = 0;
 }
 
-unsigned int Renderer::getTextureHandler() const
-{
-    return this->toneMapTexture.getHandler();
-}
-
-unsigned int Renderer::getAlbedoTextureHandler() const
-{
-    return this->albedoTexture.getHandler();
-}
-
-unsigned int Renderer::getNormalTextureHandler() const
-{
-    return this->normalTexture.getHandler();
-}
-
-unsigned int Renderer::getDepthTextureHandler() const
-{
-    return this->depthTexture.getHandler();
-}
-
-unsigned int Renderer::getAccumulatorTextureHandler() const
-{
-    return this->accumulationTexture.getHandler();
-}
-
-Image Renderer::getImage() const
-{
-    return this->toneMapTexture.upload();
-}
-
-Image Renderer::getAlbedoImage() const
-{
-    return this->albedoTexture.upload();
-}
-
-Image Renderer::getNormalImage() const
-{
-    return this->normalTexture.upload();
-}
-
-Image Renderer::getDepthImage() const
-{
-    return this->depthTexture.upload();
-}
-
-Image Renderer::getAccumulatorImage() const
-{
-    return this->accumulationTexture.upload();
-}
-
 glm::uvec2 Renderer::getSize() const
 {
-    return this->accumulationTexture.size;
+    return this->accumulationTexture.getSize();
 }
 
 unsigned int Renderer::getSampleCount() const
@@ -325,25 +326,6 @@ void Renderer::updateSceneMaterials(const Scene& scene)
 
 void Renderer::updateSceneMeshInstances(Scene& scene)
 {
-    struct MeshInstancePayload
-    {
-        glm::mat4 transform = glm::mat4(1);
-        glm::mat4 transformInv = glm::mat4(1);
-        int materialId = -1;
-        int meshId = -1;
-        int padding1 = 0;
-        int padding2 = 0;
-
-        MeshInstancePayload(const MeshInstance& meshInstance)
-            :
-            transform(meshInstance.transform),
-            transformInv(glm::inverse(meshInstance.transform)),
-            materialId(meshInstance.materialId),
-            meshId(meshInstance.meshId)
-        {
-        }
-    };
-
     std::vector<BvhNode> tlas;
     std::vector<size_t> meshInstancePermutation;
     scene.buildTLAS(tlas, meshInstancePermutation);
@@ -353,7 +335,14 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
     for (const size_t meshInstanceId : meshInstancePermutation)
     {
         const MeshInstance& meshInstance = scene.meshInstances[meshInstanceId];
-        meshInstancesPayload.emplace_back(meshInstance);
+        const MeshInstancePayload meshInstancePayload
+        {
+            .transform = meshInstance.transform,
+            .transformInv = glm::inverse(meshInstance.transform),
+            .materialId = meshInstance.materialId,
+            .meshId = meshInstance.meshId,
+        };
+        meshInstancesPayload.push_back(meshInstancePayload);
     }
 
     this->meshInstanceBuffer.update(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(MeshInstancePayload));
@@ -403,7 +392,7 @@ void Renderer::bindData()
     this->depthTexture.bindImage(3, GL_WRITE_ONLY);
     this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
 
-    // Textures
+    // Samplers
     this->environment.texture.bindSampler(0);
     this->environment.cdfTexture.bindSampler(1);
     this->textureArray.bindSampler(2);
@@ -426,80 +415,43 @@ void Renderer::bindData()
 void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
 {
     // cameraBuffer
-    const struct
+    const CameraPayload cameraPayload
     {
-        glm::vec3 position;
-        float fov;
-        glm::vec3 forward;
-        float focalDistance;
-        glm::vec3 up;
-        float aperture;
-        float blur;
-        float zNear;
-        float zFar;
-        int padding1;
-    } camera
-    {
-        this->camera.position,
-        this->camera.fov,
-        this->camera.forward,
-        this->camera.focalDistance,
-        this->camera.up,
-        this->camera.aperture,
-        this->camera.blur,
-        this->camera.zNear,
-        this->camera.zFar,
-        0,
+        .position = this->camera.position,
+        .fov = this->camera.fov,
+        .forward = this->camera.forward,
+        .focalDistance = this->camera.focalDistance,
+        .up = this->camera.up,
+        .aperture = this->camera.aperture,
+        .blur = this->camera.blur,
+        .zNear = this->camera.zNear,
+        .zFar = this->camera.zFar,
     };
-    this->cameraBuffer.update(&camera, sizeof(camera));
+    this->cameraBuffer.update(&cameraPayload, sizeof(CameraPayload));
 
     // environmentBuffer
-    const struct
+    const EnvironmentPayload environmentPayload
     {
-        glm::vec4 rotation1;
-        glm::vec4 rotation2;
-        glm::vec4 rotation3;
-        int transparent;
-        float intensity;
-        float cdfTotal;
-        int padding2;
-    } environment
-    {
-        glm::vec4(this->environment.rotation[0], 0),
-        glm::vec4(this->environment.rotation[1], 0),
-        glm::vec4(this->environment.rotation[2], 0),
-        this->environment.transparent,
-        this->environment.intensity,
-        this->environment.cdfTotal,
-        0,
+        .rotation1 = glm::vec4(this->environment.rotation[0], 0),
+        .rotation2 = glm::vec4(this->environment.rotation[1], 0),
+        .rotation3 = glm::vec4(this->environment.rotation[2], 0),
+        .transparent = this->environment.transparent,
+        .intensity = this->environment.intensity,
+        .cdfTotal = this->environment.cdfTotal,
     };
-    this->environmentBuffer.update(&environment, sizeof(environment));
+    this->environmentBuffer.update(&environmentPayload, sizeof(EnvironmentPayload));
 
     // paramBuffer
-    const struct
+    const ParamsPayload paramsPayload
     {
-        glm::ivec2 rectPosition;
-        glm::ivec2 rectSize;
-        unsigned int sampleCount;
-        unsigned int maxDepth;
-        unsigned int russianRouletteDepth;
-        unsigned int onlyToneMapping;
-        unsigned int toneMapMode;
-        float gamma;
-        int padding2;
-        int padding3;
-    } params
-    {
-        rectPosition,
-        rectSize,
-        this->sampleCount,
-        this->maxDepth,
-        this->russianRouletteDepth,
-        onlyToneMapping,
-        static_cast<unsigned int>(this->toneMapMode),
-        this->gamma,
-        0,
-        0,
+        .rectPosition = rectPosition,
+        .rectSize = rectSize,
+        .sampleCount = this->sampleCount,
+        .maxDepth = this->maxDepth,
+        .russianRouletteDepth = this->russianRouletteDepth,
+        .onlyToneMapping = onlyToneMapping,
+        .toneMapMode = static_cast<unsigned int>(this->toneMapMode),
+        .gamma = this->gamma,
     };
-    this->paramBuffer.update(&params, sizeof(params));
+    this->paramBuffer.update(&paramsPayload, sizeof(ParamsPayload));
 }
