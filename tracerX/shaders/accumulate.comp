@@ -22,7 +22,6 @@ int StackPtr = 0;
 #include "common/intersection.comp"
 #include "common/sampling.comp"
 #include "common/bsdf.comp"
-#include "common/tonemap.comp"
 
 vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
 {
@@ -98,13 +97,6 @@ void main()
         return;
     }
 
-    if (OnlyToneMapping)
-    {
-        vec4 accumColor = imageLoad(AccumulatorImage, TexelCoord);
-        imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / SampleCount));
-        return;
-    }
-
     vec2 coord = (UV - vec2(.5)) * vec2(1, float(Size.y) / Size.x) * 2 * tan(Camera.FOV * .5);
     Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0));
     JitterRay(ray);
@@ -121,5 +113,4 @@ void main()
     }
 
     imageStore(AccumulatorImage, TexelCoord, accumColor);
-    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / (SampleCount + 1)));
 }

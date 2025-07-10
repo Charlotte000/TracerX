@@ -57,11 +57,11 @@ struct ParamsPayload
     unsigned int sampleCount;
     unsigned int maxDepth;
     unsigned int russianRouletteDepth;
-    unsigned int onlyToneMapping;
     unsigned int toneMapMode;
     float gamma;
     int padding1 = 0;
     int padding2 = 0;
+    int padding3 = 0;
 };
 #pragma endregion
 
@@ -172,7 +172,8 @@ void Renderer::shutdown()
     this->paramBuffer.shutdown();
 
     // Shader
-    this->shader.shutdown();
+    this->accumShader.shutdown();
+    this->toneMapShader.shutdown();
 }
 
 void Renderer::render(unsigned int samples)
@@ -182,20 +183,8 @@ void Renderer::render(unsigned int samples)
 
 void Renderer::renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
 {
-    // Update UBOs
-    this->bindData();
-    this->updateUniform(pos, size, false);
-
-    // Render
-    this->shader.use();
-    for (unsigned int i = 0; i < samples; i++)
-    {
-        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
-        Shader::dispatchCompute(Shader::getGroups(size));
-        this->sampleCount++;
-    }
-
-    Shader::stopUse();
+    this->accumulate(samples, pos, size);
+    this->toneMap();
 
     // Revert sampleCount if needed
     if (!updateSampleCount)
@@ -204,14 +193,32 @@ void Renderer::renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size,
     }
 }
 
+void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
+{
+    // Update UBOs
+    this->bindData();
+    this->updateUniform(pos, size);
+
+    // Accumulate
+    this->accumShader.use();
+    for (unsigned int i = 0; i < samples; i++)
+    {
+        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
+        Shader::dispatchCompute(Shader::getGroups(size));
+        this->sampleCount++;
+    }
+
+    Shader::stopUse();
+}
+
 void Renderer::toneMap()
 {
     // Update UBOs
     this->bindData();
-    this->updateUniform(glm::ivec2(0), this->getSize(), true);
+    this->updateUniform(glm::ivec2(0), this->getSize());
 
     // Tone map
-    this->shader.use();
+    this->toneMapShader.use();
     Shader::dispatchCompute(Shader::getGroups(this->getSize()));
     Shader::stopUse();
 }
@@ -280,7 +287,8 @@ void Renderer::denoise()
 #if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->shader.reload(shaderPath);
+    this->accumShader.reload(shaderPath / "accumulate.comp");
+    this->toneMapShader.reload(shaderPath / "toneMap.comp");
 }
 #endif
 
@@ -353,9 +361,11 @@ void Renderer::initData()
 {
     // Shader
 #if TX_SPIRV
-    this->shader.init(Renderer::shaderSrc, Renderer::shaderSrcSize);
+    this->accumShader.init(Renderer::accumShaderSrc, Renderer::accumShaderSrcSize);
+    this->toneMapShader.init(Renderer::toneMapShaderSrc, Renderer::toneMapShaderSrcSize);
 #else
-    this->shader.init(Renderer::shaderSrc);
+    this->accumShader.init(Renderer::accumShaderSrc);
+    this->toneMapShader.init(Renderer::toneMapShaderSrc);
 #endif
 
     // Textures
@@ -412,7 +422,7 @@ void Renderer::bindData()
     this->paramBuffer.bindUniform(2);
 }
 
-void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping)
+void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize)
 {
     // cameraBuffer
     const CameraPayload cameraPayload
@@ -449,7 +459,6 @@ void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool 
         .sampleCount = this->sampleCount,
         .maxDepth = this->maxDepth,
         .russianRouletteDepth = this->russianRouletteDepth,
-        .onlyToneMapping = onlyToneMapping,
         .toneMapMode = static_cast<unsigned int>(this->toneMapMode),
         .gamma = this->gamma,
     };

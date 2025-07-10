@@ -28,19 +28,25 @@ def assemble_shader(mainPath: str) -> str:
     return result
 
 
-def write_shader(path: str, shaderBin: bytes, shaderSrc: str) -> bool:
-    src = list(map(lambda v: f"{v:#04x}", shaderBin))
+def write_shader(path: str, accumShaderSrc: str, accumShaderBin: bytes, toneMapShaderSrc: str, toneMapShaderBin: bytes) -> bool:
+    accumShaderBinRepr = list(map(lambda v: f"{v:#04x}", accumShaderBin))
+    toneMapShaderBinRepr = list(map(lambda v: f"{v:#04x}", toneMapShaderBin))
 
     newData = (
         "#include <TracerX/Renderer.h>\n\n"
         + "using namespace TracerX;\n\n"
         + "#if TX_SPIRV\n"
-        + "const unsigned char Renderer::shaderSrc[] =\n{\n    "
-        + ",\n    ".join(", ".join(src[i : i + 10]) for i in range(0, len(src), 10))
+        + "const unsigned char Renderer::accumShaderSrc[] =\n{\n    "
+        + ",\n    ".join(", ".join(accumShaderBinRepr[i : i + 10]) for i in range(0, len(accumShaderBinRepr), 10))
         + "\n};\n"
-        + f"const size_t Renderer::shaderSrcSize = {len(src)};\n"
+        + f"const size_t Renderer::accumShaderSrcSize = {len(accumShaderBinRepr)};\n\n"
+        + "const unsigned char Renderer::toneMapShaderSrc[] =\n{\n    "
+        + ",\n    ".join(", ".join(toneMapShaderBinRepr[i : i + 10]) for i in range(0, len(toneMapShaderBinRepr), 10))
+        + "\n};\n"
+        + f"const size_t Renderer::toneMapShaderSrcSize = {len(toneMapShaderBinRepr)};\n"
         + "#else\n"
-        + f'const char Renderer::shaderSrc[] = R"ShaderSrc({shaderSrc})ShaderSrc";\n'
+        + f'const char Renderer::accumShaderSrc[] = R"AccumShaderSrc({accumShaderSrc})AccumShaderSrc";\n\n'
+        + f'const char Renderer::toneMapShaderSrc[] = R"ToneMapShaderSrc({toneMapShaderSrc})ToneMapShaderSrc";\n'
         + "#endif\n"
     )
 
@@ -60,17 +66,21 @@ def write_shader(path: str, shaderBin: bytes, shaderSrc: str) -> bool:
 
 
 project = join(dirname(__file__), "..")
-mainPath = join(project, "tracerX", "shaders", "main.comp")
-srcPath = join(project, "tracerX", "src", "RendererShaderSrc.cpp")
+shaderPath = join(project, "tracerX", "shaders")
+accumPath = join(shaderPath, "accumulate.comp")
+toneMapPath = join(shaderPath, "toneMap.comp")
+outPath = join(project, "tracerX", "src", "RendererShaderSrc.cpp")
 
 try:
-    shaderSrc = assemble_shader(mainPath)
+    accumShaderSrc = assemble_shader(accumPath)
+    toneMapShaderSrc = assemble_shader(toneMapPath)
     print("[Info] Assemble completed")
 
-    shaderBin = compile_shader(mainPath)
+    accumShaderBin = compile_shader(accumPath)
+    toneMapShaderBin = compile_shader(toneMapPath)
     print("[Info] Compilation completed")
 
-    override = write_shader(srcPath, shaderBin, shaderSrc)
+    override = write_shader(outPath, accumShaderSrc, accumShaderBin, toneMapShaderSrc, toneMapShaderBin)
 
     if override:
         print("[Info] Write completed")

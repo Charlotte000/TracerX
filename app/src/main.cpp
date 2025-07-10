@@ -18,14 +18,14 @@ int main(int argc, char* argv[])
     const glm::uvec2 maxTextureArraySize(-1);
 
     // The directory containing the scenes.
-    const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes" / "";
+    const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes";
 
     // The directory containing the environment maps.
-    const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
+    const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments";
 
 #if !NDEBUG
     // The path to the shader source code.
-    const std::filesystem::path shaderPath = homeDir / "tracerX" / "shaders" / "main.comp";
+    const std::filesystem::path shaderPath = homeDir / "tracerX" / "shaders";
 #endif
 
     // The initial scene to render.

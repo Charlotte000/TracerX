@@ -46,27 +46,3 @@ vec3 GammaCorrection(in vec3 color, in float gamma)
 {
     return pow(color, vec3(1 / gamma));
 }
-
-vec4 ToneMap(in vec4 pixel)
-{
-    switch (ToneMapMode)
-    {
-        // Reinhard
-        case ReinhardToneMap:
-            pixel.rgb = Reinhard(pixel.rgb);
-            break;
-
-        // ACES
-        case ACESToneMap:
-            pixel.rgb = ACES(pixel.rgb);
-            break;
-
-        // ACES fitted
-        case ACESfittedToneMap:
-            pixel.rgb = ACESfitted(pixel.rgb);
-            break;
-    }
-
-    pixel.rgb = GammaCorrection(pixel.rgb, Gamma);
-    return pixel;
-}

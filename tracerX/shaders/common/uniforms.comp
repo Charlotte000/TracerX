@@ -60,7 +60,6 @@ layout(std140, binding=2) uniform ParamsUBO
     uint SampleCount;
     uint MaxDepth;
     uint RussianRouletteDepth;
-    bool OnlyToneMapping;
     uint ToneMapMode;
     float Gamma;
 };

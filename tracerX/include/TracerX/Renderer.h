@@ -20,9 +20,9 @@ namespace TracerX
  * 
  * The process consists of two stages:
  * 
- * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors.
+ * 1. Accumulation: The renderer traces rays through the scene and accumulates the resulting colors using Renderer::accumulate method.
  * 
- * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result.
+ * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result using Renderer::toneMap method.
  * 
  * The renderer provides the Renderer::accumulationTexture as the intermediate result of the accumulation stage and the Renderer::toneMapTexture as the final result of the tone mapping stage.
  * Also, there are Renderer::albedoTexture, Renderer::normalTexture, and Renderer::depthTexture for additional information about the render.
@@ -76,7 +76,7 @@ public:
 
     /**
      * @brief The environment settings for the scene.
-     * @see Environment::loadFromFile to load an environment from a file.
+     * @see Environment::update to load an environment image from a file.
      */
     Environment environment;
 
@@ -179,7 +179,7 @@ public:
      * The sample count is incremented.
      * The rendered texture can be accessed using Renderer::toneMapTexture.
      * 
-     * @param samples The number of samples to render.
+     * @param samples The number of samples per pixel to accumulate.
      * @see Renderer::renderRect to render only a rectangular region of the image.
      */
     void render(unsigned int samples = 1);
@@ -191,19 +191,34 @@ public:
      * The sample count is incremented if updateSampleCount is true.
      * The rendered texture can be accessed using Renderer::toneMapTexture.
      * 
-     * @param samples The number of samples to render.
-     * @param pos The position of the top-left corner of the region.
-     * @param size The size of the region.
+     * @param samples The number of samples per pixel to accumulate.
+     * @param pos The position of the top-left corner of the region of the image to render.
+     * @param size The size of the region of the image to render.
      * @param updateSampleCount Whether to update the sample count.
      * @see Renderer::render to render the entire image.
      */
     void renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount = true);
 
     /**
+     * @brief Accumulates the rendered image.
+     * 
+     * This method performs path tracing of the scene and accumulates the resulting colors in the Renderer::accumulationTexture.
+     * The sample count is incremented by the specified number of samples.
+     * 
+     * @param samples The number of samples per pixel to accumulate.
+     * @param pos The position of the top-left corner of the region of the image to accumulate.
+     * @param size The size of the region of the image to accumulate.
+     * @see Renderer::toneMap to apply tone mapping to the accumulated image.
+     */
+    void accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size);
+
+    /**
      * @brief Applies tone mapping to the rendered image.
      * 
-     * This method does not path trace the scene. It only updates the tone mapped image.
-     * Use this method after changing the tone mapping settings or the gamma value.
+     * This method applies tone mapping to the accumulated colors of the Renderer::accumulationTexture and stores the result in the Renderer::toneMapTexture.
+     * 
+     * @see Renderer::toneMapMode for the available tone mapping modes.
+     * @see Renderer::gamma for the gamma correction value used in tone mapping.
      */
     void toneMap();
 
@@ -225,7 +240,7 @@ public:
      * Use this method after changing the shader source code.
      * For debugging purposes only.
      * 
-     * @param shaderPath The path to the shader source code.
+     * @param shaderPath The path to the shader source code directory.
      * @throws std::runtime_error Thrown if the shaders fail to reload.
      */
     void reloadShaders(const std::filesystem::path& shaderPath);
@@ -292,7 +307,8 @@ public:
     void updateSceneMeshInstances(Scene& scene);
 private:
     unsigned int sampleCount = 0;
-    core::GL::Shader shader;
+    core::GL::Shader accumShader;
+    core::GL::Shader toneMapShader;
     core::GL::TextureArray textureArray;
     core::GL::StorageBuffer vertexBuffer;
     core::GL::StorageBuffer triangleBuffer;
@@ -306,14 +322,17 @@ private:
     core::GL::UniformBuffer paramBuffer;
 
 #if TX_SPIRV
-    static const unsigned char shaderSrc[];
-    static const size_t shaderSrcSize;
+    static const unsigned char accumShaderSrc[];
+    static const size_t accumShaderSrcSize;
+    static const unsigned char toneMapShaderSrc[];
+    static const size_t toneMapShaderSrcSize;
 #else
-    static const char shaderSrc[];
+    static const char accumShaderSrc[];
+    static const char toneMapShaderSrc[];
 #endif
     void initData();
     void bindData();
-    void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize, bool onlyToneMapping);
+    void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize);
 };
 
 }
