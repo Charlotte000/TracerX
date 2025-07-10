@@ -63,7 +63,7 @@ public:
      * @param size The size of the region.
      * @return An Image object containing the texture data for the specified region.
      */
-    Image uploadRect(glm::uvec2 pos, glm::uvec2 size) const;
+    Image upload(glm::uvec2 pos, glm::uvec2 size) const;
 
     /**
      * @brief Fills the texture with black color.

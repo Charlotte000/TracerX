@@ -180,7 +180,6 @@ public:
      * The rendered texture can be accessed using Renderer::toneMapTexture.
      * 
      * @param samples The number of samples per pixel to accumulate.
-     * @see Renderer::renderRect to render only a rectangular region of the image.
      */
     void render(unsigned int samples = 1);
 
@@ -195,9 +194,8 @@ public:
      * @param pos The position of the top-left corner of the region of the image to render.
      * @param size The size of the region of the image to render.
      * @param updateSampleCount Whether to update the sample count.
-     * @see Renderer::render to render the entire image.
      */
-    void renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount = true);
+    void render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount = true);
 
     /**
      * @brief Accumulates the rendered image.
@@ -217,10 +215,12 @@ public:
      * 
      * This method applies tone mapping to the accumulated colors of the Renderer::accumulationTexture and stores the result in the Renderer::toneMapTexture.
      * 
+     * @param pos The position of the top-left corner of the region of the image to tone map.
+     * @param size The size of the region of the image to tone map.
      * @see Renderer::toneMapMode for the available tone mapping modes.
      * @see Renderer::gamma for the gamma correction value used in tone mapping.
      */
-    void toneMap();
+    void toneMap(glm::uvec2 pos, glm::uvec2 size);
 
 #if TX_DENOISE
     /**
@@ -256,19 +256,13 @@ public:
 
     /**
      * @brief Gets the size of the renderer.
-     * 
-     * The size is the size of the rendered image.
-     * 
-     * @return The size of the renderer.
+     * @return The size of the rendered image.
      */
     glm::uvec2 getSize() const;
 
     /**
      * @brief Gets the sample count.
-     * 
-     * The sample count is the number of accumulated frames.
-     * 
-     * @return The sample count.
+     * @return The number of accumulated frames.
      */
     unsigned int getSampleCount() const;
 

@@ -678,7 +678,7 @@ static void propertyToneMapping(Application& app, Renderer::ToneMapMode& toneMap
 
     if (changed)
     {
-        app.rendering.isPreview ? app.clear() : app.renderer.toneMap();
+        app.rendering.isPreview ? app.clear() : app.renderer.toneMap(glm::uvec2(0, 0), app.renderer.getSize());
     }
 }
 

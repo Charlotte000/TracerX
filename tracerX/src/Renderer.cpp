@@ -178,13 +178,13 @@ void Renderer::shutdown()
 
 void Renderer::render(unsigned int samples)
 {
-    this->renderRect(samples, glm::uvec2(0, 0), this->getSize());
+    this->render(samples, glm::uvec2(0, 0), this->getSize());
 }
 
-void Renderer::renderRect(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
+void Renderer::render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
 {
     this->accumulate(samples, pos, size);
-    this->toneMap();
+    this->toneMap(pos, size);
 
     // Revert sampleCount if needed
     if (!updateSampleCount)
@@ -203,7 +203,7 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
     this->accumShader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
-        this->paramBuffer.updateSub(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
+        this->paramBuffer.update(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
         Shader::dispatchCompute(Shader::getGroups(size));
         this->sampleCount++;
     }
@@ -211,15 +211,15 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
     Shader::stopUse();
 }
 
-void Renderer::toneMap()
+void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
 {
     // Update UBOs
     this->bindData();
-    this->updateUniform(glm::ivec2(0), this->getSize());
+    this->updateUniform(pos, size);
 
     // Tone map
     this->toneMapShader.use();
-    Shader::dispatchCompute(Shader::getGroups(this->getSize()));
+    Shader::dispatchCompute(Shader::getGroups(size));
     Shader::stopUse();
 }
 
@@ -275,7 +275,7 @@ void Renderer::denoise()
     this->accumulationTexture.update(Image(size, pixels));
 
     // Update output
-    this->toneMap();
+    this->toneMap(glm::uvec2(0, 0), this->getSize());
 
     // Release buffers
     colorBuf.release();

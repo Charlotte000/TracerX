@@ -61,7 +61,7 @@ Image Texture::upload() const
     return img;
 }
 
-Image Texture::uploadRect(glm::uvec2 pos, glm::uvec2 size) const
+Image Texture::upload(glm::uvec2 pos, glm::uvec2 size) const
 {
     Image img(size);
     glGetTextureSubImage(this->handler, 0, pos.x, pos.y, 0, size.x, size.y, 1, GL_RGBA, GL_FLOAT, img.pixels.size() * sizeof(float), img.pixels.data());

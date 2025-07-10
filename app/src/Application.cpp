@@ -281,7 +281,7 @@ void Application::run()
             {
                 glm::uvec2 pos, size;
                 this->tiling.getTile(this->renderer.getSize(), pos, size);
-                this->renderer.renderRect(this->rendering.samplesPerFrame, pos, size, this->tiling.isLastTick());
+                this->renderer.render(this->rendering.samplesPerFrame, pos, size, this->tiling.isLastTick());
                 this->tiling.tick();
             }
         }
