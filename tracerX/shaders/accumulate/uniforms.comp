@@ -60,8 +60,6 @@ layout(std140, binding=2) uniform ParamsUBO
     uint SampleCount;
     uint MaxDepth;
     uint RussianRouletteDepth;
-    uint ToneMapMode;
-    float Gamma;
 };
 
 ivec2 Size = imageSize(AccumulatorImage);

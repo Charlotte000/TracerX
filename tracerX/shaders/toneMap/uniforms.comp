@@ -1,0 +1,17 @@
+layout(rgba32f, binding=0) readonly  uniform image2D AccumulatorImage;
+layout(rgba32f, binding=1) writeonly uniform image2D ToneMapImage;
+
+layout(std140, binding=0) uniform ParamsUBO
+{
+    ivec2 FramePosition;
+    ivec2 FrameSize;
+    uint SampleCount;
+    uint ToneMapMode;
+    float Gamma;
+};
+
+const uint ReinhardToneMap = 0;
+const uint ACESToneMap = 1;
+const uint ACESfittedToneMap = 2;
+
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;

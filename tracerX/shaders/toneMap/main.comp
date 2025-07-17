@@ -1,17 +1,10 @@
 #version 430 core
 #pragma shader_stage(compute)
 
-#define TX_OPENGL 1
-
 layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-const float INV_PI     = 0.31830988618379067;
-const float INV_TWO_PI = 0.15915494309189533;
-const float TWO_PI     = 6.28318530717958648;
-
-#include "common/structs.comp"
-#include "common/uniforms.comp"
-#include "common/tonemap.comp"
+#include "uniforms.comp"
+#include "tonemap.comp"
 
 vec4 ToneMap(in vec4 pixel)
 {

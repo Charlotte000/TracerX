@@ -67,8 +67,8 @@ def write_shader(path: str, accumShaderSrc: str, accumShaderBin: bytes, toneMapS
 
 project = join(dirname(__file__), "..")
 shaderPath = join(project, "tracerX", "shaders")
-accumPath = join(shaderPath, "accumulate.comp")
-toneMapPath = join(shaderPath, "toneMap.comp")
+accumPath = join(shaderPath, "accumulate", "main.comp")
+toneMapPath = join(shaderPath, "toneMap", "main.comp")
 outPath = join(project, "tracerX", "src", "RendererShaderSrc.cpp")
 
 try:

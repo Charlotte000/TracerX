@@ -325,8 +325,6 @@ private:
     static const char toneMapShaderSrc[];
 #endif
     void initData();
-    void bindData();
-    void updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize);
 };
 
 }

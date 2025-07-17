@@ -50,18 +50,23 @@ struct EnvironmentPayload
     int padding1 = 0;
 };
 
-struct ParamsPayload
+struct AccumParamsPayload
 {
     glm::ivec2 rectPosition;
     glm::ivec2 rectSize;
     unsigned int sampleCount;
     unsigned int maxDepth;
     unsigned int russianRouletteDepth;
+    int padding1 = 0;
+};
+
+struct ToneMapParamsPayload
+{
+    glm::ivec2 rectPosition;
+    glm::ivec2 rectSize;
+    unsigned int sampleCount;
     unsigned int toneMapMode;
     float gamma;
-    int padding1 = 0;
-    int padding2 = 0;
-    int padding3 = 0;
 };
 #pragma endregion
 
@@ -195,15 +200,79 @@ void Renderer::render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, boo
 
 void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
 {
-    // Update UBOs
-    this->bindData();
-    this->updateUniform(pos, size);
+    // === Bind Data ===
+    // Images
+    this->accumulationTexture.bindImage(0, GL_READ_WRITE);
+    this->albedoTexture.bindImage(1, GL_WRITE_ONLY);
+    this->normalTexture.bindImage(2, GL_WRITE_ONLY);
+    this->depthTexture.bindImage(3, GL_WRITE_ONLY);
+    this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
+
+    // Samplers
+    this->environment.texture.bindSampler(0);
+    this->environment.cdfTexture.bindSampler(1);
+    this->textureArray.bindSampler(2);
+
+    // SSBOs
+    this->vertexBuffer.bindBuffer(0);
+    this->triangleBuffer.bindBuffer(1);
+    this->meshBuffer.bindBuffer(2);
+    this->meshInstanceBuffer.bindBuffer(3);
+    this->materialBuffer.bindBuffer(4);
+    this->blasBuffer.bindBuffer(5);
+    this->tlasBuffer.bindBuffer(6);
+
+    // UBOs
+    this->cameraBuffer.bindUniform(0);
+    this->environmentBuffer.bindUniform(1);
+    this->paramBuffer.bindUniform(2);
+    // === Bind Data ===
+
+    // === Update Data ===
+    // cameraBuffer
+    const CameraPayload cameraPayload
+    {
+        .position = this->camera.position,
+        .fov = this->camera.fov,
+        .forward = this->camera.forward,
+        .focalDistance = this->camera.focalDistance,
+        .up = this->camera.up,
+        .aperture = this->camera.aperture,
+        .blur = this->camera.blur,
+        .zNear = this->camera.zNear,
+        .zFar = this->camera.zFar,
+    };
+    this->cameraBuffer.update(&cameraPayload, sizeof(CameraPayload));
+
+    // environmentBuffer
+    const EnvironmentPayload environmentPayload
+    {
+        .rotation1 = glm::vec4(this->environment.rotation[0], 0),
+        .rotation2 = glm::vec4(this->environment.rotation[1], 0),
+        .rotation3 = glm::vec4(this->environment.rotation[2], 0),
+        .transparent = this->environment.transparent,
+        .intensity = this->environment.intensity,
+        .cdfTotal = this->environment.cdfTotal,
+    };
+    this->environmentBuffer.update(&environmentPayload, sizeof(EnvironmentPayload));
+
+    // paramBuffer
+    const AccumParamsPayload paramsPayload
+    {
+        .rectPosition = pos,
+        .rectSize = size,
+        .sampleCount = this->sampleCount,
+        .maxDepth = this->maxDepth,
+        .russianRouletteDepth = this->russianRouletteDepth,
+    };
+    this->paramBuffer.update(&paramsPayload, sizeof(AccumParamsPayload));
+    // === Update Data ===
 
     // Accumulate
     this->accumShader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
-        this->paramBuffer.update(&this->sampleCount, sizeof(this->sampleCount), offsetof(ParamsPayload, sampleCount));
+        this->paramBuffer.update(&this->sampleCount, sizeof(this->sampleCount), offsetof(AccumParamsPayload, sampleCount));
         Shader::dispatchCompute(Shader::getGroups(size));
         this->sampleCount++;
     }
@@ -213,9 +282,27 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
 
 void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
 {
-    // Update UBOs
-    this->bindData();
-    this->updateUniform(pos, size);
+    // === Bind Data ===
+    // Images
+    this->accumulationTexture.bindImage(0, GL_READ_ONLY);
+    this->toneMapTexture.bindImage(1, GL_WRITE_ONLY);
+
+    // UBOs
+    this->paramBuffer.bindUniform(0);
+    // === Bind Data ===
+
+    // === Update Data ===
+    // paramBuffer
+    const ToneMapParamsPayload paramsPayload
+    {
+        .rectPosition = pos,
+        .rectSize = size,
+        .sampleCount = this->sampleCount,
+        .toneMapMode = static_cast<unsigned int>(this->toneMapMode),
+        .gamma = this->gamma,
+    };
+    this->paramBuffer.update(&paramsPayload, sizeof(ToneMapParamsPayload));
+    // === Update Data ===
 
     // Tone map
     this->toneMapShader.use();
@@ -287,8 +374,8 @@ void Renderer::denoise()
 #if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->accumShader.reload(shaderPath / "accumulate.comp");
-    this->toneMapShader.reload(shaderPath / "toneMap.comp");
+    this->accumShader.reload(shaderPath / "accumulate" / "main.comp");
+    this->toneMapShader.reload(shaderPath / "toneMap" / "main.comp");
 }
 #endif
 
@@ -391,76 +478,4 @@ void Renderer::initData()
     this->cameraBuffer.init();
     this->environmentBuffer.init();
     this->paramBuffer.init();
-}
-
-void Renderer::bindData()
-{
-    // Images
-    this->accumulationTexture.bindImage(0, GL_READ_WRITE);
-    this->albedoTexture.bindImage(1, GL_WRITE_ONLY);
-    this->normalTexture.bindImage(2, GL_WRITE_ONLY);
-    this->depthTexture.bindImage(3, GL_WRITE_ONLY);
-    this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
-
-    // Samplers
-    this->environment.texture.bindSampler(0);
-    this->environment.cdfTexture.bindSampler(1);
-    this->textureArray.bindSampler(2);
-
-    // SSBOs
-    this->vertexBuffer.bindBuffer(0);
-    this->triangleBuffer.bindBuffer(1);
-    this->meshBuffer.bindBuffer(2);
-    this->meshInstanceBuffer.bindBuffer(3);
-    this->materialBuffer.bindBuffer(4);
-    this->blasBuffer.bindBuffer(5);
-    this->tlasBuffer.bindBuffer(6);
-
-    // UBOs
-    this->cameraBuffer.bindUniform(0);
-    this->environmentBuffer.bindUniform(1);
-    this->paramBuffer.bindUniform(2);
-}
-
-void Renderer::updateUniform(glm::ivec2 rectPosition, glm::ivec2 rectSize)
-{
-    // cameraBuffer
-    const CameraPayload cameraPayload
-    {
-        .position = this->camera.position,
-        .fov = this->camera.fov,
-        .forward = this->camera.forward,
-        .focalDistance = this->camera.focalDistance,
-        .up = this->camera.up,
-        .aperture = this->camera.aperture,
-        .blur = this->camera.blur,
-        .zNear = this->camera.zNear,
-        .zFar = this->camera.zFar,
-    };
-    this->cameraBuffer.update(&cameraPayload, sizeof(CameraPayload));
-
-    // environmentBuffer
-    const EnvironmentPayload environmentPayload
-    {
-        .rotation1 = glm::vec4(this->environment.rotation[0], 0),
-        .rotation2 = glm::vec4(this->environment.rotation[1], 0),
-        .rotation3 = glm::vec4(this->environment.rotation[2], 0),
-        .transparent = this->environment.transparent,
-        .intensity = this->environment.intensity,
-        .cdfTotal = this->environment.cdfTotal,
-    };
-    this->environmentBuffer.update(&environmentPayload, sizeof(EnvironmentPayload));
-
-    // paramBuffer
-    const ParamsPayload paramsPayload
-    {
-        .rectPosition = rectPosition,
-        .rectSize = rectSize,
-        .sampleCount = this->sampleCount,
-        .maxDepth = this->maxDepth,
-        .russianRouletteDepth = this->russianRouletteDepth,
-        .toneMapMode = static_cast<unsigned int>(this->toneMapMode),
-        .gamma = this->gamma,
-    };
-    this->paramBuffer.update(&paramsPayload, sizeof(ParamsPayload));
 }

@@ -15,13 +15,13 @@ const float INF = 1000000000;
 vec2 Stack[64];
 int StackPtr = 0;
 
-#include "common/structs.comp"
-#include "common/uniforms.comp"
-#include "common/random.comp"
-#include "common/transforms.comp"
-#include "common/intersection.comp"
-#include "common/sampling.comp"
-#include "common/bsdf.comp"
+#include "structs.comp"
+#include "uniforms.comp"
+#include "random.comp"
+#include "transforms.comp"
+#include "intersection.comp"
+#include "sampling.comp"
+#include "bsdf.comp"
 
 vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
 {
