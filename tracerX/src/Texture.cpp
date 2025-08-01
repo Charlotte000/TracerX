@@ -33,6 +33,15 @@ glm::uvec2 Texture::getSize() const
     return this->size;
 }
 
+void Texture::update(const Image& image, glm::uvec2 pos)
+{
+    glBindTexture(GL_TEXTURE_2D, this->handler);
+    {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, pos.x, pos.y, image.size.x, image.size.y, GL_RGBA, GL_FLOAT, image.pixels.data());
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void Texture::update(const Image& image)
 {
     glBindTexture(GL_TEXTURE_2D, this->handler);

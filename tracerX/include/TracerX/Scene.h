@@ -9,7 +9,6 @@
 #include "TracerX/Material.h"
 #include "TracerX/core/Vertex.h"
 #include "TracerX/core/BvhNode.h"
-#include "TracerX/core/Triangle.h"
 
 #include <string>
 
@@ -25,8 +24,6 @@ class Scene
 public:
     /**
      * @brief The vertices of the scene.
-     * 
-     * The index of the vertex in the vector is the Triangle::v1, Triangle::v2, or Triangle::v3 of the triangles in the scene.
      */
     std::vector<core::Vertex> vertices;
 
@@ -36,7 +33,7 @@ public:
      * The range of the triangles in the vector is [Mesh::triangleOffset, Mesh::triangleOffset + Mesh::triangleSize) for each mesh in the scene.
      * The order of the triangles in the mesh is not guaranteed due to the BVH build optimization.
      */
-    std::vector<core::Triangle> triangles;
+    std::vector<glm::uvec3> triangles;
 
     /**
      * @brief The textures used in the scene.

@@ -48,6 +48,13 @@ public:
     /**
      * @brief Updates the texture with the specified image.
      * @param image The image to update the texture with.
+     * @param pos The position of the top-left corner of the region to update.
+     */
+    void update(const Image& image, glm::uvec2 pos);
+
+    /**
+     * @brief Updates the texture with the specified image.
+     * @param image The image to update the texture with.
      */
     void update(const Image& image);
 

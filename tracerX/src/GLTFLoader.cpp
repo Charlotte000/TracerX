@@ -94,26 +94,22 @@ static std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, cons
                         case 1:
                             glm::vec<3, uint8_t> index8;
                             std::memcpy(glm::value_ptr(index8), data, sizeof(uint8_t) * 3);
-                            scene.triangles.push_back(
-                                Triangle { .v1 = (int)(index8.x + vertexOffset), .v2 = (int)(index8.y + vertexOffset), .v3 = (int)(index8.z + vertexOffset) });
+                            scene.triangles.emplace_back(index8.x + vertexOffset, index8.y + vertexOffset, index8.z + vertexOffset);
                             break;
                         case 2:
                             glm::vec<3, uint16_t> index16;
                             std::memcpy(glm::value_ptr(index16), data, sizeof(uint16_t) * 3);
-                            scene.triangles.push_back(
-                                Triangle { .v1 = (int)(index16.x + vertexOffset), .v2 = (int)(index16.y + vertexOffset), .v3 = (int)(index16.z + vertexOffset) });
+                            scene.triangles.emplace_back(index16.x + vertexOffset, index16.y + vertexOffset, index16.z + vertexOffset);
                             break;
                         case 4:
                             glm::vec<3, uint32_t> index32;
                             std::memcpy(glm::value_ptr(index32), data, sizeof(uint32_t) * 3);
-                            scene.triangles.push_back(
-                                Triangle { .v1 = (int)(index32.x + vertexOffset), .v2 = (int)(index32.y + vertexOffset), .v3 = (int)(index32.z + vertexOffset) });
+                            scene.triangles.emplace_back(index32.x + vertexOffset, index32.y + vertexOffset, index32.z + vertexOffset);
                             break;
                         case 8:
                             glm::vec<3, uint64_t> index64;
                             std::memcpy(glm::value_ptr(index64), data, sizeof(uint64_t) * 3);
-                            scene.triangles.push_back(
-                                Triangle { .v1 = (int)(index64.x + vertexOffset), .v2 = (int)(index64.y + vertexOffset), .v3 = (int)(index64.z + vertexOffset) });
+                            scene.triangles.emplace_back(index64.x + vertexOffset, index64.y + vertexOffset, index64.z + vertexOffset);
                             break;
                         default:
                             throw std::runtime_error("Unsupported index stride: " + std::to_string(indexStride));
@@ -125,7 +121,7 @@ static std::unordered_multimap<size_t, glm::ivec2> GLTFmeshes(Scene& scene, cons
                 scene.triangles.reserve(triangleOffset + (scene.vertices.size() - vertexOffset) / 3);
                 for (size_t i = vertexOffset; i < scene.vertices.size(); i += 3)
                 {
-                    scene.triangles.push_back(Triangle { .v1 = (int)(i + 0), .v2 = (int)(i + 1), .v3 = (int)(i + 2) });
+                    scene.triangles.emplace_back(i + 0, i + 1, i + 2);
                 }
             }
 

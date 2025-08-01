@@ -92,19 +92,19 @@ void Scene::buildBLAS(Mesh& mesh)
     public:
         const std::vector<Vertex>* vertices;
 
-        FastBVH::BBox<float> operator()(const Triangle& triangle) const noexcept
+        FastBVH::BBox<float> operator()(const glm::uvec3& triangle) const noexcept
         {
-            const glm::vec3 v1 = this->vertices->at(triangle.v1).positionU;
-            const glm::vec3 v2 = this->vertices->at(triangle.v2).positionU;
-            const glm::vec3 v3 = this->vertices->at(triangle.v3).positionU;
+            const glm::vec3 v1 = this->vertices->at(triangle.x).positionU;
+            const glm::vec3 v2 = this->vertices->at(triangle.y).positionU;
+            const glm::vec3 v3 = this->vertices->at(triangle.z).positionU;
             return FastBVH::BBox<float>(toVector3(glm::min(v1, v2, v3)), toVector3(glm::max(v1, v2, v3)));
         }
     } triangleConverter { &this->vertices };
     FastBVH::DefaultBuilder<float> bvhBuilder;
 
     // Build BVH
-    const FastBVH::BVH<float, Triangle> bvh = bvhBuilder(
-        FastBVH::Iterable<Triangle>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
+    const FastBVH::BVH<float, glm::uvec3> bvh = bvhBuilder(
+        FastBVH::Iterable<glm::uvec3>(this->triangles.data() + mesh.triangleOffset, mesh.triangleSize),
         triangleConverter);
 
     // Convert to our format

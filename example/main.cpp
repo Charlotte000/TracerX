@@ -33,8 +33,8 @@ void renderAndSave(TracerX::Renderer& renderer, unsigned int samples, const std:
 int main(int argc, char* argv[])
 {
     const std::filesystem::path homeDir = std::filesystem::path(argv[0]).parent_path() / ".." / "..";
-    const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments" / "";
-    const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes" / "";
+    const std::filesystem::path environmentDir = homeDir / "app" / "assets" / "environments";
+    const std::filesystem::path sceneDir = homeDir / "app" / "assets" / "scenes";
 
     std::cout << "Setting up" << std::endl << std::endl;
     GLFWwindow* window = createWindow();

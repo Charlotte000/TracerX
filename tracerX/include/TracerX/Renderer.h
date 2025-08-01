@@ -130,7 +130,7 @@ public:
      * 
      * It represents the distance from the camera to the closest object in the scene.
      * The depth information is encoded non-linearly in the red channel within the range [0, 1].
-     * To get a linear depth, use the formula: linearDepth = 2 * near * far / (far + near - depth * (far - near)).
+     * To get a linear depth, use the formula: linearDepth = near * far / (far - depth * (far - near)).
      * Where near is the minimum render distance and far is the maximum render distance.
      */
     core::GL::Texture depthTexture;
@@ -173,17 +173,6 @@ public:
     void shutdown();
 
     /**
-     * @brief Renders the scene.
-     * 
-     * Renders the scene using accumulation and tone mapping.
-     * The sample count is incremented.
-     * The rendered texture can be accessed using Renderer::toneMapTexture.
-     * 
-     * @param samples The number of samples per pixel to accumulate.
-     */
-    void render(unsigned int samples = 1);
-
-    /**
      * @brief Renders a rectangular region of the image.
      * 
      * Renders the specified region of the image using accumulation and tone mapping.
@@ -196,6 +185,17 @@ public:
      * @param updateSampleCount Whether to update the sample count.
      */
     void render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount = true);
+
+    /**
+     * @brief Renders the scene.
+     * 
+     * Renders the scene using accumulation and tone mapping.
+     * The sample count is incremented.
+     * The rendered texture can be accessed using Renderer::toneMapTexture.
+     * 
+     * @param samples The number of samples per pixel to accumulate.
+     */
+    void render(unsigned int samples = 1);
 
     /**
      * @brief Accumulates the rendered image.
@@ -223,6 +223,17 @@ public:
     void toneMap(glm::uvec2 pos, glm::uvec2 size);
 
 #if TX_DENOISE
+    /**
+     * @brief Applies denoising to the rendered image.
+     * 
+     * Use this method after rendering the scene to reduce noise.
+     * 
+     * @param pos The position of the top-left corner of the region of the image to denoise.
+     * @param size The size of the region of the image to denoise.
+     * @throws std::runtime_error Thrown if the denoising fails.
+     */
+    void denoise(glm::uvec2 pos, glm::uvec2 size);
+
     /**
      * @brief Applies denoising to the rendered image.
      * 

@@ -56,9 +56,9 @@ struct Vertex
 
 struct Triangle
 {
-    int V1;
-    int V2;
-    int V3;
+    uint V1;
+    uint V2;
+    uint V3;
 };
 
 struct Mesh

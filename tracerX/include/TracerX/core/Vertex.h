@@ -9,7 +9,7 @@ namespace TracerX::core
 {
 
 /**
- * @brief A data structure that describes a 3D point of a Triangle.
+ * @brief A data structure that describes a 3D point of a triangle.
  */
 struct Vertex
 {

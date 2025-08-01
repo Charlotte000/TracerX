@@ -181,11 +181,6 @@ void Renderer::shutdown()
     this->toneMapShader.shutdown();
 }
 
-void Renderer::render(unsigned int samples)
-{
-    this->render(samples, glm::uvec2(0, 0), this->getSize());
-}
-
 void Renderer::render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
 {
     this->accumulate(samples, pos, size);
@@ -196,6 +191,11 @@ void Renderer::render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, boo
     {
         this->sampleCount -= samples;
     }
+}
+
+void Renderer::render(unsigned int samples)
+{
+    this->render(samples, glm::uvec2(0, 0), this->getSize());
 }
 
 void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
@@ -311,26 +311,24 @@ void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
 }
 
 #if TX_DENOISE
-void Renderer::denoise()
+void Renderer::denoise(glm::uvec2 pos, glm::uvec2 size)
 {
     // Create device
     oidn::DeviceRef device = oidn::newDevice();
     device.commit();
 
-    const glm::uvec2 size = this->getSize();
-
     // Create color buffer
-    const Image colorImage = this->accumulationTexture.upload();
+    const Image colorImage = this->accumulationTexture.upload(pos, size);
     oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
 
     // Create albedo buffer
-    const Image albedoImage = this->albedoTexture.upload();
+    const Image albedoImage = this->albedoTexture.upload(pos, size);
     oidn::BufferRef albedoBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(float), albedoImage.pixels.data());
 
     // Create normal buffer
-    const Image normalImage = this->normalTexture.upload();
+    const Image normalImage = this->normalTexture.upload(pos, size);
     oidn::BufferRef normalBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
     normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(float), normalImage.pixels.data());
 
@@ -359,15 +357,20 @@ void Renderer::denoise()
     // Update accumulator
     const float* data = (const float*)colorBuf.getData();
     const std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->accumulationTexture.update(Image(size, pixels));
+    this->accumulationTexture.update(Image(size, pixels), pos);
 
     // Update output
-    this->toneMap(glm::uvec2(0, 0), this->getSize());
+    this->toneMap(pos, size);
 
     // Release buffers
     colorBuf.release();
     albedoBuf.release();
     normalBuf.release();
+}
+
+void Renderer::denoise()
+{
+    this->denoise(glm::uvec2(0, 0), this->getSize());
 }
 #endif
 
@@ -407,7 +410,7 @@ void Renderer::loadScene(Scene& scene, glm::uvec2 maxTextureArraySize)
 
     // SSBOs
     this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
-    this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(Triangle));
+    this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(glm::uvec3));
     this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
     this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);

@@ -11,7 +11,7 @@ namespace TracerX::core::GL
 /**
  * @brief An OpenGL storage buffer object (SSBO) wrapper class.
  * 
- * The storage buffer is used to store data that is shared between the CPU and the GPU, such as vertex, triangle, and material data.
+ * The storage buffer is used to store data that is shared between the CPU and the GPU, such as vertex, indices, and material data.
  * 
  * @remark Should not be used directly and is only used internally by the Renderer.
  */
