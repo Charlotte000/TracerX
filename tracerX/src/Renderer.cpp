@@ -33,10 +33,12 @@ struct CameraPayload
     float focalDistance;
     glm::vec3 up;
     float aperture;
+    glm::vec3 right;
     float blur;
     float zNear;
     float zFar;
     int padding1 = 0;
+    int padding2 = 0;
 };
 
 struct EnvironmentPayload
@@ -238,6 +240,7 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
         .focalDistance = this->camera.focalDistance,
         .up = this->camera.up,
         .aperture = this->camera.aperture,
+        .right = glm::cross(this->camera.forward, this->camera.up),
         .blur = this->camera.blur,
         .zNear = this->camera.zNear,
         .zFar = this->camera.zFar,

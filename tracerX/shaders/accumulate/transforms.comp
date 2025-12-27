@@ -19,12 +19,12 @@ void JitterRay(inout Ray ray)
     // Focal
     vec3 focalPoint = ray.Origin + ray.Direction * Camera.FocalDistance;
     vec2 focal = RandomVector2() * Camera.Aperture;
-    ray.Origin += focal.x * CameraRight + focal.y * Camera.Up;
+    ray.Origin += focal.x * Camera.Right + focal.y * Camera.Up;
     ray.Direction = normalize(focalPoint - ray.Origin);
 
     // Blur
     vec2 blur = RandomVector2() * Camera.Blur;
-    ray.Origin += blur.x * CameraRight + blur.y * Camera.Up;
+    ray.Origin += blur.x * Camera.Right + blur.y * Camera.Up;
 
     ray.InvDirection = 1 / ray.Direction;
 }

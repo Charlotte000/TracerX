@@ -98,7 +98,7 @@ void main()
     }
 
     vec2 coord = (UV - vec2(.5)) * vec2(1, float(Size.y) / Size.x) * 2 * tan(Camera.FOV * .5);
-    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + CameraRight * coord.x + Camera.Up * coord.y), vec3(0));
+    Ray ray = Ray(Camera.Position, normalize(Camera.Forward + Camera.Right * coord.x + Camera.Up * coord.y), vec3(0));
     JitterRay(ray);
 
     vec3 albedo, normal;

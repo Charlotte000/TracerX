@@ -71,8 +71,6 @@ vec2 UV = vec2(TexelCoord.x, Size.y - 1 - TexelCoord.y) / Size;
 vec2 UV = vec2(TexelCoord) / Size;
 #endif
 
-vec3 CameraRight = cross(Camera.Forward, Camera.Up);
-
 float Luminance(vec3 c)
 {
     return 0.212671 * c.x + 0.715160 * c.y + 0.072169 * c.z;
@@ -126,10 +124,10 @@ Material GetMaterial(inout CollisionManifold manifold)
         manifold.Normal = normalize(manifold.Tangent * texNormal.x + manifold.Bitangent * texNormal.y + manifold.Normal * texNormal.z);
     }
 
-    if (!manifold.IsFrontFace)
-    {
-        manifold.Normal *= -1;
-    }
+    // if (!manifold.IsFrontFace)
+    // {
+    //     manifold.Normal *= -1;
+    // }
 
     return material;
 }

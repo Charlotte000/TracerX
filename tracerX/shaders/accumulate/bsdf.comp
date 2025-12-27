@@ -61,7 +61,7 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     // Refract
     if (material.IOR > 0)
     {
-        vec3 refractedDir = refract(ray.Direction, manifold.Normal, manifold.IsFrontFace ? 1 / material.IOR : material.IOR);
+        vec3 refractedDir = refract(ray.Direction, manifold.Normal * (manifold.IsFrontFace ? 1 : -1), manifold.IsFrontFace ? 1 / material.IOR : material.IOR);
         if (refractedDir == vec3(0))
         {
             refractedDir = specularDir;

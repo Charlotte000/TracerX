@@ -194,7 +194,7 @@ Application::Application(
         throw std::runtime_error("GLFW Error: " + std::string(err));
     });
 
-    if (glfwInit() == GL_FALSE)
+    if (glfwInit() == GLFW_FALSE)
     {
         std::cerr << "GLFW Init Error" << std::endl;
         throw std::runtime_error("Failed to initialize GLFW");

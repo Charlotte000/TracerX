@@ -21,10 +21,12 @@ struct Cam
     float FocalDistance;
     vec3 Up;
     float Aperture;
+    vec3 Right;
     float Blur;
     float ZNear;
     float ZFar;
     int Padding1;
+    int Padding2;
 };
 
 struct Material
