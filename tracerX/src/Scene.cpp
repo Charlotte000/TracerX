@@ -1,11 +1,13 @@
 /**
  * @file Scene.cpp
  */
-#include "TracerX/Scene.h"
-
 #include <numeric>
+
 #include <FastBVH.h>
+
 #include <glm/gtx/extended_min_max.hpp>
+
+#include "TracerX/Scene.h"
 
 using namespace TracerX;
 using namespace TracerX::core;
@@ -60,7 +62,7 @@ BvhNode toNode(const FastBVH::Node<float>& node)
     return myNode;
 }
 
-int Scene::addTexture(const Image& texture, const std::string& name)
+int Scene::addTexture(const OGL::Image2D& texture, const std::string& name)
 {
     const int index = (int)this->textures.size();
     this->textures.push_back(texture);

@@ -1,11 +1,15 @@
 #include <GL/glew.h>
+
 #include "Application.h"
 
 #include <iostream>
 #include <stdexcept>
+
 #include <tinyfiledialogs.h>
+
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/polar_coordinates.hpp>
@@ -209,7 +213,7 @@ static bool materialTextureSelector(Application& app, const std::string& name, i
 
         for (size_t textureId = 0; textureId < app.scene.textures.size(); textureId++)
         {
-            const Image& texture = app.scene.textures[textureId];
+            const OGL::Image2D& texture = app.scene.textures[textureId];
             const std::string& textureName = app.scene.textureNames[textureId];
             if (ImGui::Selectable(
                 (textureName + "##" + name + "Texture" + std::to_string(textureId)).c_str(),
@@ -227,7 +231,8 @@ static bool materialTextureSelector(Application& app, const std::string& name, i
     {
         if (app.materialTextureView.textureId != currentTextureId)
         {
-            app.materialTextureView.texture.update(app.scene.textures[currentTextureId]);
+            app.materialTextureView.texture = OGL::Texture2D(app.scene.textures[currentTextureId].size, OGL::ImageFormat::RGBA32F);
+            app.materialTextureView.texture.update(app.scene.textures[currentTextureId], glm::uvec2(0));
             app.materialTextureView.textureId = currentTextureId;
         }
 
@@ -936,37 +941,37 @@ static void drawingPanel(Application& app)
 
     if (ImGui::BeginTabItem("View"))
     {
-        viewRenderTexture(app, app.rendering.isPreview ? app.renderer.albedoTexture.getHandler() : app.renderer.toneMapTexture.getHandler());
+        viewRenderTexture(app, app.rendering.isPreview ? app.renderer.albedoTexture().getHandler() : app.renderer.toneMapTexture().getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Albedo"))
     {
-        viewRenderTexture(app, app.renderer.albedoTexture.getHandler());
+        viewRenderTexture(app, app.renderer.albedoTexture().getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Normal"))
     {
-        viewRenderTexture(app, app.renderer.normalTexture.getHandler());
+        viewRenderTexture(app, app.renderer.normalTexture().getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Depth"))
     {
-        viewRenderTexture(app, app.renderer.depthTexture.getHandler());
+        viewRenderTexture(app, app.renderer.depthTexture().getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Accumulator"))
     {
-        viewRenderTexture(app, app.renderer.accumulationTexture.getHandler());
+        viewRenderTexture(app, app.renderer.accumulatorTexture().getHandler());
         ImGui::EndTabItem();
     }
 
     if (ImGui::BeginTabItem("Tonemapped"))
     {
-        viewRenderTexture(app, app.renderer.toneMapTexture.getHandler());
+        viewRenderTexture(app, app.renderer.toneMapTexture().getHandler());
         ImGui::EndTabItem();
     }
 
@@ -1029,7 +1034,7 @@ static void mainMenuBar(Application& app)
             {
                 try
                 {
-                    app.renderer.environment.update(Image(fileName));
+                    app.renderer.environment.update(OGL::Image2D(fileName));
                     app.clear();
                 }
                 catch (const std::runtime_error& err)
@@ -1048,7 +1053,7 @@ static void mainMenuBar(Application& app)
             {
                 try
                 {
-                    app.renderer.toneMapTexture.upload().saveToFile(fileName);
+                    app.renderer.toneMapTexture().read().saveToFile(fileName);
                 }
                 catch (const std::runtime_error& err)
                 {
@@ -1099,8 +1104,6 @@ void Application::initUI()
     ImGui_ImplOpenGL3_Init();
 
     SetupImGuiStyle();
-
-    this->materialTextureView.texture.init(GL_RGBA32F, GL_LINEAR);
 }
 
 void Application::shutdownUI()
@@ -1108,7 +1111,6 @@ void Application::shutdownUI()
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
-    this->materialTextureView.texture.shutdown();
 }
 
 void Application::renderUI()

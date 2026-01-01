@@ -3,12 +3,14 @@
  */
 #pragma once
 
+#include <OGL/Program.h>
+#include <OGL/FrameBuffer.h>
+#include <OGL/UniformBuffer.h>
+#include <OGL/StorageBuffer.h>
+#include <OGL/Texture2DArray.h>
+
 #include "TracerX/Scene.h"
 #include "TracerX/Environment.h"
-#include "TracerX/core/GL/Shader.h"
-#include "TracerX/core/GL/TextureArray.h"
-#include "TracerX/core/GL/StorageBuffer.h"
-#include "TracerX/core/GL/UniformBuffer.h"
 
 namespace TracerX
 {
@@ -24,7 +26,7 @@ namespace TracerX
  * 
  * 2. Tone mapping: The renderer applies tone mapping to the accumulated colors and displays the result using Renderer::toneMap method.
  * 
- * The renderer provides the Renderer::accumulationTexture as the intermediate result of the accumulation stage and the Renderer::toneMapTexture as the final result of the tone mapping stage.
+ * The renderer provides the Renderer::accumulatorTexture as the intermediate result of the accumulation stage and the Renderer::toneMapTexture as the final result of the tone mapping stage.
  * Also, there are Renderer::albedoTexture, Renderer::normalTexture, and Renderer::depthTexture for additional information about the render.
  * 
  * An OpenGL compute shader is utilized to trace rays and update the image.
@@ -38,14 +40,12 @@ namespace TracerX
  * @code {.cpp}
  * TracerX::Scene scene = TracerX::loadGLTF("scene.glb");
  * 
- * TracerX::Renderer renderer;
- * renderer.init(glm::uvec2(800, 600));
+ * TracerX::Renderer renderer(glm::uvec2(800, 600));
  * renderer.loadScene(scene);
  * renderer.render(100);
  * renderer.denoise();
- * const TracerX::Image image = renderer.toneMapTexture.upload();
+ * const OGL::Image2D image = renderer.toneMapTexture().read();
  * image.saveToFile("output.png");
- * renderer.shutdown();
  * @endcode
  */
 class Renderer
@@ -110,12 +110,23 @@ public:
         ACESfitted = 2,
     } toneMapMode = ToneMapMode::Reinhard;
 
+    OGL::FrameBuffer frameBuffer;
+
+    Renderer(glm::uvec2 size);
+
     /**
      * @brief The texture contains the information about the albedo (diffuse) colors of the scene.
      * 
      * It represents the base color of the surface at each pixel and contains no lighting information.
      */
-    core::GL::Texture albedoTexture;
+    OGL::Texture2D& albedoTexture();
+
+    /**
+     * @brief The texture contains the information about the albedo (diffuse) colors of the scene.
+     * 
+     * It represents the base color of the surface at each pixel and contains no lighting information.
+     */
+    const OGL::Texture2D& albedoTexture() const;
 
     /**
      * @brief The texture contains the information about the normals of the scene.
@@ -123,7 +134,15 @@ public:
      * It represents the direction of the surface normals at each pixel.
      * To get the world-space normal, use the formula: normal = 2 * color - 1.
      */
-    core::GL::Texture normalTexture;
+    OGL::Texture2D& normalTexture();
+
+    /**
+     * @brief The texture contains the information about the normals of the scene.
+     * 
+     * It represents the direction of the surface normals at each pixel.
+     * To get the world-space normal, use the formula: normal = 2 * color - 1.
+     */
+    const OGL::Texture2D& normalTexture() const;
 
     /**
      * @brief The texture contains the information about the depth of the scene.
@@ -133,44 +152,51 @@ public:
      * To get a linear depth, use the formula: linearDepth = near * far / (far - depth * (far - near)).
      * Where near is the minimum render distance and far is the maximum render distance.
      */
-    core::GL::Texture depthTexture;
+    OGL::Texture2D& depthTexture();
+
+    /**
+     * @brief The texture contains the information about the depth of the scene.
+     * 
+     * It represents the distance from the camera to the closest object in the scene.
+     * The depth information is encoded non-linearly in the red channel within the range [0, 1].
+     * To get a linear depth, use the formula: linearDepth = near * far / (far - depth * (far - near)).
+     * Where near is the minimum render distance and far is the maximum render distance.
+     */
+    const OGL::Texture2D& depthTexture() const;
 
     /**
      * @brief The texture contains the information about the accumulated colors of the scene.
      * 
      * It represents the accumulated colors of the scene over multiple samples.
      */
-    core::GL::Texture accumulationTexture;
+    OGL::Texture2D& accumulatorTexture();
+
+    /**
+     * @brief The texture contains the information about the accumulated colors of the scene.
+     * 
+     * It represents the accumulated colors of the scene over multiple samples.
+     */
+    const OGL::Texture2D& accumulatorTexture() const;
 
     /**
      * @brief The texture contains the information about the tone mapped colors and hence the final output image.
      * 
      * It represents the final image that is the result of the rendering process.
      */
-    core::GL::Texture toneMapTexture;
+    OGL::Texture2D& toneMapTexture();
 
     /**
-     * @brief Initializes the renderer with the specified size.
+     * @brief The texture contains the information about the tone mapped colors and hence the final output image.
      * 
-     * Must be called before any other method. Initializes GLEW and OpenGL.
-     * 
-     * @param size The size of the renderer.
-     * @throws std::runtime_error Thrown if GLEW fails to initialize.
+     * It represents the final image that is the result of the rendering process.
      */
-    void init(glm::uvec2 size);
+    const OGL::Texture2D& toneMapTexture() const;
 
     /**
      * @brief Resizes the rendered image to the specified size.
      * @param size The new size of the image.
      */
     void resize(glm::uvec2 size);
-
-    /**
-     * @brief Shuts down the renderer and releases resources.
-     * 
-     * Must be called after all other methods. Releases all resources and shuts down GLEW and OpenGL.
-     */
-    void shutdown();
 
     /**
      * @brief Renders a rectangular region of the image.
@@ -200,7 +226,7 @@ public:
     /**
      * @brief Accumulates the rendered image.
      * 
-     * This method performs path tracing of the scene and accumulates the resulting colors in the Renderer::accumulationTexture.
+     * This method performs path tracing of the scene and accumulates the resulting colors in the Renderer::accumulatorTexture.
      * The sample count is incremented by the specified number of samples.
      * 
      * @param samples The number of samples per pixel to accumulate.
@@ -213,7 +239,7 @@ public:
     /**
      * @brief Applies tone mapping to the rendered image.
      * 
-     * This method applies tone mapping to the accumulated colors of the Renderer::accumulationTexture and stores the result in the Renderer::toneMapTexture.
+     * This method applies tone mapping to the accumulated colors of the Renderer::accumulatorTexture and stores the result in the Renderer::toneMapTexture.
      * 
      * @param pos The position of the top-left corner of the region of the image to tone map.
      * @param size The size of the region of the image to tone map.
@@ -312,19 +338,19 @@ public:
     void updateSceneMeshInstances(Scene& scene);
 private:
     unsigned int sampleCount = 0;
-    core::GL::Shader accumShader;
-    core::GL::Shader toneMapShader;
-    core::GL::TextureArray textureArray;
-    core::GL::StorageBuffer vertexBuffer;
-    core::GL::StorageBuffer triangleBuffer;
-    core::GL::StorageBuffer meshBuffer;
-    core::GL::StorageBuffer meshInstanceBuffer;
-    core::GL::StorageBuffer materialBuffer;
-    core::GL::StorageBuffer blasBuffer;
-    core::GL::StorageBuffer tlasBuffer;
-    core::GL::UniformBuffer cameraBuffer;
-    core::GL::UniformBuffer environmentBuffer;
-    core::GL::UniformBuffer paramBuffer;
+    OGL::Program accumShader;
+    OGL::Program toneMapShader;
+    OGL::Texture2DArray textureArray;
+    OGL::StorageBuffer vertexBuffer;
+    OGL::StorageBuffer triangleBuffer;
+    OGL::StorageBuffer meshBuffer;
+    OGL::StorageBuffer meshInstanceBuffer;
+    OGL::StorageBuffer materialBuffer;
+    OGL::StorageBuffer blasBuffer;
+    OGL::StorageBuffer tlasBuffer;
+    OGL::UniformBuffer cameraBuffer;
+    OGL::UniformBuffer environmentBuffer;
+    OGL::UniformBuffer paramBuffer;
 
 #if TX_SPIRV
     static const unsigned char accumShaderSrc[];
@@ -335,7 +361,6 @@ private:
     static const char accumShaderSrc[];
     static const char toneMapShaderSrc[];
 #endif
-    void initData();
 };
 
 }

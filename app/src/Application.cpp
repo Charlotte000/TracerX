@@ -1,3 +1,5 @@
+#include <GL/glew.h>
+
 #include "Application.h"
 
 #include <TracerX/GLTFLoader.h>
@@ -5,7 +7,9 @@
 #include <thread>
 #include <iostream>
 #include <stdexcept>
+
 #include <tinyfiledialogs.h>
+
 #include <glm/gtx/rotate_vector.hpp>
 
 using namespace TracerX;
@@ -169,6 +173,7 @@ void Application::Tiling::getTile(glm::uvec2 canvasSize, glm::uvec2& pos, glm::u
 #pragma endregion
 
 Application::Application(
+    GLFWwindow* window,
     glm::uvec2 initSize,
     glm::uvec2 maxTextureArraySize,
     const std::filesystem::path sceneDir,
@@ -177,38 +182,18 @@ Application::Application(
     const std::filesystem::path shaderPath,
 #endif
     const Scene& initScene,
-    const Image& initEnvironment)
+    const OGL::Image2D& initEnvironment)
     :
+    window(window),
     maxTextureArraySize(maxTextureArraySize),
     sceneDir(sceneDir),
     environmentDir(environmentDir),
 #if !NDEBUG
     shaderPath(shaderPath),
 #endif
-    scene(initScene)
+    scene(initScene),
+    renderer(initSize)
 {
-    // Init GLFW
-    glfwSetErrorCallback([](int, const char* err)
-    {
-        std::cerr << "GLFW Error: " << err << std::endl;
-        throw std::runtime_error("GLFW Error: " + std::string(err));
-    });
-
-    if (glfwInit() == GLFW_FALSE)
-    {
-        std::cerr << "GLFW Init Error" << std::endl;
-        throw std::runtime_error("Failed to initialize GLFW");
-    }
-
-    // Create window
-    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-    this->window = glfwCreateWindow(initSize.x, initSize.y, "TracerX", nullptr, nullptr);
-    if (this->window == nullptr)
-    {
-        std::cerr << "Failed to create window" << std::endl;
-        throw std::runtime_error("Failed to create window");
-    }
-
     // Create thread context
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     this->threadContext = glfwCreateWindow(1, 1, "", nullptr, this->window);
@@ -218,20 +203,9 @@ Application::Application(
         throw std::runtime_error("Failed to create window");
     }
 
-    glfwMakeContextCurrent(this->window);
     glfwSwapInterval(0);
 
     // Init renderer
-    try
-    {
-        this->renderer.init(initSize);
-    }
-    catch(const std::runtime_error& err)
-    {
-        std::cerr << "Renderer Init Error: " << err.what() << std::endl;
-        throw err;
-    }
-    
     this->renderer.environment.update(initEnvironment);
     this->renderer.loadScene(this->scene, this->maxTextureArraySize);
 
@@ -242,7 +216,6 @@ Application::Application(
 void Application::shutdown()
 {
     this->shutdownUI();
-    this->renderer.shutdown();
     glfwDestroyWindow(this->threadContext);
     glfwDestroyWindow(this->window);
     glfwTerminate();
@@ -377,8 +350,8 @@ void Application::control()
 
 float Application::getLookAtDistance() const
 {
-    const Image image = this->renderer.depthTexture.upload();
-    const float nonLinear = image.get(image.size / 2u).r * 2 - 1;
+    const OGL::Image2D image = this->renderer.depthTexture().read(this->renderer.getSize() / 2u, glm::uvec2(1));
+    const float nonLinear = image.pixels[0].r * 2 - 1;
 
     const float min = this->renderer.camera.zNear;
     const float max = this->renderer.camera.zFar;
@@ -426,6 +399,93 @@ void Application::reloadShaders()
 void Application::clear()
 {
     this->rendering.needClear = true;
+}
+
+#if !NDEBUG
+// https://learnopengl.com/In-Practice/Debugging
+void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
+{
+    // ignore non-significant error/warning codes
+    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; 
+
+    std::cout << "---------------" << std::endl;
+    std::cout << "Debug message (" << id << "): " <<  message << std::endl;
+
+    switch (source)
+    {
+        case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
+        case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
+        case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
+    } std::cout << std::endl;
+
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break; 
+        case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
+        case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
+        case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
+        case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
+        case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
+    } std::cout << std::endl;
+    
+    switch (severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
+        case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
+        case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
+    } std::cout << std::endl;
+    std::cout << std::endl;
+}
+#endif
+
+GLFWwindow* Application::initGLFW()
+{
+    // Init GLFW
+    glfwSetErrorCallback([](int, const char* err)
+    {
+        std::cerr << "GLFW Error: " << err << std::endl;
+        throw std::runtime_error("GLFW Error: " + std::string(err));
+    });
+
+    if (glfwInit() == GLFW_FALSE)
+    {
+        std::cerr << "GLFW Init Error" << std::endl;
+        throw std::runtime_error("Failed to initialize GLFW");
+    }
+
+    // Create window
+    glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+    GLFWwindow* window = glfwCreateWindow(10, 10, "TracerX", nullptr, nullptr);
+    if (window == nullptr)
+    {
+        std::cerr << "Failed to create window" << std::endl;
+        throw std::runtime_error("Failed to create window");
+    }
+
+    glfwMakeContextCurrent(window);
+
+    // Init GLEW
+    if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
+    {
+        throw std::runtime_error("Failed to initialize GLEW: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(status))));
+    }
+
+#if !NDEBUG
+    // Debug output
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(glDebugOutput, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#endif
+
+    return window;
 }
 
 glm::vec2 toVec2(const ImVec2 v)

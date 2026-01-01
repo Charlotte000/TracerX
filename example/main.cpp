@@ -7,10 +7,23 @@
 
 GLFWwindow* createWindow()
 {
-    glfwInit();
+    // Init GLFW
+    if (glfwInit() == GLFW_FALSE)
+    {
+        throw std::runtime_error("Failed to initialize GLFW");
+    }
+
+    // Create window
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow* window = glfwCreateWindow(1, 1, "", nullptr, nullptr);
     glfwMakeContextCurrent(window);
+
+    // Init GLEW
+    if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
+    {
+        throw std::runtime_error("Failed to initialize GLEW: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(status))));
+    }
+
     return window;
 }
 
@@ -27,7 +40,7 @@ void renderAndSave(TracerX::Renderer& renderer, unsigned int samples, const std:
 #endif
 
     std::cout << "Saving " << outputFile.filename() << std::endl << std::endl;
-    renderer.toneMapTexture.upload().saveToFile(outputFile);
+    renderer.toneMapTexture().read().saveToFile(outputFile);
 }
 
 int main(int argc, char* argv[])
@@ -47,9 +60,8 @@ int main(int argc, char* argv[])
     ajaxMesh.transform = glm::translate(ajaxMesh.transform, glm::vec3(0, -.5f, 0));
 
     // Setting up the renderer
-    TracerX::Renderer renderer;
-    renderer.init(glm::uvec2(1000, 1000));
-    renderer.environment.update(TracerX::Image(environmentDir / "konzerthaus_2k.hdr"));
+    TracerX::Renderer renderer(glm::uvec2(1000, 1000));
+    renderer.environment.update(OGL::Image2D(environmentDir / "konzerthaus_2k.hdr"));
     renderer.loadScene(scene);
 
     // Setting up the camera
@@ -70,7 +82,6 @@ int main(int argc, char* argv[])
     renderAndSave(renderer, 100, "ajaxGold.png");
 
     // Shutting down
-    renderer.shutdown();
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

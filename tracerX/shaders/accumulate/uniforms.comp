@@ -2,7 +2,6 @@ layout(rgba32f, binding=0)           uniform image2D AccumulatorImage;
 layout(rgba32f, binding=1) writeonly uniform image2D AlbedoImage;
 layout(rgba32f, binding=2) writeonly uniform image2D NormalImage;
 layout(r32f,    binding=3) writeonly uniform image2D DepthImage;
-layout(rgba32f, binding=4) writeonly uniform image2D ToneMapImage;
 
 layout(binding=0) uniform sampler2D EnvironmentTexture;
 layout(binding=1) uniform sampler2D EnvironmentCDFTexture;

@@ -3,13 +3,15 @@
  */
 #define TINYGLTF_IMPLEMENTATION
 
-#include "TracerX/GLTFLoader.h"
-
 #include <stdexcept>
-#include <tiny_gltf.h>
 #include <unordered_map>
+
+#include <tiny_gltf.h>
+
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
+
+#include "TracerX/GLTFLoader.h"
 
 using namespace TracerX;
 using namespace TracerX::core;
@@ -145,20 +147,18 @@ static void GLTFtextures(Scene& scene, const std::vector<tinygltf::Texture>& tex
     for (const tinygltf::Texture& gltfTexture : textures)
     {
         const tinygltf::Image& gltfImage = images[gltfTexture.source];
-
-        const glm::uvec2 size(gltfImage.width, gltfImage.height);
-
-        std::vector<float> pixels;
-        pixels.reserve(gltfImage.width * gltfImage.height * 4);
+        OGL::Image2D myImage(glm::uvec2(gltfImage.width, gltfImage.height));
         for (size_t i = 0; i < gltfImage.image.size(); i += gltfImage.component)
         {
-            pixels.push_back(gltfImage.component > 0 ? gltfImage.image[i + 0] / 255.f : 0);
-            pixels.push_back(gltfImage.component > 1 ? gltfImage.image[i + 1] / 255.f : 0);
-            pixels.push_back(gltfImage.component > 2 ? gltfImage.image[i + 2] / 255.f : 0);
-            pixels.push_back(gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1);
+            myImage.pixels[i / gltfImage.component] = glm::vec4(
+                gltfImage.component > 0 ? gltfImage.image[i + 0] / 255.f : 0,
+                gltfImage.component > 1 ? gltfImage.image[i + 1] / 255.f : 0,
+                gltfImage.component > 2 ? gltfImage.image[i + 2] / 255.f : 0,
+                gltfImage.component > 3 ? gltfImage.image[i + 3] / 255.f : 1
+            );
         }
 
-        scene.addTexture(Image(size, pixels), gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
+        scene.addTexture(myImage, gltfTexture.name.empty() ? gltfImage.name : gltfTexture.name);
     }
 }
 

@@ -7,16 +7,10 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(
     ${PROJECT_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Scene.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Image.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Shader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Camera.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/Texture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLTFLoader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/TextureArray.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/StorageBuffer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/UniformBuffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -41,8 +35,8 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(glew)
 target_include_directories(${PROJECT_NAME} PUBLIC ${glew_SOURCE_DIR}/include)
-target_sources(${PROJECT_NAME} PRIVATE ${glew_SOURCE_DIR}/src/glew.c)
-target_compile_definitions(${PROJECT_NAME} PRIVATE GLEW_STATIC)
+target_sources(${PROJECT_NAME} PUBLIC ${glew_SOURCE_DIR}/src/glew.c)
+target_compile_definitions(${PROJECT_NAME} PUBLIC GLEW_STATIC)
 
 # GLM v1.0.1
 FetchContent_Declare(
@@ -101,3 +95,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tinygltf)
 target_include_directories(${PROJECT_NAME} PRIVATE ${tinygltf_SOURCE_DIR})
+
+# OGL
+FetchContent_Declare(
+    ogl
+    GIT_REPOSITORY https://github.com/Charlotte000/OGL.git
+    GIT_TAG        main
+)
+FetchContent_MakeAvailable(ogl)
+target_link_libraries(${PROJECT_NAME} PUBLIC OGL)

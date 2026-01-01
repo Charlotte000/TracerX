@@ -3,7 +3,7 @@
  */
 #pragma once
 
-#include "TracerX/core/GL/Texture.h"
+#include <OGL/Texture2D.h>
 
 namespace TracerX
 {
@@ -38,13 +38,13 @@ public:
      * @brief Loads environment image from an image.
      * @param image The image to load the environment from.
      */
-    void update(const Image& image);
+    void update(const OGL::Image2D& image);
 private:
-    core::GL::Texture texture;
-    core::GL::Texture cdfTexture;
+    OGL::Texture2D texture = OGL::Texture2D(glm::uvec2(1), OGL::ImageFormat::RGBA32F);
+    OGL::Texture2D cdfTexture = OGL::Texture2D(glm::uvec2(1), OGL::ImageFormat::R32F);
     float cdfTotal;
 
-    void buildCDF(const Image& image);
+    void buildCDF(const OGL::Image2D& image);
 
     friend class Renderer;
 };

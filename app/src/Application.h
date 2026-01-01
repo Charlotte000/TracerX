@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 #include <ImGuizmo.h>
+
 #include <GLFW/glfw3.h>
 
 class Application
@@ -79,7 +80,7 @@ public:
     struct MaterialTextureView
     {
         int textureId = -1;
-        TracerX::core::GL::Texture texture;
+        OGL::Texture2D texture = OGL::Texture2D(glm::uvec2(1), OGL::ImageFormat::RGBA32F);
     } materialTextureView;
     struct Gizmo
     {
@@ -89,6 +90,7 @@ public:
     } gizmo;
 
     Application(
+        GLFWwindow* window,
         glm::uvec2 initSize,
         glm::uvec2 maxTextureArraySize,
         const std::filesystem::path sceneDir,
@@ -97,7 +99,7 @@ public:
         const std::filesystem::path shaderPath,
 #endif
         const TracerX::Scene& initScene,
-        const TracerX::Image& initEnvironment);
+        const OGL::Image2D& initEnvironment);
     void shutdown();
     void run();
     void loadScene(const std::filesystem::path& path);
@@ -112,6 +114,8 @@ public:
     void initUI();
     void renderUI();
     void shutdownUI();
+
+    static GLFWwindow* initGLFW();
 };
 
 glm::vec2 toVec2(const ImVec2 v);

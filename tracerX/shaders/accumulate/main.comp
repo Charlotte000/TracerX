@@ -48,7 +48,7 @@ vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
                 z = Camera.ZFar;
             }
 
-            return vec4(radiance, !isSampled && Environment.Transparent ? 0 : 1);
+            return vec4(radiance, isSampled || !Environment.Transparent);
         }
 
         Material material = GetMaterial(manifold);

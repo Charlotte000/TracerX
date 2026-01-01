@@ -3,14 +3,15 @@
  */
 #pragma once
 
+#include <string>
+
+#include <OGL/Image2D.h>
+
 #include "TracerX/Mesh.h"
-#include "TracerX/Image.h"
 #include "TracerX/Camera.h"
 #include "TracerX/Material.h"
 #include "TracerX/core/Vertex.h"
 #include "TracerX/core/BvhNode.h"
-
-#include <string>
 
 namespace TracerX
 {
@@ -40,7 +41,7 @@ public:
      * 
      * The index of the texture in the vector is the material texture ID used in the scene.
      */
-    std::vector<Image> textures;
+    std::vector<OGL::Image2D> textures;
 
     /**
      * @brief The names of the textures.
@@ -96,7 +97,7 @@ public:
      * @param name The name of the texture.
      * @return The index (texture ID) of the added texture in the Scene::textures vector.
      */
-    int addTexture(const Image& texture, const std::string& name);
+    int addTexture(const OGL::Image2D& texture, const std::string& name);
 
     /**
      * @brief Adds a material to the scene.

@@ -1,186 +1,164 @@
 /**
  * @file Renderer.cpp
  */
-#include "TracerX/Renderer.h"
-
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
+
 #include <GL/glew.h>
+
 #if TX_DENOISE
 #include <OpenImageDenoise/oidn.hpp>
 #endif
 
+#include "TracerX/Renderer.h"
+
 using namespace TracerX;
 using namespace TracerX::core;
-using namespace TracerX::core::GL;
 
-#pragma region Payload Structs
-struct MeshInstancePayload
+static inline glm::uvec3 getGroupCount(glm::uvec3 globalSize, glm::uvec3 localSize = glm::uvec3(16, 16, 1))
 {
-    glm::mat4 transform = glm::mat4(1);
-    glm::mat4 transformInv = glm::mat4(1);
-    int materialId = -1;
-    int meshId = -1;
-    int padding1 = 0;
-    int padding2 = 0;
-};
+    return glm::uvec3(glm::ceil(glm::vec3(globalSize) / glm::vec3(localSize)));
+}
 
-struct CameraPayload
+static inline OGL::Image3D createImage3D(const std::vector<OGL::Image2D>& images, glm::uvec2 maxTextureSize)
 {
-    glm::vec3 position;
-    float fov;
-    glm::vec3 forward;
-    float focalDistance;
-    glm::vec3 up;
-    float aperture;
-    glm::vec3 right;
-    float blur;
-    float zNear;
-    float zFar;
-    int padding1 = 0;
-    int padding2 = 0;
-};
+    // Calculate image size
+    glm::uvec2 maxSize(0);
+    for (const OGL::Image2D& img : images)
+    {
+        maxSize = glm::max(maxSize, img.size);
+    }
+    maxSize = glm::min(maxSize, maxTextureSize);
 
-struct EnvironmentPayload
-{
-    glm::vec4 rotation1;
-    glm::vec4 rotation2;
-    glm::vec4 rotation3;
-    int transparent;
-    float intensity;
-    float cdfTotal;
-    int padding1 = 0;
-};
 
-struct AccumParamsPayload
-{
-    glm::ivec2 rectPosition;
-    glm::ivec2 rectSize;
-    unsigned int sampleCount;
-    unsigned int maxDepth;
-    unsigned int russianRouletteDepth;
-    int padding1 = 0;
-};
+    std::vector<glm::vec4> pixels;
+    for (const OGL::Image2D& img : images)
+    {
+        OGL::Image2D resizedImg = img.resize(maxSize);
+        pixels.insert(pixels.end(), resizedImg.pixels.begin(), resizedImg.pixels.end());
+    }
 
-struct ToneMapParamsPayload
-{
-    glm::ivec2 rectPosition;
-    glm::ivec2 rectSize;
-    unsigned int sampleCount;
-    unsigned int toneMapMode;
-    float gamma;
-};
-#pragma endregion
+    return OGL::Image3D(glm::uvec3(maxSize, images.size()), pixels.data());
+}
 
 #if !NDEBUG
-// https://learnopengl.com/In-Practice/Debugging
-void GLAPIENTRY glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei length, const char *message, const void *userParam)
+static inline std::string loadShader(const std::filesystem::path& path)
 {
-    // ignore non-significant error/warning codes
-    if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; 
-
-    std::cout << "---------------" << std::endl;
-    std::cout << "Debug message (" << id << "): " <<  message << std::endl;
-
-    switch (source)
+    std::ifstream file(path);
+    if (!file.is_open())
     {
-        case GL_DEBUG_SOURCE_API:             std::cout << "Source: API"; break;
-        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:   std::cout << "Source: Window System"; break;
-        case GL_DEBUG_SOURCE_SHADER_COMPILER: std::cout << "Source: Shader Compiler"; break;
-        case GL_DEBUG_SOURCE_THIRD_PARTY:     std::cout << "Source: Third Party"; break;
-        case GL_DEBUG_SOURCE_APPLICATION:     std::cout << "Source: Application"; break;
-        case GL_DEBUG_SOURCE_OTHER:           std::cout << "Source: Other"; break;
-    } std::cout << std::endl;
+        throw std::runtime_error("Shader source not found: " + path.string());
+    }
 
-    switch (type)
+    const std::string includeIdentifier = "#include";
+
+    std::string code;
+    std::string line;
+    while (std::getline(file, line))
     {
-        case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
-        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
-        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break; 
-        case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
-        case GL_DEBUG_TYPE_PERFORMANCE:         std::cout << "Type: Performance"; break;
-        case GL_DEBUG_TYPE_MARKER:              std::cout << "Type: Marker"; break;
-        case GL_DEBUG_TYPE_PUSH_GROUP:          std::cout << "Type: Push Group"; break;
-        case GL_DEBUG_TYPE_POP_GROUP:           std::cout << "Type: Pop Group"; break;
-        case GL_DEBUG_TYPE_OTHER:               std::cout << "Type: Other"; break;
-    } std::cout << std::endl;
-    
-    switch (severity)
-    {
-        case GL_DEBUG_SEVERITY_HIGH:         std::cout << "Severity: high"; break;
-        case GL_DEBUG_SEVERITY_MEDIUM:       std::cout << "Severity: medium"; break;
-        case GL_DEBUG_SEVERITY_LOW:          std::cout << "Severity: low"; break;
-        case GL_DEBUG_SEVERITY_NOTIFICATION: std::cout << "Severity: notification"; break;
-    } std::cout << std::endl;
-    std::cout << std::endl;
+        if (line.find(includeIdentifier) != line.npos)
+        {
+            // Get include path (remove #include and quotes)
+            line.erase(0, includeIdentifier.size() + 2);
+            line.pop_back();
+
+            code += loadShader(path.parent_path() / line) + '\n';
+            continue;
+        }
+
+        code += line + '\n';
+    }
+
+    return code;
 }
 #endif
 
-void Renderer::init(glm::uvec2 size)
-{
-    // Init GLEW
-    if (const GLenum status = glewInit(); status != GLEW_OK && status != GLEW_ERROR_NO_GLX_DISPLAY)
-    {
-        throw std::runtime_error("Failed to initialize GLEW: " + std::string(reinterpret_cast<const char*>(glewGetErrorString(status))));
-    }
-
-#if !NDEBUG
-    // Debug output
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(glDebugOutput, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+Renderer::Renderer(glm::uvec2 size)
+    :
+    // Shader
+#if TX_SPIRV
+    accumShader  ({ OGL::Shader(Renderer::accumShaderSrc,   Renderer::accumShaderSrcSize,   OGL::ShaderType::COMPUTE)}),
+    toneMapShader({ OGL::Shader(Renderer::toneMapShaderSrc, Renderer::toneMapShaderSrcSize, OGL::ShaderType::COMPUTE)}),
+#else
+    accumShader({ OGL::Shader(Renderer::accumShaderSrc, OGL::ShaderType::COMPUTE) }),
+    toneMapShader({ OGL::Shader(Renderer::toneMapShaderSrc, OGL::ShaderType::COMPUTE) }),
 #endif
+    // Textures
+    frameBuffer({
+        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // ToneMap
+        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Accumulator
+        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Albedo
+        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Normal
+        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    OGL::Filter::NEAREST) }, // Depth
+    }),
+    textureArray(glm::uvec3(1), OGL::ImageFormat::RGBA32F)
+{
+}
 
-    // Init GPU data
-    this->initData();
+OGL::Texture2D& Renderer::albedoTexture()
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR2);
+}
 
-    // Set size
-    this->resize(size);
+const OGL::Texture2D& Renderer::albedoTexture() const
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR2);
+}
+
+OGL::Texture2D& Renderer::normalTexture()
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR3);
+}
+
+const OGL::Texture2D& Renderer::normalTexture() const
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR3);
+}
+
+OGL::Texture2D& Renderer::depthTexture()
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR4);
+}
+
+const OGL::Texture2D& Renderer::depthTexture() const
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR4);
+}
+
+OGL::Texture2D& Renderer::accumulatorTexture()
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR1);
+}
+
+const OGL::Texture2D& Renderer::accumulatorTexture() const
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR1);
+}
+
+OGL::Texture2D& Renderer::toneMapTexture()
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR0);
+}
+
+const OGL::Texture2D& Renderer::toneMapTexture() const
+{
+    return this->frameBuffer.textures.at(OGL::Attachment::COLOR0);
 }
 
 void Renderer::resize(glm::uvec2 size)
 {
-    // Resize textures
-    this->accumulationTexture.resize(size);
-    this->albedoTexture.resize(size);
-    this->normalTexture.resize(size);
-    this->depthTexture.resize(size);
-    this->toneMapTexture.resize(size);
+    this->frameBuffer = OGL::FrameBuffer(
+    {
+        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // ToneMap
+        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Accumulator
+        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Albedo
+        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Normal
+        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    OGL::Filter::NEAREST) }, // Depth
+    });
 
     // Clear for safety
     this->clear();
-}
-
-void Renderer::shutdown()
-{
-    // Textures
-    this->accumulationTexture.shutdown();
-    this->albedoTexture.shutdown();
-    this->normalTexture.shutdown();
-    this->depthTexture.shutdown();
-    this->toneMapTexture.shutdown();
-    this->environment.texture.shutdown();
-    this->environment.cdfTexture.shutdown();
-    this->textureArray.shutdown();
-
-    // SSBOs
-    this->vertexBuffer.shutdown();
-    this->triangleBuffer.shutdown();
-    this->meshBuffer.shutdown();
-    this->meshInstanceBuffer.shutdown();
-    this->materialBuffer.shutdown();
-    this->blasBuffer.shutdown();
-    this->tlasBuffer.shutdown();
-
-    // UBOs
-    this->cameraBuffer.shutdown();
-    this->environmentBuffer.shutdown();
-    this->paramBuffer.shutdown();
-
-    // Shader
-    this->accumShader.shutdown();
-    this->toneMapShader.shutdown();
 }
 
 void Renderer::render(unsigned int samples, glm::uvec2 pos, glm::uvec2 size, bool updateSampleCount)
@@ -204,11 +182,10 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
 {
     // === Bind Data ===
     // Images
-    this->accumulationTexture.bindImage(0, GL_READ_WRITE);
-    this->albedoTexture.bindImage(1, GL_WRITE_ONLY);
-    this->normalTexture.bindImage(2, GL_WRITE_ONLY);
-    this->depthTexture.bindImage(3, GL_WRITE_ONLY);
-    this->toneMapTexture.bindImage(4, GL_WRITE_ONLY);
+    this->accumulatorTexture().bindImage(0, OGL::ImageUnitFormat::RGBA32F, OGL::Access::READ_WRITE);
+    this->albedoTexture().bindImage(     1, OGL::ImageUnitFormat::RGBA32F, OGL::Access::WRITE_ONLY);
+    this->normalTexture().bindImage(     2, OGL::ImageUnitFormat::RGBA32F, OGL::Access::WRITE_ONLY);
+    this->depthTexture().bindImage(      3, OGL::ImageUnitFormat::R32F,    OGL::Access::WRITE_ONLY);
 
     // Samplers
     this->environment.texture.bindSampler(0);
@@ -232,7 +209,21 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
 
     // === Update Data ===
     // cameraBuffer
-    const CameraPayload cameraPayload
+    const struct
+    {
+        glm::vec3 position;
+        float fov;
+        glm::vec3 forward;
+        float focalDistance;
+        glm::vec3 up;
+        float aperture;
+        glm::vec3 right;
+        float blur;
+        float zNear;
+        float zFar;
+        int padding1 = 0;
+        int padding2 = 0;
+    } cameraPayload
     {
         .position = this->camera.position,
         .fov = this->camera.fov,
@@ -245,10 +236,19 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
         .zNear = this->camera.zNear,
         .zFar = this->camera.zFar,
     };
-    this->cameraBuffer.update(&cameraPayload, sizeof(CameraPayload));
+    this->cameraBuffer.write(&cameraPayload, sizeof(cameraPayload));
 
     // environmentBuffer
-    const EnvironmentPayload environmentPayload
+    const struct
+    {
+        glm::vec4 rotation1;
+        glm::vec4 rotation2;
+        glm::vec4 rotation3;
+        int transparent;
+        float intensity;
+        float cdfTotal;
+        int padding1 = 0;
+    } environmentPayload
     {
         .rotation1 = glm::vec4(this->environment.rotation[0], 0),
         .rotation2 = glm::vec4(this->environment.rotation[1], 0),
@@ -257,10 +257,18 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
         .intensity = this->environment.intensity,
         .cdfTotal = this->environment.cdfTotal,
     };
-    this->environmentBuffer.update(&environmentPayload, sizeof(EnvironmentPayload));
+    this->environmentBuffer.write(&environmentPayload, sizeof(environmentPayload));
 
     // paramBuffer
-    const AccumParamsPayload paramsPayload
+    const struct
+    {
+        glm::ivec2 rectPosition;
+        glm::ivec2 rectSize;
+        unsigned int sampleCount;
+        unsigned int maxDepth;
+        unsigned int russianRouletteDepth;
+        int padding1 = 0;
+    } paramsPayload
     {
         .rectPosition = pos,
         .rectSize = size,
@@ -268,27 +276,27 @@ void Renderer::accumulate(unsigned int samples, glm::uvec2 pos, glm::uvec2 size)
         .maxDepth = this->maxDepth,
         .russianRouletteDepth = this->russianRouletteDepth,
     };
-    this->paramBuffer.update(&paramsPayload, sizeof(AccumParamsPayload));
+    this->paramBuffer.write(&paramsPayload, sizeof(paramsPayload));
     // === Update Data ===
 
     // Accumulate
     this->accumShader.use();
     for (unsigned int i = 0; i < samples; i++)
     {
-        this->paramBuffer.update(&this->sampleCount, sizeof(this->sampleCount), offsetof(AccumParamsPayload, sampleCount));
-        Shader::dispatchCompute(Shader::getGroups(size));
+        this->paramBuffer.update(&this->sampleCount, offsetof(decltype(paramsPayload), sampleCount), sizeof(this->sampleCount));
+        OGL::Program::dispatchCompute(getGroupCount(glm::uvec3(size, 1)));
         this->sampleCount++;
     }
 
-    Shader::stopUse();
+    OGL::Program::stopUse();
 }
 
 void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
 {
     // === Bind Data ===
     // Images
-    this->accumulationTexture.bindImage(0, GL_READ_ONLY);
-    this->toneMapTexture.bindImage(1, GL_WRITE_ONLY);
+    this->accumulatorTexture().bindImage(0, OGL::ImageUnitFormat::RGBA32F, OGL::Access::READ_ONLY);
+    this->toneMapTexture().bindImage(1, OGL::ImageUnitFormat::RGBA32F, OGL::Access::WRITE_ONLY);
 
     // UBOs
     this->paramBuffer.bindUniform(0);
@@ -296,7 +304,14 @@ void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
 
     // === Update Data ===
     // paramBuffer
-    const ToneMapParamsPayload paramsPayload
+    const struct
+    {
+        glm::ivec2 rectPosition;
+        glm::ivec2 rectSize;
+        unsigned int sampleCount;
+        unsigned int toneMapMode;
+        float gamma;
+    } paramsPayload
     {
         .rectPosition = pos,
         .rectSize = size,
@@ -304,13 +319,13 @@ void Renderer::toneMap(glm::uvec2 pos, glm::uvec2 size)
         .toneMapMode = static_cast<unsigned int>(this->toneMapMode),
         .gamma = this->gamma,
     };
-    this->paramBuffer.update(&paramsPayload, sizeof(ToneMapParamsPayload));
+    this->paramBuffer.write(&paramsPayload, sizeof(paramsPayload));
     // === Update Data ===
 
     // Tone map
     this->toneMapShader.use();
-    Shader::dispatchCompute(Shader::getGroups(size));
-    Shader::stopUse();
+    OGL::Program::dispatchCompute(getGroupCount(glm::uvec3(size, 1)));
+    OGL::Program::stopUse();
 }
 
 #if TX_DENOISE
@@ -321,19 +336,19 @@ void Renderer::denoise(glm::uvec2 pos, glm::uvec2 size)
     device.commit();
 
     // Create color buffer
-    const Image colorImage = this->accumulationTexture.upload(pos, size);
-    oidn::BufferRef colorBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
-    colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(float), colorImage.pixels.data());
+    const OGL::Image2D colorImage = this->accumulatorTexture().read(pos, size);
+    oidn::BufferRef colorBuf = device.newBuffer(colorImage.pixels.size() * sizeof(glm::vec4));
+    colorBuf.writeAsync(0, colorImage.pixels.size() * sizeof(glm::vec4), colorImage.pixels.data());
 
     // Create albedo buffer
-    const Image albedoImage = this->albedoTexture.upload(pos, size);
-    oidn::BufferRef albedoBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
-    albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(float), albedoImage.pixels.data());
+    const OGL::Image2D albedoImage = this->albedoTexture().read(pos, size);
+    oidn::BufferRef albedoBuf = device.newBuffer(albedoImage.pixels.size() * sizeof(glm::vec4));
+    albedoBuf.writeAsync(0, albedoImage.pixels.size() * sizeof(glm::vec4), albedoImage.pixels.data());
 
     // Create normal buffer
-    const Image normalImage = this->normalTexture.upload(pos, size);
-    oidn::BufferRef normalBuf = device.newBuffer(size.x * size.y * 4 * sizeof(float));
-    normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(float), normalImage.pixels.data());
+    const OGL::Image2D normalImage = this->normalTexture().read(pos, size);
+    oidn::BufferRef normalBuf = device.newBuffer(normalImage.pixels.size() * sizeof(glm::vec4));
+    normalBuf.writeAsync(0, normalImage.pixels.size() * sizeof(glm::vec4), normalImage.pixels.data());
 
     // Create filter
     device.sync();
@@ -358,9 +373,7 @@ void Renderer::denoise(glm::uvec2 pos, glm::uvec2 size)
     }
 
     // Update accumulator
-    const float* data = (const float*)colorBuf.getData();
-    const std::vector<float> pixels(data, data + colorImage.pixels.size());
-    this->accumulationTexture.update(Image(size, pixels), pos);
+    this->accumulatorTexture().update(OGL::Image2D(size, reinterpret_cast<const glm::vec4*>(colorBuf.getData())), pos);
 
     // Update output
     this->toneMap(pos, size);
@@ -380,25 +393,25 @@ void Renderer::denoise()
 #if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->accumShader.reload(shaderPath / "accumulate" / "main.comp");
-    this->toneMapShader.reload(shaderPath / "toneMap" / "main.comp");
+    this->accumShader = OGL::Program({ OGL::Shader(loadShader(shaderPath / "accumulate" / "main.comp").c_str(), OGL::ShaderType::COMPUTE) });
+    this->toneMapShader = OGL::Program({ OGL::Shader(loadShader(shaderPath / "toneMap" / "main.comp").c_str(), OGL::ShaderType::COMPUTE) });
 }
 #endif
 
 void Renderer::clear()
 {
-    this->accumulationTexture.clear();
-    this->albedoTexture.clear();
-    this->normalTexture.clear();
-    this->depthTexture.clear();
-    this->toneMapTexture.clear();
+    this->accumulatorTexture().clear();
+    this->albedoTexture().clear();
+    this->normalTexture().clear();
+    this->depthTexture().clear();
+    this->toneMapTexture().clear();
 
     this->sampleCount = 0;
 }
 
 glm::uvec2 Renderer::getSize() const
 {
-    return this->accumulationTexture.getSize();
+    return this->frameBuffer.getSize();
 }
 
 unsigned int Renderer::getSampleCount() const
@@ -409,24 +422,36 @@ unsigned int Renderer::getSampleCount() const
 void Renderer::loadScene(Scene& scene, glm::uvec2 maxTextureArraySize)
 {
     // Textures
-    this->textureArray.update(scene.textures, maxTextureArraySize);
+    OGL::Image3D img = createImage3D(scene.textures, maxTextureArraySize);
+    this->textureArray = OGL::Texture2DArray(img.size, OGL::ImageFormat::RGBA32F);
+    this->textureArray.update(img, glm::uvec3(0));
 
     // SSBOs
-    this->vertexBuffer.update(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
-    this->triangleBuffer.update(scene.triangles.data(), scene.triangles.size() * sizeof(glm::uvec3));
-    this->meshBuffer.update(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
+    this->vertexBuffer.write(scene.vertices.data(), scene.vertices.size() * sizeof(Vertex));
+    this->triangleBuffer.write(scene.triangles.data(), scene.triangles.size() * sizeof(glm::uvec3));
+    this->meshBuffer.write(scene.meshes.data(), scene.meshes.size() * sizeof(Mesh));
     this->updateSceneMeshInstances(scene);
     this->updateSceneMaterials(scene);
-    this->blasBuffer.update(scene.blas.data(), scene.blas.size() * sizeof(BvhNode));
+    this->blasBuffer.write(scene.blas.data(), scene.blas.size() * sizeof(BvhNode));
 }
 
 void Renderer::updateSceneMaterials(const Scene& scene)
 {
-    this->materialBuffer.update(scene.materials.data(), scene.materials.size() * sizeof(Material));
+    this->materialBuffer.write(scene.materials.data(), scene.materials.size() * sizeof(Material));
 }
 
 void Renderer::updateSceneMeshInstances(Scene& scene)
 {
+    struct MeshInstancePayload
+    {
+        glm::mat4 transform = glm::mat4(1);
+        glm::mat4 transformInv = glm::mat4(1);
+        int materialId = -1;
+        int meshId = -1;
+        int padding1 = 0;
+        int padding2 = 0;
+    };
+
     std::vector<BvhNode> tlas;
     std::vector<size_t> meshInstancePermutation;
     scene.buildTLAS(tlas, meshInstancePermutation);
@@ -446,42 +471,6 @@ void Renderer::updateSceneMeshInstances(Scene& scene)
         meshInstancesPayload.push_back(meshInstancePayload);
     }
 
-    this->meshInstanceBuffer.update(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(MeshInstancePayload));
-    this->tlasBuffer.update(tlas.data(), tlas.size() * sizeof(BvhNode));
-}
-
-void Renderer::initData()
-{
-    // Shader
-#if TX_SPIRV
-    this->accumShader.init(Renderer::accumShaderSrc, Renderer::accumShaderSrcSize);
-    this->toneMapShader.init(Renderer::toneMapShaderSrc, Renderer::toneMapShaderSrcSize);
-#else
-    this->accumShader.init(Renderer::accumShaderSrc);
-    this->toneMapShader.init(Renderer::toneMapShaderSrc);
-#endif
-
-    // Textures
-    this->accumulationTexture.init(GL_RGBA32F, GL_NEAREST);
-    this->albedoTexture.init(GL_RGBA32F, GL_NEAREST);
-    this->normalTexture.init(GL_RGBA32F, GL_NEAREST);
-    this->depthTexture.init(GL_R32F, GL_NEAREST);
-    this->toneMapTexture.init(GL_RGBA32F, GL_NEAREST);
-    this->environment.texture.init(GL_RGBA32F, GL_LINEAR);
-    this->environment.cdfTexture.init(GL_R32F, GL_LINEAR);
-    this->textureArray.init(GL_RGBA32F);
-
-    // SSBOs
-    this->vertexBuffer.init();
-    this->triangleBuffer.init();
-    this->meshBuffer.init();
-    this->meshInstanceBuffer.init();
-    this->materialBuffer.init();
-    this->blasBuffer.init();
-    this->tlasBuffer.init();
-
-    // UBOs
-    this->cameraBuffer.init();
-    this->environmentBuffer.init();
-    this->paramBuffer.init();
+    this->meshInstanceBuffer.write(meshInstancesPayload.data(), meshInstancesPayload.size() * sizeof(MeshInstancePayload));
+    this->tlasBuffer.write(tlas.data(), tlas.size() * sizeof(BvhNode));
 }

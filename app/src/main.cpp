@@ -1,6 +1,8 @@
-#include "Application.h"
+#include <OGL/Image2D.h>
 
 #include <TracerX/GLTFLoader.h>
+
+#include "Application.h"
 
 int main(int argc, char* argv[])
 {
@@ -32,11 +34,13 @@ int main(int argc, char* argv[])
     const TracerX::Scene initScene = TracerX::loadGLTF(sceneDir / "Box.glb");
 
     // The initial environment to render.
-    const TracerX::Image initEnvironment(environmentDir / "konzerthaus_2k.hdr");
+    const OGL::Image2D initEnvironment(environmentDir / "konzerthaus_2k.hdr");
     // =======================================
 
     // Create the application and run it.
+    GLFWwindow* window = Application::initGLFW();
     Application app(
+        window,
         initSize,
         maxTextureArraySize,
         sceneDir,
