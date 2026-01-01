@@ -1,4 +1,3 @@
-// TODO
 vec3 Slerp(in vec3 a, in vec3 b, float t)
 {
     float angle = acos(dot(a, b));

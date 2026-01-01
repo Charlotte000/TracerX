@@ -78,8 +78,8 @@ float Luminance(vec3 c)
 vec4 GetEnvironment(in Ray ray)
 {
     vec3 direction = Environment.Rotation * ray.Direction;
-    float theta = acos(direction.y);
-    
+    float theta = acos(clamp(direction.y, -1, 1));
+
     float v = theta * INV_PI;
     float u = atan(direction.z, direction.x) * INV_TWO_PI + 0.5;
 
