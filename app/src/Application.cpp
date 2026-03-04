@@ -213,7 +213,7 @@ Application::Application(
     this->initUI();
 }
 
-void Application::shutdown()
+Application::~Application()
 {
     this->shutdownUI();
     glfwDestroyWindow(this->threadContext);
@@ -264,8 +264,6 @@ void Application::run()
         this->renderUI();
         glfwSwapBuffers(this->window);
     }
-
-    this->shutdown();
 }
 
 void Application::loadScene(const std::filesystem::path& path)

@@ -100,7 +100,7 @@ public:
 #endif
         const TracerX::Scene& initScene,
         const OGL::Image2D& initEnvironment);
-    void shutdown();
+    ~Application();
     void run();
     void loadScene(const std::filesystem::path& path);
     void control();

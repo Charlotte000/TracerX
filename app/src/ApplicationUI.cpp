@@ -239,7 +239,7 @@ static bool materialTextureSelector(Application& app, const std::string& name, i
         glm::vec2 imagePos, imageSize;
         ImGui::BeginChild("viewMaterialTexture");
 
-        const glm::uvec2 size = app.materialTextureView.texture.getSize();
+        const glm::uvec2 size = app.materialTextureView.texture.size();
         const float aspect = (float)size.x / size.y;
         drawFillImage(app.materialTextureView.texture.getHandler(), aspect, imagePos, imageSize, tintColor);
         ImGui::EndChild();

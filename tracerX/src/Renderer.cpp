@@ -86,11 +86,11 @@ Renderer::Renderer(glm::uvec2 size)
 #endif
     // Textures
     frameBuffer({
-        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // ToneMap
-        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Accumulator
-        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Albedo
-        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Normal
-        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    OGL::Filter::NEAREST) }, // Depth
+        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<2, OGL::Filter>(OGL::Filter::NEAREST)) }, // ToneMap
+        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<2, OGL::Filter>(OGL::Filter::NEAREST)) }, // Accumulator
+        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<2, OGL::Filter>(OGL::Filter::NEAREST)) }, // Albedo
+        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<2, OGL::Filter>(OGL::Filter::NEAREST)) }, // Normal
+        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    glm::vec<2, OGL::Filter>(OGL::Filter::NEAREST)) }, // Depth
     }),
     textureArray(glm::uvec3(1), OGL::ImageFormat::RGBA32F)
 {
@@ -98,63 +98,63 @@ Renderer::Renderer(glm::uvec2 size)
 
 OGL::Texture2D& Renderer::albedoTexture()
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR2);
+    return this->frameBuffer[OGL::Attachment::COLOR2];
 }
 
 const OGL::Texture2D& Renderer::albedoTexture() const
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR2);
+    return this->frameBuffer[OGL::Attachment::COLOR2];
 }
 
 OGL::Texture2D& Renderer::normalTexture()
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR3);
+    return this->frameBuffer[OGL::Attachment::COLOR3];
 }
 
 const OGL::Texture2D& Renderer::normalTexture() const
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR3);
+    return this->frameBuffer[OGL::Attachment::COLOR3];
 }
 
 OGL::Texture2D& Renderer::depthTexture()
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR4);
+    return this->frameBuffer[OGL::Attachment::COLOR4];
 }
 
 const OGL::Texture2D& Renderer::depthTexture() const
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR4);
+    return this->frameBuffer[OGL::Attachment::COLOR4];
 }
 
 OGL::Texture2D& Renderer::accumulatorTexture()
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR1);
+    return this->frameBuffer[OGL::Attachment::COLOR1];
 }
 
 const OGL::Texture2D& Renderer::accumulatorTexture() const
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR1);
+    return this->frameBuffer[OGL::Attachment::COLOR1];
 }
 
 OGL::Texture2D& Renderer::toneMapTexture()
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR0);
+    return this->frameBuffer[OGL::Attachment::COLOR0];
 }
 
 const OGL::Texture2D& Renderer::toneMapTexture() const
 {
-    return this->frameBuffer.textures.at(OGL::Attachment::COLOR0);
+    return this->frameBuffer[OGL::Attachment::COLOR0];
 }
 
 void Renderer::resize(glm::uvec2 size)
 {
     this->frameBuffer = OGL::FrameBuffer(
     {
-        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // ToneMap
-        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Accumulator
-        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Albedo
-        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, OGL::Filter::NEAREST) }, // Normal
-        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    OGL::Filter::NEAREST) }, // Depth
+        { OGL::Attachment::COLOR0, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<3, OGL::Filter>(OGL::Filter::NEAREST)) }, // ToneMap
+        { OGL::Attachment::COLOR1, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<3, OGL::Filter>(OGL::Filter::NEAREST)) }, // Accumulator
+        { OGL::Attachment::COLOR2, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<3, OGL::Filter>(OGL::Filter::NEAREST)) }, // Albedo
+        { OGL::Attachment::COLOR3, OGL::Texture2D(size, OGL::ImageFormat::RGBA32F, glm::vec<3, OGL::Filter>(OGL::Filter::NEAREST)) }, // Normal
+        { OGL::Attachment::COLOR4, OGL::Texture2D(size, OGL::ImageFormat::R32F,    glm::vec<3, OGL::Filter>(OGL::Filter::NEAREST)) }, // Depth
     });
 
     // Clear for safety
@@ -411,7 +411,7 @@ void Renderer::clear()
 
 glm::uvec2 Renderer::getSize() const
 {
-    return this->frameBuffer.getSize();
+    return this->frameBuffer.size();
 }
 
 unsigned int Renderer::getSampleCount() const
