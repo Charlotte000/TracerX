@@ -11,15 +11,15 @@ add_library(
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Renderer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/GLTFLoader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Environment.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ShaderSrc.cpp
 )
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/ShaderSrc.cpp
     COMMAND ${CMAKE_COMMAND}
         -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders/out
-        -DOUTPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
+        -DOUTPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/src/ShaderSrc.cpp
         -P "${CMAKE_CURRENT_SOURCE_DIR}/EmbedShaders.cmake"
     DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
