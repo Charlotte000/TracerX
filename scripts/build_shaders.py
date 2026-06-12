@@ -1,54 +1,50 @@
 import subprocess
-from os import remove
 from os.path import dirname, exists, join
 
 
-def compile_shader(mainPath: str) -> bytes:
-    temp = join(dirname(mainPath), "out.spv")
-    proc = subprocess.run(["glslc", mainPath, "-o", temp], stderr=subprocess.PIPE)
+def preprocess_shader(mainPath: str) -> str:
+    proc = subprocess.run(["glslc", "-Werror", "-O", "-E", mainPath ], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    if proc.returncode != 0:
+        raise ValueError(f"Preprocessing error:\n{proc.stderr.decode()}")
+
+    return proc.stdout.decode()
+
+def compile_shader(mainPath: str) -> str:
+    proc = subprocess.run(["glslc", "-Werror", "-O", "-mfmt=c", mainPath, "-o", "-"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     if proc.returncode != 0:
         raise ValueError(f"Compilation error:\n{proc.stderr.decode()}")
 
-    with open(temp, "rb") as file:
-        data = file.read()
+    return proc.stdout.decode()
 
-    remove(temp)
-    return data
+def write_shader(path: str, accumShaderSrc: str, accumShaderBin: str, toneMapShaderSrc: str, toneMapShaderBin: str) -> bool:
+    dataFormat = """\
+#include <iterator>
+#include <TracerX/Renderer.h>
 
+using namespace TracerX;
 
-def assemble_shader(mainPath: str) -> str:
-    result = ""
-    with open(mainPath, "r") as file:
-        for line in file:
-            if line.startswith('#include "'):
-                includePath = line.removeprefix('#include "').removesuffix('"\n')
-                result += assemble_shader(join(dirname(mainPath), includePath))
-            else:
-                result += line
-    return result
+#if TX_SPIRV
+const uint32_t Renderer::accumShaderSrc[] =
+{};
 
+const size_t Renderer::accumShaderSrcSize = std::size(Renderer::accumShaderSrc) * sizeof(uint32_t);
 
-def write_shader(path: str, accumShaderSrc: str, accumShaderBin: bytes, toneMapShaderSrc: str, toneMapShaderBin: bytes) -> bool:
-    accumShaderBinRepr = list(map(lambda v: f"{v:#04x}", accumShaderBin))
-    toneMapShaderBinRepr = list(map(lambda v: f"{v:#04x}", toneMapShaderBin))
+const uint32_t Renderer::toneMapShaderSrc[] =
+{};
 
-    newData = (
-        "#include <TracerX/Renderer.h>\n\n"
-        + "using namespace TracerX;\n\n"
-        + "#if TX_SPIRV\n"
-        + "const unsigned char Renderer::accumShaderSrc[] =\n{\n    "
-        + ",\n    ".join(", ".join(accumShaderBinRepr[i : i + 10]) for i in range(0, len(accumShaderBinRepr), 10))
-        + "\n};\n"
-        + f"const size_t Renderer::accumShaderSrcSize = {len(accumShaderBinRepr)};\n\n"
-        + "const unsigned char Renderer::toneMapShaderSrc[] =\n{\n    "
-        + ",\n    ".join(", ".join(toneMapShaderBinRepr[i : i + 10]) for i in range(0, len(toneMapShaderBinRepr), 10))
-        + "\n};\n"
-        + f"const size_t Renderer::toneMapShaderSrcSize = {len(toneMapShaderBinRepr)};\n"
-        + "#else\n"
-        + f'const char Renderer::accumShaderSrc[] = R"AccumShaderSrc({accumShaderSrc})AccumShaderSrc";\n\n'
-        + f'const char Renderer::toneMapShaderSrc[] = R"ToneMapShaderSrc({toneMapShaderSrc})ToneMapShaderSrc";\n'
-        + "#endif\n"
-    )
+const size_t Renderer::toneMapShaderSrcSize = std::size(Renderer::toneMapShaderSrc) * sizeof(uint32_t);
+#else
+const char Renderer::accumShaderSrc[] = R"AccumShaderSrc(
+{}
+)AccumShaderSrc";
+
+const char Renderer::toneMapShaderSrc[] = R"ToneMapShaderSrc(
+{}
+)ToneMapShaderSrc";
+#endif
+"""
+
+    newData = dataFormat.format(accumShaderBin, toneMapShaderBin, accumShaderSrc, toneMapShaderSrc)
 
     if exists(path):
         with open(path, "r") as file:
@@ -72,8 +68,8 @@ toneMapPath = join(shaderPath, "toneMap", "main.comp")
 outPath = join(project, "tracerX", "src", "RendererShaderSrc.cpp")
 
 try:
-    accumShaderSrc = assemble_shader(accumPath)
-    toneMapShaderSrc = assemble_shader(toneMapPath)
+    accumShaderSrc = preprocess_shader(accumPath)
+    toneMapShaderSrc = preprocess_shader(toneMapPath)
     print("[Info] Assemble completed")
 
     accumShaderBin = compile_shader(accumPath)

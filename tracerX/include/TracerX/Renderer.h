@@ -353,9 +353,9 @@ private:
     OGL::UniformBuffer paramBuffer;
 
 #if TX_SPIRV
-    static const unsigned char accumShaderSrc[];
+    static const uint32_t accumShaderSrc[];
     static const size_t accumShaderSrcSize;
-    static const unsigned char toneMapShaderSrc[];
+    static const uint32_t toneMapShaderSrc[];
     static const size_t toneMapShaderSrcSize;
 #else
     static const char accumShaderSrc[];

@@ -12,8 +12,7 @@ static float luminance(glm::vec3 c)
 
 void Environment::update(const OGL::Image2D& image)
 {
-    this->texture = OGL::Texture2D(image.size, OGL::ImageFormat::RGBA32F);
-    this->texture.update(image, glm::uvec2(0));
+    this->texture = OGL::Texture2D(image, OGL::ImageFormat::RGBA32F);
     this->buildCDF(image);
 }
 

@@ -78,11 +78,11 @@ Renderer::Renderer(glm::uvec2 size)
     :
     // Shader
 #if TX_SPIRV
-    accumShader  ({ OGL::Shader(Renderer::accumShaderSrc,   Renderer::accumShaderSrcSize,   OGL::ShaderType::COMPUTE)}),
-    toneMapShader({ OGL::Shader(Renderer::toneMapShaderSrc, Renderer::toneMapShaderSrcSize, OGL::ShaderType::COMPUTE)}),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const unsigned char*>(Renderer::accumShaderSrc),   Renderer::accumShaderSrcSize  )}),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const unsigned char*>(Renderer::toneMapShaderSrc), Renderer::toneMapShaderSrcSize)}),
 #else
-    accumShader({ OGL::Shader(Renderer::accumShaderSrc, OGL::ShaderType::COMPUTE) }),
-    toneMapShader({ OGL::Shader(Renderer::toneMapShaderSrc, OGL::ShaderType::COMPUTE) }),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, Renderer::accumShaderSrc  ) }),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, Renderer::toneMapShaderSrc) }),
 #endif
     // Textures
     frameBuffer({
@@ -357,6 +357,8 @@ void Renderer::denoise(glm::uvec2 pos, glm::uvec2 size)
     filter.setImage("albedo", albedoBuf, oidn::Format::Float3, size.x, size.y, 0, 4 * sizeof(float));
     filter.setImage("normal", normalBuf, oidn::Format::Float3, size.x, size.y, 0, 4 * sizeof(float));
     filter.setImage("output", colorBuf, oidn::Format::Float3, size.x, size.y, 0, 4 * sizeof(float));
+    filter.set("cleanAux", true);
+    filter.set("quality", oidn::Quality::High);
     filter.set("hdr", true);
     filter.commit();
 
@@ -393,8 +395,8 @@ void Renderer::denoise()
 #if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->accumShader = OGL::Program({ OGL::Shader(loadShader(shaderPath / "accumulate" / "main.comp").c_str(), OGL::ShaderType::COMPUTE) });
-    this->toneMapShader = OGL::Program({ OGL::Shader(loadShader(shaderPath / "toneMap" / "main.comp").c_str(), OGL::ShaderType::COMPUTE) });
+    this->accumShader   = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "accumulate" / "main.comp").c_str()) });
+    this->toneMapShader = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "toneMap" / "main.comp").c_str())    });
 }
 #endif
 
