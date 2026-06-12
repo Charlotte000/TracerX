@@ -15,6 +15,18 @@ add_library(
 )
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
+    COMMAND ${CMAKE_COMMAND}
+        -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders/out
+        -DOUTPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/src/RendererShaderSrc.cpp
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/EmbedShaders.cmake"
+    DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp.spv
+    COMMENT "Embedding shaders"
+)
+
 # FastBVH
 set(FASTBVH_BUILD_EXAMPLES OFF CACHE BOOL "Whether or not to build the example programs.")
 set(FASTBVH_BUILD_TESTS OFF CACHE BOOL "Whether or not to build the unit tests.")

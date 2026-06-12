@@ -351,16 +351,6 @@ private:
     OGL::UniformBuffer cameraBuffer;
     OGL::UniformBuffer environmentBuffer;
     OGL::UniformBuffer paramBuffer;
-
-#if TX_SPIRV
-    static const uint32_t accumShaderSrc[];
-    static const size_t accumShaderSrcSize;
-    static const uint32_t toneMapShaderSrc[];
-    static const size_t toneMapShaderSrcSize;
-#else
-    static const char accumShaderSrc[];
-    static const char toneMapShaderSrc[];
-#endif
 };
 
 }

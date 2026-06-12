@@ -74,15 +74,25 @@ static inline std::string loadShader(const std::filesystem::path& path)
 }
 #endif
 
+#if TX_SPIRV
+extern const uint8_t accumShaderSrc[];
+extern const uint8_t toneMapShaderSrc[];
+extern const size_t accumShaderSrcSize;
+extern const size_t toneMapShaderSrcSize;
+#else
+extern const char accumShaderSrc[];
+extern const char toneMapShaderSrc[];
+#endif
+
 Renderer::Renderer(glm::uvec2 size)
     :
     // Shader
 #if TX_SPIRV
-    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const unsigned char*>(Renderer::accumShaderSrc),   Renderer::accumShaderSrcSize  )}),
-    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const unsigned char*>(Renderer::toneMapShaderSrc), Renderer::toneMapShaderSrcSize)}),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(accumShaderSrc),   accumShaderSrcSize  )}),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(toneMapShaderSrc), toneMapShaderSrcSize)}),
 #else
-    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, Renderer::accumShaderSrc  ) }),
-    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, Renderer::toneMapShaderSrc) }),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, accumShaderSrc  ) }),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, toneMapShaderSrc) }),
 #endif
     // Textures
     frameBuffer({

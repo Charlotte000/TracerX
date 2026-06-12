@@ -1,0 +1,112 @@
+#version 430 core
+#extension GL_GOOGLE_include_directive : enable
+#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
+
+#pragma shader_stage(compute)
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap/uniforms.comp"
+ layout(rgba32f, binding = 0) readonly uniform image2D AccumulatorImage;
+layout(rgba32f, binding = 1) writeonly uniform image2D ToneMapImage;
+
+layout(std140, binding = 0) uniform ParamsUBO
+{
+    ivec2 FramePosition;
+    ivec2 FrameSize;
+    uint SampleCount;
+    uint ToneMapMode;
+    float Gamma;
+};
+
+const uint ReinhardToneMap = 0;
+const uint ACESToneMap = 1;
+const uint ACESfittedToneMap = 2;
+
+ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
+#line 7 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
+#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap/tonemap.comp"
+ vec3 Reinhard(in vec3 color)
+{
+    return color / (color + 1);
+}
+
+vec3 ACES(in vec3 color)
+{
+    const float a = 2.51;
+    const float b = 0.03;
+    const float y = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+
+    return clamp( (color * (a * color + b)) / (color * (y * color + d) + e), 0, 1);
+}
+
+vec3 ACESfitted(in vec3 color)
+{
+    const mat3 ACESInputMat = mat3
+    (
+        vec3(0.59719, 0.35458, 0.04823),
+        vec3(0.07600, 0.90834, 0.01566),
+        vec3(0.02840, 0.13383, 0.83777)
+    );
+
+    const mat3 ACESOutputMat = mat3
+    (
+        vec3(1.60475, - 0.53108, - 0.07367),
+        vec3(- 0.10208, 1.10813, - 0.00605),
+        vec3(- 0.00327, - 0.07276, 1.07602)
+    );
+
+    color = color * ACESInputMat;
+
+
+    vec3 a = color * (color + 0.0245786) - 0.000090537;
+    vec3 b = color * (0.983729 * color + 0.4329510) + 0.238081;
+    color = a / b;
+
+    color = color * ACESOutputMat;
+
+    return clamp(color, 0, 1);
+}
+
+vec3 GammaCorrection(in vec3 color, in float gamma)
+{
+    return pow(color, vec3(1 / gamma));
+}
+#line 8 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
+
+vec4 ToneMap(in vec4 pixel)
+{
+    switch (ToneMapMode)
+    {
+
+        case ReinhardToneMap :
+            pixel.rgb = Reinhard(pixel.rgb);
+            break;
+
+
+        case ACESToneMap :
+            pixel.rgb = ACES(pixel.rgb);
+            break;
+
+
+        case ACESfittedToneMap :
+            pixel.rgb = ACESfitted(pixel.rgb);
+            break;
+    }
+
+    pixel.rgb = GammaCorrection(pixel.rgb, Gamma);
+    return pixel;
+}
+
+void main()
+{
+    if (any(lessThan(TexelCoord, FramePosition)) || any(lessThanEqual(FramePosition + FrameSize, TexelCoord)))
+    {
+        return;
+    }
+
+    vec4 accumColor = imageLoad(AccumulatorImage, TexelCoord);
+    imageStore(ToneMapImage, TexelCoord, ToneMap(accumColor / SampleCount));
+}

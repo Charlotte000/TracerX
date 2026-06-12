@@ -1,89 +1,35 @@
 import subprocess
-from os.path import dirname, exists, join
+from pathlib import Path
 
 
-def preprocess_shader(mainPath: str) -> str:
-    proc = subprocess.run(["glslc", "-Werror", "-O", "-E", mainPath ], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+def preprocess_shader(mainPath: Path, outputPath: Path):
+    proc = subprocess.run([ "glslc", "-Werror", "-O", "-E", mainPath, "-o", outputPath ], stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        raise ValueError(f"Preprocessing error:\n{proc.stderr.decode()}")
+        raise RuntimeError(f"Preprocessing error:\n{proc.stderr.decode()}")
 
-    return proc.stdout.decode()
-
-def compile_shader(mainPath: str) -> str:
-    proc = subprocess.run(["glslc", "-Werror", "-O", "-mfmt=c", mainPath, "-o", "-"], stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+def compile_shader(mainPath: Path, outputPath: Path):
+    proc = subprocess.run([ "glslc", "-Werror", "-O", mainPath, "-o", outputPath ], stderr=subprocess.PIPE)
     if proc.returncode != 0:
-        raise ValueError(f"Compilation error:\n{proc.stderr.decode()}")
+        raise RuntimeError(f"Compilation error:\n{proc.stderr.decode()}")
 
-    return proc.stdout.decode().replace("\r\n", "\n")
+project = (Path(__file__).parent / "..").resolve()
+shaderPath = project / "tracerX" / "shaders"
+accumPath = shaderPath / "accumulate" / "main.comp"
+toneMapPath = shaderPath / "toneMap" / "main.comp"
+outputPath = shaderPath / "out"
 
-def write_shader(path: str, accumShaderSrc: str, accumShaderBin: str, toneMapShaderSrc: str, toneMapShaderBin: str) -> bool:
-    dataFormat = """\
-#include <iterator>
-#include <TracerX/Renderer.h>
-
-using namespace TracerX;
-
-#if TX_SPIRV
-const uint32_t Renderer::accumShaderSrc[] =
-{};
-
-const size_t Renderer::accumShaderSrcSize = std::size(Renderer::accumShaderSrc) * sizeof(uint32_t);
-
-const uint32_t Renderer::toneMapShaderSrc[] =
-{};
-
-const size_t Renderer::toneMapShaderSrcSize = std::size(Renderer::toneMapShaderSrc) * sizeof(uint32_t);
-#else
-const char Renderer::accumShaderSrc[] = R"AccumShaderSrc(
-{}
-)AccumShaderSrc";
-
-const char Renderer::toneMapShaderSrc[] = R"ToneMapShaderSrc(
-{}
-)ToneMapShaderSrc";
-#endif
-"""
-
-    newData = dataFormat.format(accumShaderBin, toneMapShaderBin, accumShaderSrc, toneMapShaderSrc)
-
-    if exists(path):
-        with open(path, "r") as file:
-            oldData = file.read()
-    else:
-        oldData = ""
-
-    if oldData == newData:
-        return False
-
-    with open(path, "w") as file:
-        file.write(newData)
-
-    return True
-
-
-project = join(dirname(__file__), "..")
-shaderPath = join(project, "tracerX", "shaders")
-accumPath = join(shaderPath, "accumulate", "main.comp")
-toneMapPath = join(shaderPath, "toneMap", "main.comp")
-outPath = join(project, "tracerX", "src", "RendererShaderSrc.cpp")
+outputPath.mkdir(exist_ok=True)
 
 try:
-    accumShaderSrc = preprocess_shader(accumPath)
-    toneMapShaderSrc = preprocess_shader(toneMapPath)
+    preprocess_shader(accumPath, outputPath / "accum.comp")
+    preprocess_shader(toneMapPath, outputPath / "toneMap.comp")
     print("[Info] Assemble completed")
 
-    accumShaderBin = compile_shader(accumPath)
-    toneMapShaderBin = compile_shader(toneMapPath)
+    compile_shader(accumPath, outputPath / "accum.comp.spv")
+    compile_shader(toneMapPath, outputPath / "toneMap.comp.spv")
     print("[Info] Compilation completed")
 
-    override = write_shader(outPath, accumShaderSrc, accumShaderBin, toneMapShaderSrc, toneMapShaderBin)
-
-    if override:
-        print("[Info] Write completed")
-    else:
-        print("[Info] Write skipped")
-
     print("[Info] Build completed")
-except ValueError as err:
+except RuntimeError as err:
     print(f"[Error] {err}")
     exit(1)
