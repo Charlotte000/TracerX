@@ -14,7 +14,7 @@ def compile_shader(mainPath: str) -> str:
     if proc.returncode != 0:
         raise ValueError(f"Compilation error:\n{proc.stderr.decode()}")
 
-    return proc.stdout.decode()
+    return proc.stdout.decode().replace("\r\n", "\n")
 
 def write_shader(path: str, accumShaderSrc: str, accumShaderBin: str, toneMapShaderSrc: str, toneMapShaderBin: str) -> bool:
     dataFormat = """\
