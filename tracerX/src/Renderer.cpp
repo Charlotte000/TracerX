@@ -88,11 +88,11 @@ Renderer::Renderer(glm::uvec2 size)
     :
     // Shader
 #if TX_SPIRV
-    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(accumShaderSrc),   accumShaderSrcSize  )}),
-    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(toneMapShaderSrc), toneMapShaderSrcSize)}),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(accumShaderSrc),   accumShaderSrcSize,   OGL::ShaderFormat::SPIRV)}),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, reinterpret_cast<const void*>(toneMapShaderSrc), toneMapShaderSrcSize, OGL::ShaderFormat::SPIRV)}),
 #else
-    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, accumShaderSrc  ) }),
-    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, toneMapShaderSrc) }),
+    accumShader  ({ OGL::Shader(OGL::ShaderType::COMPUTE, accumShaderSrc,   0) }),
+    toneMapShader({ OGL::Shader(OGL::ShaderType::COMPUTE, toneMapShaderSrc, 0) }),
 #endif
     // Textures
     frameBuffer({
@@ -405,8 +405,8 @@ void Renderer::denoise()
 #if !NDEBUG
 void Renderer::reloadShaders(const std::filesystem::path& shaderPath)
 {
-    this->accumShader   = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "accumulate" / "main.comp").c_str()) });
-    this->toneMapShader = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "toneMap" / "main.comp").c_str())    });
+    this->accumShader   = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "accumulate" / "main.comp").c_str(), 0) });
+    this->toneMapShader = OGL::Program({ OGL::Shader(OGL::ShaderType::COMPUTE, loadShader(shaderPath / "toneMap"    / "main.comp").c_str(), 0) });
 }
 #endif
 

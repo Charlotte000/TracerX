@@ -24,6 +24,8 @@ add_custom_command(
     DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp.spv
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp
     COMMENT "Embedding shaders"
 )
 

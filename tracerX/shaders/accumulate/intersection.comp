@@ -1,4 +1,7 @@
 // https://github.com/brandonpelfrey/Fast-BVH/blob/master/include/FastBVH/Traverser.h#L61
+vec2 Stack[64];
+int StackPtr = 0;
+
 #define Traverse(BVH, NODE_OFFSET, LEAF)                                                                \
 {                                                                                                       \
     /* Bounding box min-t/max-t for left/right children at some point in the tree */                    \
