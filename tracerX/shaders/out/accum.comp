@@ -1,6 +1,6 @@
 #version 430 core
 #extension GL_GOOGLE_include_directive : enable
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
 
 #pragma shader_stage(compute)
 
@@ -15,7 +15,7 @@ const float TWO_PI = 6.28318530717958648;
 const float EPS = 0.001;
 const float INF = 1000000000;
 
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/structs.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/structs.comp"
  struct Ray
 {
     vec3 Origin;
@@ -123,8 +123,8 @@ struct Node
 const uint OpaqueAlphaMode = 0;
 const uint BlendAlphaMode = 1;
 const uint MaskAlphaMode = 2;
-#line 16 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/uniforms.comp"
+#line 16 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/uniforms.comp"
  layout(rgba32f, binding = 0) uniform image2D AccumulatorImage;
 layout(rgba32f, binding = 1) writeonly uniform image2D AlbedoImage;
 layout(rgba32f, binding = 2) writeonly uniform image2D NormalImage;
@@ -257,8 +257,8 @@ Material GetMaterial(inout CollisionManifold manifold)
 
     return material;
 }
-#line 17 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/random.comp"
+#line 17 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/random.comp"
 
 uvec4 Seed = uvec4(TexelCoord.x, TexelCoord.y, SampleCount, TexelCoord.x + TexelCoord.y);
 
@@ -298,8 +298,8 @@ vec3 RandomVector3()
     float z = RandomValueNormalDistribution();
     return normalize(vec3(x, y, z));
 }
-#line 18 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/transforms.comp"
+#line 18 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/transforms.comp"
  vec3 Slerp(in vec3 a, in vec3 b, float t)
 {
     float angle = acos(dot(a, b));
@@ -341,8 +341,8 @@ vec4 DepthToColor(in float depth)
     float nonLinear = (1 / depth - 1 / Camera.ZNear) / (1 / Camera.ZFar - 1 / Camera.ZNear);
     return vec4(vec3(nonLinear), 1);
 }
-#line 19 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/intersection.comp"
+#line 19 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/intersection.comp"
 
 vec2 Stack[64];
 int StackPtr = 0;
@@ -538,15 +538,15 @@ bool FindIntersection(in Ray ray, in float minDistance, in float maxDistance, ou
 
     return manifold.Depth < maxDistance;
 }
-#line 20 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/sampling.comp"
+#line 20 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/sampling.comp"
  float PowerHeuristic(float a, float b)
 {
     float t = a * a;
     return t / (b * b + t);
 }
-#line 21 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate/bsdf.comp"
+#line 21 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/bsdf.comp"
  bool AlphaTest(in Material material)
 {
     switch (material.AlphaMode)
@@ -632,7 +632,7 @@ bool BSDF(inout Ray ray, inout vec3 throughput, inout vec3 radiance, in Collisio
     throughput *= material.AlbedoColor.rgb;
     return true;
 }
-#line 22 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\accumulate\main.comp"
+#line 22 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/accumulate/main.comp"
 
 vec4 PathTrace(in Ray ray, out vec3 albedo, out vec3 normal, out float z)
 {

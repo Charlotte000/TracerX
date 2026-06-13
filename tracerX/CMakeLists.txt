@@ -15,17 +15,40 @@ add_library(
 )
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+# Compile shaders, if glslc is available
+file(
+    GLOB_RECURSE SHADER_SRC
+    CONFIGURE_DEPENDS
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/accumulate/*.comp
+    ${CMAKE_CURRENT_SOURCE_DIR}/shaders/toneMap/*.comp
+)
+add_custom_command(
+    OUTPUT
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp.spv
+    COMMAND
+        ${CMAKE_COMMAND}
+        -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        -DOUTPUT_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders/out
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CompileShaders.cmake"
+    DEPENDS ${SHADER_SRC}
+    COMMENT "Compiling shaders"
+)
+
+# Embed compiled shaders into cpp file
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/ShaderSrc.cpp
     COMMAND ${CMAKE_COMMAND}
         -DSHADERS_DIR=${CMAKE_CURRENT_SOURCE_DIR}/shaders/out
         -DOUTPUT_FILE=${CMAKE_CURRENT_SOURCE_DIR}/src/ShaderSrc.cpp
-        -P "${CMAKE_CURRENT_SOURCE_DIR}/EmbedShaders.cmake"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedShaders.cmake"
     DEPENDS
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp.spv
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp
         ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/accum.comp.spv
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/out/toneMap.comp.spv
     COMMENT "Embedding shaders"
 )
 
@@ -63,11 +86,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${glm_SOURCE_DIR})
 target_compile_definitions(${PROJECT_NAME} PUBLIC GLM_ENABLE_EXPERIMENTAL)
 
 # OIDN v2.3.2
-if (TX_DENOISE)
-    if (WIN32)
+if(TX_DENOISE)
+    if(WIN32)
         set(OIDN_URL https://github.com/RenderKit/oidn/releases/download/v2.3.2/oidn-2.3.2.x64.windows.zip)
         set(OIDN_URL_HASH c4f527b133d955fa5775af64f09e7a03a098f3aaef6b05b1702c1482c5d94fef)
-    elseif (UNIX)
+    elseif(UNIX)
         set(OIDN_URL https://github.com/RenderKit/oidn/releases/download/v2.3.2/oidn-2.3.2.x86_64.linux.tar.gz)
         set(OIDN_URL_HASH 4113f7aaac7d04a69162bf1efbd565f561a12e45423c367bbae350e7854034d1)
     else()
@@ -85,7 +108,7 @@ if (TX_DENOISE)
     target_link_directories(${PROJECT_NAME} PUBLIC ${oidn_SOURCE_DIR}/lib)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenImageDenoise)
 
-    if (WIN32)
+    if(WIN32)
         file(GLOB OIDN_DLL "${oidn_SOURCE_DIR}/bin/*.dll")
         set(TX_DENOISE_DLL ${OIDN_DLL} PARENT_SCOPE)
     endif()

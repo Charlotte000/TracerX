@@ -6,20 +6,20 @@ option(TX_SPIRV "Use SPIR-V shaders" ON)
 option(TX_BUILD_EDITOR "Build graphic editor" ON)
 option(TX_BUILD_EXAMPLE "Build example" OFF)
 
-if (TX_DENOISE)
+if(TX_DENOISE)
     add_compile_definitions(TX_DENOISE)
 endif()
 
-if (TX_SPIRV)
+if(TX_SPIRV)
     add_compile_definitions(TX_SPIRV)
 endif()
 
 add_subdirectory(tracerX)
 
-if (TX_BUILD_EDITOR)
+if(TX_BUILD_EDITOR)
     add_subdirectory(app)
 endif()
 
-if (TX_BUILD_EXAMPLE)
+if(TX_BUILD_EXAMPLE)
     add_subdirectory(example)
 endif()

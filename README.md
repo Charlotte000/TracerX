@@ -54,7 +54,7 @@ To generate the corresponding build files, run the following commands:
 ```bash
 mkdir build
 cd ./build
-cmake ..
+cmake .. -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 ```
 
 ## Building the documentation
@@ -68,20 +68,20 @@ doxygen
 ## Debugging the shaders
 The source shader code can be found in the `tracerX/shaders` directory.
 
-You can modify and rebuild the shaders by running the `scripts/build_shaders.py` python script.
-In order to run the script, you need to have Python 3 and the **glslc** compiler installed on your system.
-By running this script, the shaders will be compiled and saved in the `tracerX/src/RendererShaderSrc.cpp` file.
-Each time you rebuild the shaders, you need to rebuild the project to see the changes.
+You can modify and recompile the shaders by rebuilding the project.  
+In order to recompile the shaders, you need to have `glslc` compiler installed on your system.  
+By building the project, the shaders will be compiled and saved in the `tracerX/shaders/out` directory and will be embedded in the `tracerX/src/ShaderSrc.cpp` file.  
+Each time you modify the shaders, you need to rebuild the project to see the changes.
 
 If the __TX_SPIRV__ option is enabled, the shaders will be compiled into SPIR-V format.
 
 If the __TX_SPIRV__ option is disabled, the shaders will be compiled into GLSL source code.
 
-If the __CMAKE_BUILD_TYPE__ is set to __Debug__, the shaders can be modified in the `tracerX/shaders` directory and live reloaded without rebuilding the project by pressing the __Reload shaders__ button.
+If the __CMAKE_BUILD_TYPE__ is set to __Debug__, the shaders can be modified in the `tracerX/shaders` directory and live reloaded without rebuilding the project by pressing the `Reload shaders` button in the `app` GUI or by calling `Render::reloadShaders()` function from the `tracerX` library.
 
 # External
 ## Libraries
-- [brandonpelfrey/Fast-BVH](https://github.com/brandonpelfrey/Fast-BVH) (Modified version): A Simple, Optimized Bounding Volume Hierarchy for Ray/Object Intersection Testing
+- [brandonpelfrey/Fast-BVH](https://github.com/brandonpelfrey/Fast-BVH): A Simple, Optimized Bounding Volume Hierarchy for Ray/Object Intersection Testing
 - [nigels-com/glew](https://github.com/nigels-com/glew): The OpenGL Extension Wrangler Library
 - [g-truc/glm](https://github.com/g-truc/glm): OpenGL Mathematics (GLM)
 - [OpenImageDenoise/oidn](https://github.com/OpenImageDenoise/oidn): Intel® Open Image Denoise library

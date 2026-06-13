@@ -1,12 +1,12 @@
 #version 430 core
 #extension GL_GOOGLE_include_directive : enable
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/toneMap/main.comp"
 
 #pragma shader_stage(compute)
 
 layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap/uniforms.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/toneMap/uniforms.comp"
  layout(rgba32f, binding = 0) readonly uniform image2D AccumulatorImage;
 layout(rgba32f, binding = 1) writeonly uniform image2D ToneMapImage;
 
@@ -24,8 +24,8 @@ const uint ACESToneMap = 1;
 const uint ACESfittedToneMap = 2;
 
 ivec2 TexelCoord = ivec2(gl_GlobalInvocationID.xy) + FramePosition;
-#line 7 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
-#line 1 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap/tonemap.comp"
+#line 7 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/toneMap/main.comp"
+#line 1 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/toneMap/tonemap.comp"
  vec3 Reinhard(in vec3 color)
 {
     return color / (color + 1);
@@ -74,7 +74,7 @@ vec3 GammaCorrection(in vec3 color, in float gamma)
 {
     return pow(color, vec3(1 / gamma));
 }
-#line 8 "C:\Users\ramil\Documents\Programming\Cpp\TracerX\tracerX\shaders\toneMap\main.comp"
+#line 8 "C:/Users/ramil/Documents/Programming/Cpp/TracerX/tracerX/shaders/toneMap/main.comp"
 
 vec4 ToneMap(in vec4 pixel)
 {
